@@ -14,6 +14,14 @@
                 <p class="truncate text-xs text-text-muted">{{ $identity->displayName() }}</p>
             </div>
             {{ $actions }}
+            @auth
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="inline-flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-primary-soft" aria-label="Keluar">
+                        <x-ui.icon name="log-out" />
+                    </button>
+                </form>
+            @endauth
         </div>
     </header>
 

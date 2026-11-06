@@ -215,6 +215,11 @@ test('font cadangan arab benar-benar dipakai contoh cadangan', async ({ page }) 
     expect(family.startsWith('"Noto Naskh Arabic"')).toBe(true);
 });
 
+test('halaman publik beranda tetap tersedia', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+});
+
 test('tepat satu kartu hero per layar portal dan staf', async ({ page }) => {
     for (const path of ['/_pratinjau/staf', '/_pratinjau/portal/wali', '/_pratinjau/portal/santri']) {
         await page.goto(path);

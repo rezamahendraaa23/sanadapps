@@ -52,6 +52,12 @@ return [
 
     'channels' => [
 
+        'e2e' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/e2e.log'),
+            'level' => 'debug',
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),

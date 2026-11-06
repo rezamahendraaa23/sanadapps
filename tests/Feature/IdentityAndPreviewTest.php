@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Preview\SampleTable;
+use App\Modules\Core\Models\SchoolProfile;
 use App\Support\Navigation;
 use Livewire\Livewire;
 
@@ -37,8 +38,17 @@ it('menolak peran portal yang tidak dikenal', function () {
 });
 
 it('tidak menampilkan menu yang rutenya belum ada', function () {
-    expect(app(Navigation::class)->staff())->toBe([])
-        ->and(app(Navigation::class)->portal('wali'))->toBe([]);
+    $keys = collect(app(Navigation::class)->staff())->flatMap(fn ($group) => $group['items'])->pluck('key');
+
+    expect($keys)->toContain('home')->not->toContain('exams')
+        ->and(collect(app(Navigation::class)->portal('wali'))->pluck('key')->all())->toBe(['home']);
+});
+
+it('memakai isian profil pesantren di atas nilai awal', function () {
+    config(['sanad.school.name' => 'Dari Config']);
+    SchoolProfile::create(['name' => 'Dari Pengaturan', 'brand_color' => '#1D3F72']);
+
+    $this->get('/')->assertOk()->assertSee('Dari Pengaturan')->assertDontSee('Dari Config')->assertSee('--color-primary:#1D3F72', false);
 });
 
 it('membatasi navigasi portal maksimal lima item', function (string $role) {

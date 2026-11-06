@@ -2,14 +2,18 @@
 
 namespace App\Support;
 
+use App\Modules\Core\Support\ModuleRegistry;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Menyusun menu dari config/sanad.php. Item tanpa rute tidak muncul, kecuali di pratinjau
- * yang menampilkannya sebagai "belum dibuat" agar tidak ada tautan mati (R-24).
+ * Menyusun menu dari config/sanad.php. Item tampil bila rutenya ada, modulnya aktif, dan pengguna berhak.
+ * Pratinjau menampilkan semua item, yang belum ada ditandai "belum dibuat" agar tidak ada tautan mati (R-24).
  */
 final class Navigation
 {
+    public function __construct(private ModuleRegistry $modules) {}
+
     /**
      * @return list<array{label: string, items: list<array<string, mixed>>}>
      */
@@ -37,7 +41,7 @@ final class Navigation
     }
 
     /**
-     * @param  list<array<string, string>>  $items
+     * @param  list<array<string, mixed>>  $items
      * @return list<array<string, mixed>>
      */
     private function resolve(array $items, ?string $homeUrl, bool $preview): array
@@ -45,19 +49,26 @@ final class Navigation
         $resolved = [];
 
         foreach ($items as $item) {
-            $url = match (true) {
-                Route::has($item['route']) => route($item['route']),
-                $item['key'] === 'home' && $homeUrl !== null => $homeUrl,
-                default => null,
-            };
+            if ($preview) {
+                $url = $item['key'] === 'home' ? $homeUrl : null;
+                $resolved[] = [...$item, 'url' => $url];
 
-            if ($url === null && ! $preview) {
                 continue;
             }
 
-            $resolved[] = [...$item, 'url' => $url];
+            if (Route::has($item['route']) && $this->modules->enabled($item['module']) && $this->allowed($item)) {
+                $resolved[] = [...$item, 'url' => route($item['route'])];
+            }
         }
 
         return $resolved;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private function allowed(array $item): bool
+    {
+        return ! isset($item['permission']) || Auth::user()?->canAny((array) $item['permission']);
     }
 }

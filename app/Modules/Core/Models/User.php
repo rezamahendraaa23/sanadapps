@@ -14,7 +14,12 @@ class User extends Authenticatable
 {
     use Audited, HasPublicUuid, HasRoles, TwoFactorAuthenticatable;
 
+    /** @var list<string> */
+    protected array $auditExcept = ['last_login_at', 'two_factor_confirmed_at'];
+
     protected $guarded = ['id', 'uuid'];
+
+    protected $attributes = ['is_active' => true];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 

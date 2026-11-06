@@ -57,3 +57,5 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
+        env:
+          E2E_DB: sanad_test

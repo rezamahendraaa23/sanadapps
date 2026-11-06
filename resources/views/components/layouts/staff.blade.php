@@ -10,7 +10,7 @@
             class="fixed inset-y-0 left-0 z-20 hidden flex-col border-r border-border bg-surface lg:flex"
             :class="collapsed ? 'w-[72px]' : 'w-[264px]'"
         >
-            <a href="{{ $homeUrl ?? route('home') }}" class="flex min-h-16 items-center border-b border-border px-4">
+            <a href="{{ $homeUrl ?? route('staff.dashboard') }}" class="flex min-h-16 items-center border-b border-border px-4">
                 <span x-show="collapsed"><x-ui.logo variant="mark" /></span>
                 <span x-show="!collapsed"><x-ui.logo /></span>
             </a>
@@ -71,6 +71,9 @@
                 @if ($actions)
                     <div class="flex shrink-0 items-center gap-2">{{ $actions }}</div>
                 @endif
+                @auth
+                    <x-layouts.partials-account-menu />
+                @endauth
             </header>
             <main id="konten" tabindex="-1" class="mx-auto w-full max-w-[1280px] p-4 outline-none md:p-6">
                 {{ $slot }}
