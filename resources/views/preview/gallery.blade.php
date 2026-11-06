@@ -15,8 +15,8 @@
 
         <section class="flex flex-col gap-4">
             <x-ui.section-heading>Tipografi</x-ui.section-heading>
-            <p class="font-display text-3xl font-semibold">Fraunces untuk judul dan angka utama</p>
-            <p class="max-w-prose text-base">Figtree dipakai untuk teks bacaan dan tabel. Angka uang memakai tabular: <span class="font-tabular">Rp 1.250.000</span> dan <span class="font-tabular">Rp 625.000</span>.</p>
+            <p class="font-display text-3xl font-semibold">Fredoka untuk judul dan angka utama</p>
+            <p class="max-w-prose text-base">Nunito dipakai untuk teks bacaan dan tabel. Angka uang memakai tabular: <span class="font-tabular">Rp 1.250.000</span> dan <span class="font-tabular">Rp 625.000</span>.</p>
             <div class="flex flex-col gap-1">
                 <p class="text-sm text-text-muted">Amiri, font Arab utama</p>
                 <p dir="rtl"><x-ui.arabic class="text-[1.75rem]">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</x-ui.arabic></p>

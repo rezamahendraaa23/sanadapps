@@ -39,8 +39,8 @@
     --color-chart-2: #D97706;
     --color-chart-3: #1D5FA8;
 
-    --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
-    --font-sans: 'Figtree Variable', system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+    --font-display: 'Fredoka Variable', 'Trebuchet MS', system-ui, sans-serif;
+    --font-sans: 'Nunito Variable', system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
     --font-arabic: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', serif;
     --font-arabic-fallback: 'Noto Naskh Arabic', 'Traditional Arabic', serif;
 

@@ -69,15 +69,15 @@ test('font latin dan arab benar-benar termuat', async ({ page }) => {
 
     const loaded = await page.evaluate(async () => {
         await Promise.all([
-            document.fonts.load('600 28px "Fraunces Variable"', 'A'),
-            document.fonts.load('16px "Figtree Variable"', 'A'),
+            document.fonts.load('600 28px "Fredoka Variable"', 'A'),
+            document.fonts.load('16px "Nunito Variable"', 'A'),
             document.fonts.load('22px "Amiri"', 'ب'),
             document.fonts.load('22px "Noto Naskh Arabic"', 'ب'),
         ]);
         return [...document.fonts].filter((font) => font.status === 'loaded').map((font) => font.family.replaceAll('"', ''));
     });
 
-    for (const family of ['Fraunces Variable', 'Figtree Variable', 'Amiri', 'Noto Naskh Arabic']) {
+    for (const family of ['Fredoka Variable', 'Nunito Variable', 'Amiri', 'Noto Naskh Arabic']) {
         expect(loaded).toContain(family);
     }
 });
@@ -207,6 +207,24 @@ test('angka hero tidak meluber dari kartunya', async ({ page }) => {
         const overflow = await page.locator('section.on-primary p').first().evaluate((value) => value.scrollWidth - value.clientWidth);
         expect(overflow, `lebar ${width}`).toBeLessThanOrEqual(0);
     }
+});
+
+test('angka uang sejajar di kolom karena lebar digitnya sama', async ({ page }) => {
+    await page.goto('/_pratinjau');
+    await page.evaluate(() => document.fonts.ready);
+    const widths = await page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.className = 'font-tabular';
+        probe.style.position = 'absolute';
+        document.body.append(probe);
+        const measured = ['111111', '888888', '000000'].map((digits) => {
+            probe.textContent = digits;
+            return probe.getBoundingClientRect().width;
+        });
+        probe.remove();
+        return measured;
+    });
+    expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(0.5);
 });
 
 test('font cadangan arab benar-benar dipakai contoh cadangan', async ({ page }) => {
