@@ -2,9 +2,9 @@
 
 {{-- Layar kecil tampil sebagai bottom sheet, mulai 768 px sebagai modal di tengah. --}}
 <div
-    x-data="{ open: false }"
-    x-on:open-modal.window="if ($event.detail === @js($name)) open = true"
-    x-on:close-modal.window="if ($event.detail === @js($name)) open = false"
+    x-data="{ open: false, isMine: (detail) => [detail].flat().includes(@js($name)) }"
+    x-on:open-modal.window="if (isMine($event.detail)) open = true"
+    x-on:close-modal.window="if (isMine($event.detail)) open = false"
     x-on:keydown.escape.window="open = false"
     x-show="open"
     x-cloak

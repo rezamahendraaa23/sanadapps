@@ -11,6 +11,7 @@ use App\Modules\Core\Policies\StudentPolicy;
 use App\Modules\Core\Support\LogOtpSender;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Support\SchoolIdentity;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
@@ -32,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         SchoolProfile::saved(fn () => app(SchoolIdentity::class)->forget());
+        Paginator::defaultView('components.ui.pagination');
 
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Guardian::class, GuardianPolicy::class);

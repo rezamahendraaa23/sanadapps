@@ -12,6 +12,9 @@ return [
         'brand_color' => env('SANAD_BRAND_COLOR', '#0B5D45'),
     ],
 
+    // Tampilan waktu mengikuti school_profile.timezone mulai dari sini ke bawah; penyimpanan selalu UTC.
+    'display_timezone' => env('SANAD_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
+
     'navigation' => [
 
         'staff' => [
@@ -58,13 +61,13 @@ return [
                 ['key' => 'export', 'label' => 'Ekspor Dapodik/EMIS', 'icon' => 'file-down', 'route' => 'staff.export.index', 'module' => 'export_dapodik'],
             ]],
             ['label' => 'Pengaturan', 'items' => [
-                ['key' => 'profile', 'label' => 'Profil & Branding', 'icon' => 'building-2', 'route' => 'staff.settings.profile', 'module' => 'core'],
-                ['key' => 'modules', 'label' => 'Modul', 'icon' => 'toggle-right', 'route' => 'staff.settings.modules', 'module' => 'core'],
-                ['key' => 'integrations', 'label' => 'Integrasi', 'icon' => 'plug', 'route' => 'staff.settings.integrations', 'module' => 'core'],
+                ['key' => 'profile', 'permission' => 'settings.manage', 'label' => 'Profil & Branding', 'icon' => 'building-2', 'route' => 'staff.settings.profile', 'module' => 'core'],
+                ['key' => 'modules', 'permission' => 'settings.manage', 'label' => 'Modul', 'icon' => 'toggle-right', 'route' => 'staff.settings.modules', 'module' => 'core'],
+                ['key' => 'integrations', 'permission' => 'settings.manage', 'label' => 'Integrasi', 'icon' => 'plug', 'route' => 'staff.settings.integrations', 'module' => 'core'],
                 ['key' => 'fee-types', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
                 ['key' => 'notifications', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'notification_wa'],
-                ['key' => 'users', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
-                ['key' => 'audit', 'label' => 'Audit Log', 'icon' => 'scroll-text', 'route' => 'staff.settings.audit', 'module' => 'core'],
+                ['key' => 'users', 'permission' => 'users.manage', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
+                ['key' => 'audit', 'permission' => 'audit.view', 'label' => 'Audit Log', 'icon' => 'scroll-text', 'route' => 'staff.settings.audit', 'module' => 'core'],
             ]],
         ],
 

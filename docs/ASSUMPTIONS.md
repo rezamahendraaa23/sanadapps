@@ -38,4 +38,6 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A15 | Kolom `integrations.credentials` bertipe `text`, bukan `jsonb` | Isi terenkripsi bukan JSON yang valid |
 | A16 | OTP memakai `LogOtpSender` sampai Fonnte selesai di Tahap 3; di produksi pengirim ini menolak, jadi kode tidak pernah masuk log | Keputusan urutan kerja di master prompt |
 | A17 | Ustadz melihat santri lewat wali kelas sampai penugasan mengajar ada di Tahap 6 | Tabel penugasan mengajar belum ada |
+| A18 | SE-03 Tahap 1 hanya menyimpan kredensial. Tes koneksi, URL webhook, dan kanal menyusul di Tahap 3; rekening transfer manual di Tahap 2 | Butuh klien Midtrans, Fonnte, dan tabel `bank_accounts` dari tahap itu |
+| A19 | Kartu modul memakai tombol Aktifkan dan Matikan berlabel, bukan toggle | Status tertulis jelas dan aksi punya kata kerja |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

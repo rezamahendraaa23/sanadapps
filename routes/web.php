@@ -7,6 +7,10 @@ use App\Modules\Core\Livewire\Auth\Login;
 use App\Modules\Core\Livewire\Auth\ResetPassword;
 use App\Modules\Core\Livewire\Auth\TwoFactorChallenge;
 use App\Modules\Core\Livewire\Auth\VerifyOtp;
+use App\Modules\Core\Livewire\Settings\AuditLogs;
+use App\Modules\Core\Livewire\Settings\IntegrationSettings;
+use App\Modules\Core\Livewire\Settings\ModuleSettings;
+use App\Modules\Core\Livewire\Settings\ProfileSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +36,15 @@ Route::post('/keluar', function (Request $request, RecordAudit $audit) {
 
 Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('panel')->name('staff.')->group(function (): void {
     Route::view('/', 'core.staff.dashboard')->name('dashboard');
+
+    Route::prefix('pengaturan')->name('settings.')->group(function (): void {
+        Route::middleware('can:settings.manage')->group(function (): void {
+            Route::get('/profil', ProfileSettings::class)->name('profile');
+            Route::get('/modul', ModuleSettings::class)->name('modules');
+            Route::get('/integrasi', IntegrationSettings::class)->name('integrations');
+        });
+        Route::get('/audit-log', AuditLogs::class)->middleware('can:audit.view')->name('audit');
+    });
 });
 
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
