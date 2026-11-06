@@ -1,0 +1,138 @@
+@import '@fontsource-variable/fraunces/index.css';
+@import '@fontsource-variable/figtree/index.css';
+@import '@fontsource/amiri/arabic-400.css';
+@import '@fontsource/amiri/arabic-700.css';
+@import '@fontsource/noto-naskh-arabic/arabic-400.css';
+
+@import 'tailwindcss';
+@import './tokens.css';
+
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../../app/**/*.php';
+
+@layer base {
+    html {
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-sans);
+        -webkit-text-size-adjust: 100%;
+    }
+
+    /* Satu gaya fokus untuk semua elemen interaktif (PRD UI/UX 2.7). */
+    :focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+
+    .on-primary :focus-visible {
+        outline-color: var(--color-on-primary);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    .font-tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Arsiran hanya menandai status menunggu, selalu berpasangan ikon dan teks. */
+    .hatch {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            var(--color-hatch) 0 4px,
+            transparent 4px 9px
+        );
+    }
+
+    .rule-double {
+        border-bottom: 3px double var(--color-border);
+    }
+
+    /* Takik tiket memakai mask agar tetap berlubang di atas latar apa pun dan saat dicetak. */
+    .ticket-top {
+        mask:
+            radial-gradient(circle var(--radius-notch) at 0 100%, transparent 97%, #000) left / 51% 100% no-repeat,
+            radial-gradient(circle var(--radius-notch) at 100% 100%, transparent 97%, #000) right / 51% 100% no-repeat;
+    }
+
+    .ticket-bottom {
+        mask:
+            radial-gradient(circle var(--radius-notch) at 0 0, transparent 97%, #000) left / 51% 100% no-repeat,
+            radial-gradient(circle var(--radius-notch) at 100% 0, transparent 97%, #000) right / 51% 100% no-repeat;
+    }
+
+    .ticket {
+        filter: drop-shadow(0 0 0.5px var(--color-text-muted)) drop-shadow(0 1px 2px rgb(22 33 58 / 0.08));
+    }
+
+    /* Bintang delapan untuk latar halaman masuk dan identitas; opasitas dijaga di bawah 6%. */
+    .pattern-geometric {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .pattern-geometric::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        opacity: 0.05;
+        background-color: var(--color-primary);
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.5' d='M32 6l7.6 18.4L58 32l-18.4 7.6L32 58l-7.6-18.4L6 32l18.4-7.6zM13.6 13.6h36.8v36.8H13.6z'/%3E%3C/svg%3E") repeat;
+    }
+
+    /* Di bawah 768 px baris tabel menjadi kartu; label kolom diambil dari data-label. */
+    @media (width < 48rem) {
+        .table-stack thead {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+        }
+
+        .table-stack tr {
+            display: block;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .table-stack td {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.25rem 0;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .table-stack td::before {
+            content: attr(data-label);
+            flex: none;
+            max-width: 45%;
+            color: var(--color-text-muted);
+            text-align: left;
+        }
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+    }
+}
