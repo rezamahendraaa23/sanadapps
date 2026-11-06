@@ -42,6 +42,11 @@ class SchoolIdentity
         return BrandColor::cssOverrides($this->profile()?->brand_color ?? config('sanad.school.brand_color'));
     }
 
+    public function timezone(): string
+    {
+        return $this->profile()?->timezone ?? config('sanad.display_timezone');
+    }
+
     public function forget(): void
     {
         $this->profile = null;

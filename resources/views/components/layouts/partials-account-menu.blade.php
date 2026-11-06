@@ -13,7 +13,11 @@
     <div x-show="open" x-cloak class="absolute top-full right-0 z-40 mt-1 w-64 rounded-control border border-border bg-surface p-2 shadow-md">
         <p class="truncate px-2 text-sm font-semibold">{{ auth()->user()->name }}</p>
         <p class="truncate px-2 pb-2 text-xs text-text-muted">{{ auth()->user()->getRoleNames()->map(fn ($role) => str_replace('_', ' ', $role))->join(', ') ?: 'Staf' }}</p>
-        <form method="POST" action="{{ route('logout') }}" class="border-t border-border pt-2">
+        <a href="{{ route('staff.account') }}" class="flex min-h-11 items-center gap-2 rounded-control px-2 text-sm font-semibold hover:bg-primary-soft">
+            <x-ui.icon name="lock" />
+            Keamanan Akun
+        </a>
+        <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-border pt-2">
             @csrf
             <button type="submit" class="flex min-h-11 w-full items-center gap-2 rounded-control px-2 text-sm font-semibold text-danger hover:bg-danger-soft">
                 <x-ui.icon name="log-out" />

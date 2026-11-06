@@ -76,7 +76,7 @@ test('modul: dependensi ditolak dengan alasan, matikan lewat dialog, menu ikut h
 });
 
 test('integrasi: kunci tersamar setelah disimpan', async ({ page }) => {
-    await page.getByRole('link', { name: 'Integrasi' }).click();
+    await page.getByRole('link', { name: 'Integrasi', exact: true }).click();
     await page.getByLabel('Token').fill('token-rahasia-e2e-4321');
     await page.getByRole('button', { name: 'Simpan Fonnte' }).click();
     await expect(page.getByText('Tersimpan: ••••4321')).toBeVisible();

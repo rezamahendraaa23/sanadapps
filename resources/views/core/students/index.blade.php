@@ -1,25 +1,37 @@
 @php($canManage = auth()->user()->can('create', \App\Modules\Core\Models\Student::class))
 
 <div>
-    <x-ui.page-toolbar>
-        <div class="grid w-full gap-3 md:grid-cols-4 lg:max-w-4xl">
-            <x-ui.input label="Cari nama atau NIS" name="search" type="search" wire:model.live.debounce.300ms="search" />
-            <x-ui.select label="Kelas" name="classroom" placeholder="Semua kelas" :options="$classrooms" wire:model.live="classroom" />
-            <x-ui.select label="Asrama" name="dormitory" placeholder="Semua asrama" :options="$dormitories" wire:model.live="dormitory" />
-            <x-ui.select label="Status" name="status" :options="['active' => 'Aktif', 'inactive' => 'Nonaktif', 'graduated' => 'Lulus', 'dropped' => 'Keluar', 'all' => 'Semua']" wire:model.live="status" />
-        </div>
-        @if ($canManage)
-            <div class="flex flex-wrap gap-2">
-                @can('masters.manage')
-                    <x-ui.button variant="secondary" :href="route('staff.students.promotion')">Kenaikan Kelas</x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('staff.students.custom-fields')">Field Tambahan</x-ui.button>
-                @endcan
-                <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.export')">Ekspor</x-ui.button>
-                <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')">Impor</x-ui.button>
-                <x-ui.button icon="plus" :href="route('staff.students.create')">Tambah Santri</x-ui.button>
+    <div class="mb-4 flex flex-col gap-3" x-data="{ filters: false, actions: false }">
+        <div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:justify-between">
+            <div class="grid w-full gap-3 md:grid-cols-4 lg:max-w-4xl">
+                <x-ui.input label="Cari nama atau NIS" name="search" type="search" wire:model.live.debounce.300ms="search" />
+                <div class="hidden md:contents" :class="filters && '!contents'">
+                    <x-ui.select label="Kelas" name="classroom" placeholder="Semua kelas" :options="$classrooms" wire:model.live="classroom" />
+                    <x-ui.select label="Asrama" name="dormitory" placeholder="Semua asrama" :options="$dormitories" wire:model.live="dormitory" />
+                    <x-ui.select label="Status" name="status" :options="['active' => 'Aktif', 'inactive' => 'Nonaktif', 'graduated' => 'Lulus', 'dropped' => 'Keluar', 'all' => 'Semua']" wire:model.live="status" />
+                </div>
             </div>
-        @endif
-    </x-ui.page-toolbar>
+            <div class="grid grid-cols-2 gap-2 md:hidden">
+                <x-ui.button variant="secondary" icon="list-filter" x-on:click="filters = !filters" x-bind:aria-expanded="filters.toString()">Filter</x-ui.button>
+                @if ($canManage)
+                    <x-ui.button variant="secondary" x-on:click="actions = !actions" x-bind:aria-expanded="actions.toString()">Aksi Lain</x-ui.button>
+                @endif
+            </div>
+            @if ($canManage)
+                <div class="flex flex-col gap-2 md:flex-row md:flex-wrap">
+                    <div class="hidden flex-col gap-2 md:contents" :class="actions && '!flex md:!contents'">
+                        @can('masters.manage')
+                            <x-ui.button variant="secondary" :href="route('staff.students.promotion')">Kenaikan Kelas</x-ui.button>
+                            <x-ui.button variant="secondary" :href="route('staff.students.custom-fields')">Field Tambahan</x-ui.button>
+                        @endcan
+                        <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.export')">Ekspor</x-ui.button>
+                        <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')">Impor</x-ui.button>
+                    </div>
+                    <x-ui.button icon="plus" :href="route('staff.students.create')">Tambah Santri</x-ui.button>
+                </div>
+            @endif
+        </div>
+    </div>
 
     <x-ui.card>
         @if ($students->isEmpty())

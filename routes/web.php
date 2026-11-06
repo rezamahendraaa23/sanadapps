@@ -17,6 +17,9 @@ use App\Modules\Core\Livewire\Settings\AuditLogs;
 use App\Modules\Core\Livewire\Settings\IntegrationSettings;
 use App\Modules\Core\Livewire\Settings\ModuleSettings;
 use App\Modules\Core\Livewire\Settings\ProfileSettings;
+use App\Modules\Core\Livewire\Settings\SystemHealth;
+use App\Modules\Core\Livewire\Staff\AccountSecurity;
+use App\Modules\Core\Livewire\Staff\Dashboard;
 use App\Modules\Core\Livewire\Students\ClassPromotion;
 use App\Modules\Core\Livewire\Students\CustomFields;
 use App\Modules\Core\Livewire\Students\StudentForm;
@@ -54,7 +57,8 @@ Route::post('/keluar', function (Request $request, RecordAudit $audit) {
 })->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('panel')->name('staff.')->group(function (): void {
-    Route::view('/', 'core.staff.dashboard')->name('dashboard');
+    Route::get('/', Dashboard::class)->name('dashboard');
+    Route::get('/akun', AccountSecurity::class)->name('account');
 
     Route::get('/santri', StudentIndex::class)->middleware('can:viewAny,'.Student::class)->name('students.index');
     Route::get('/santri/ekspor', fn (Request $request) => Excel::download(new StudentsExport($request->user()), 'santri.xlsx'))
@@ -81,6 +85,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
     Route::get('/kelas-asrama', MasterData::class)->middleware('can:masters.manage')->name('classrooms.index');
 
     Route::prefix('pengaturan')->name('settings.')->group(function (): void {
+        Route::get('/kesehatan-sistem', SystemHealth::class)->middleware('can:settings.manage')->name('system');
         Route::get('/pengguna', UserIndex::class)->middleware('can:users.manage')->name('users');
         Route::middleware('can:settings.manage')->group(function (): void {
             Route::get('/profil', ProfileSettings::class)->name('profile');

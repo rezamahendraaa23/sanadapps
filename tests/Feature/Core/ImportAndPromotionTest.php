@@ -2,6 +2,7 @@
 
 use App\Modules\Core\Actions\PromoteStudents;
 use App\Modules\Core\Actions\SaveStudent;
+use App\Modules\Core\Jobs\ProcessStudentImport;
 use App\Modules\Core\Livewire\Announcements\AnnouncementIndex;
 use App\Modules\Core\Livewire\Students\ClassPromotion;
 use App\Modules\Core\Livewire\Students\CustomFields;
@@ -20,6 +21,7 @@ use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Http\Testing\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -103,6 +105,20 @@ it('mengimpor baris valid, melewati yang salah, dan menyediakan laporan', functi
 
     $component->assertSee('2 santri berhasil diimpor')->assertSee('Unduh Baris Gagal');
     $this->get(route('staff.students.import.errors', $import))->assertOk()->assertDownload('baris-gagal-impor.xlsx');
+});
+
+it('memantau impor yang masih berjalan di antrean', function () {
+    Queue::fake();
+
+    Livewire::test(StudentImport::class)
+        ->set('file', importFile([importRow('Antre')]))
+        ->call('check')
+        ->call('start')
+        ->assertSee('Sedang mengimpor')
+        ->assertSeeHtml('wire:poll.2s');
+
+    Queue::assertPushed(ProcessStudentImport::class);
+    expect(Student::count())->toBe(0);
 });
 
 it('mengimpor 200 baris di bawah 30 detik', function () {
@@ -193,6 +209,13 @@ it('layar kenaikan menolak tujuan yang sama dan memproses setelah konfirmasi', f
         ->assertDispatched('toast')
         ->assertSee('Bisa dibatalkan')
         ->assertSee('Kelas 7A: 1 santri dinaikkan');
+});
+
+it('dropdown tujuan memakai id kelas yang sebenarnya', function () {
+    Classroom::create(['name' => 'Kelas Pengisi']);
+    $next = Classroom::create(['name' => 'Kelas 8A']);
+
+    Livewire::test(ClassPromotion::class)->assertViewHas('targets', fn (array $targets) => $targets['lulus'] === 'Lulus' && $targets[$next->id] === 'Kelas 8A');
 });
 
 it('pengumuman hanya tampil untuk penerima dan setelah jadwal tayang', function () {

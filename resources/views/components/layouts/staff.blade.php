@@ -72,6 +72,8 @@
                     <div class="flex shrink-0 items-center gap-2">{{ $actions }}</div>
                 @endif
                 @auth
+                    <livewire:core.staff.globalsearch />
+                    <livewire:core.staff.notificationbell />
                     <x-layouts.partials-account-menu />
                 @endauth
             </header>

@@ -12,7 +12,7 @@
                     <span class="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary-soft font-display text-2xl font-semibold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($student->name, 0, 1)) }}</span>
                 @endif
                 <div class="min-w-0">
-                    <h2 class="text-xl font-semibold break-words">{{ $student->name }}</h2>
+                    <p class="text-xl font-semibold break-words">{{ $student->name }}</p>
                     <p class="text-sm text-text-muted">NIS <span class="font-tabular">{{ $student->nis }}</span> · {{ $student->classroom?->name ?? 'Belum ada kelas' }} · {{ $student->dormitory?->name ?? 'Belum ada asrama' }}</p>
                 </div>
             </div>

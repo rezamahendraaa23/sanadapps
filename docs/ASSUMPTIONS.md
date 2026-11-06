@@ -43,4 +43,9 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A20 | Santri hasil import belum punya sandi; admin membuatnya dari detail santri | Hash per baris melewati batas 30 detik untuk 200 baris dan daftar sandi massal berisiko bocor |
 | A21 | SET-03 di Tahap 1 hanya santri dan wali. Saldo dompet awal menyusul di Tahap 4, tunggakan awal di Tahap 2 | Tabelnya baru ada di tahap itu |
 | A22 | Opsi kirim WA pada pengumuman belum ditampilkan; pengumuman hanya tayang di portal sampai Tahap 3 | Pengiriman Fonnte belum ada, jadi kontrolnya akan mati |
+| A23 | Checklist setup baru 6 dari 7 langkah PRD UI/UX 5.6; langkah jenis tagihan ditambah di Tahap 2 | Layar jenis tagihan belum ada, jadi tautannya akan mati |
+| A24 | Status backup di Kesehatan Sistem menyusul di Tahap 13 | Penjadwalan backup dibuat di tahap itu |
+| A25 | Pencarian topbar baru mencari santri dan NIS; nomor invoice menyusul di Tahap 2 | Tabel invoice belum ada |
+| A26 | Pencarian topbar disembunyikan di bawah 1024 px; di HP cari lewat halaman Santri | Topbar sempit, sesuai aturan satu aksi utama |
+| A27 | Detail santri baru punya tab Profil, Wali, dan Riwayat kelas; tab lain di PRD UI/UX A-03 ditambah di tahap modulnya | Datanya belum ada |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

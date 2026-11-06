@@ -16,9 +16,6 @@
                             <li class="py-0.5">{{ $student->name }} <span class="font-tabular text-text-muted">{{ $student->nis }}</span></li>
                         @endforeach
                     </ul>
-                    @error('to')
-                        <p role="alert" class="mt-2 flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                    @enderror
                     <div class="mt-4 flex justify-end">
                         <x-ui.button class="w-full md:w-auto" :disabled="! $targetName" x-data x-on:click="$dispatch('open-modal', 'konfirmasi-kenaikan')">Proses {{ $preview->count() }} Santri</x-ui.button>
                     </div>

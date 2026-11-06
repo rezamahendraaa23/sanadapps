@@ -12,7 +12,7 @@ return [
         'brand_color' => env('SANAD_BRAND_COLOR', '#0B5D45'),
     ],
 
-    // Tampilan waktu mengikuti school_profile.timezone mulai dari sini ke bawah; penyimpanan selalu UTC.
+    // Nilai awal zona tampilan; ditimpa school_profile.timezone per request. Penyimpanan selalu UTC.
     'display_timezone' => env('SANAD_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
 
     'navigation' => [
@@ -67,6 +67,7 @@ return [
                 ['key' => 'fee-types', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
                 ['key' => 'notifications', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'notification_wa'],
                 ['key' => 'users', 'permission' => 'users.manage', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
+                ['key' => 'system', 'permission' => 'settings.manage', 'label' => 'Kesehatan Sistem', 'icon' => 'activity', 'route' => 'staff.settings.system', 'module' => 'core'],
                 ['key' => 'audit', 'permission' => 'audit.view', 'label' => 'Audit Log', 'icon' => 'scroll-text', 'route' => 'staff.settings.audit', 'module' => 'core'],
             ]],
         ],

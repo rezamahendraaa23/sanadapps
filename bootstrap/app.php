@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ApplySchoolTimezone;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureUserType;
 use App\Modules\Core\Actions\StartSession;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module' => EnsureModuleEnabled::class,
             'user.type' => EnsureUserType::class,
         ]);
+        $middleware->web(append: [ApplySchoolTimezone::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => StartSession::homeFor($request->user()));
     })

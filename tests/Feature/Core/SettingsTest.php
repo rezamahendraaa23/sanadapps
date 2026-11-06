@@ -14,6 +14,7 @@ use App\Support\Navigation;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -71,6 +72,18 @@ it('mengubah semua identitas pesantren dan langsung tampil', function () {
 
     auth()->logout();
     $this->get(route('login'))->assertSee('Pesantren Uji')->assertSee('--color-primary:#1D3F72', false)->assertSee($profile->logo_path);
+});
+
+it('menampilkan waktu sesuai zona waktu di profil pesantren', function () {
+    SchoolProfile::current()->update(['name' => 'P', 'timezone' => 'Asia/Jayapura']);
+    $this->freezeTime(function () {
+        Carbon::setTestNow('2026-11-07 00:00:00');
+        AuditLog::create(['action' => 'uji', 'entity_type' => 'Uji']);
+        $this->get(route('staff.settings.audit'))->assertOk();
+
+        expect(config('sanad.display_timezone'))->toBe('Asia/Jayapura');
+        Livewire::test(AuditLogs::class)->assertSee('07/11/2026 09.00');
+    });
 });
 
 it('menolak warna yang gagal kontras dan menyarankan versi lebih gelap', function () {

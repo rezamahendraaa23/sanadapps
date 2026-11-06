@@ -1,7 +1,8 @@
 <div class="mx-auto flex w-full max-w-[720px] flex-col gap-4">
     @if ($import)
-        <x-ui.card title="Hasil impor" :wire:poll.2s="in_array($import->status, ['queued', 'processing'], true) ? '' : null">
+        <x-ui.card title="Hasil impor">
             @if (in_array($import->status, ['queued', 'processing'], true))
+                <div wire:poll.2s></div>
                 <x-ui.skeleton label="Sedang mengimpor" />
                 <p class="mt-3 text-base">Sedang mengimpor {{ $import->total_rows }} baris. Halaman ini akan diperbarui sendiri.</p>
             @elseif ($import->status === 'failed')

@@ -70,7 +70,7 @@ class ClassPromotion extends Component
 
         return view('core.students.promotion', [
             'classrooms' => $classrooms,
-            'targets' => [self::GRADUATE => 'Lulus', ...$classrooms],
+            'targets' => [self::GRADUATE => 'Lulus'] + $classrooms,
             'preview' => $this->from !== '' ? $action->preview((int) $this->from) : null,
             'batches' => $batches,
             'targetName' => $this->to === self::GRADUATE ? 'Lulus' : ($classrooms[(int) $this->to] ?? null),
