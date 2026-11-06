@@ -8,14 +8,15 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 |---|---|---|
 | Identitas pesantren (D1) | Belum ada nama tetap. Nama, logo, alamat, kontak, dan warna semuanya diatur admin di Pengaturan (dibangun di Tahap 1). Selama kosong, aplikasi tampil sebagai SANAD | 7 Nov 2026 |
 | Font | Dikunci: Fraunces (judul dan angka hero), Figtree (UI dan isi), Amiri (Arab utama), Noto Naskh Arabic (Arab cadangan) | 7 Nov 2026 |
+| Database | PostgreSQL 16, versi terkelola untuk produksi. Menggantikan MySQL 8 di PRD dan master prompt | 7 Nov 2026 |
 | Benturan aturan antislop | Pemilik menyerahkan ke pengembang. Lucide tetap dipakai karena diminta PRD: satu set konsisten dan ringan. Em dash tidak dipakai di antarmuka | 7 Nov 2026 |
 
 ## Belum diputuskan
 
 | Topik | Status |
 |---|---|
-| Database | PRD mengunci MySQL 8. Pemilik menanyakan PostgreSQL. Tahap 0 belum memakai tabel, jadi pilihan ini perlu final sebelum Tahap 1 |
-| Lingkungan lokal | Docker Desktop belum terpasang dan WSL2 belum aktif. Tahap 0 memakai PHP 8.3 portabel. Horizon butuh `pcntl`, jadi tidak bisa berjalan di Windows langsung |
+| Lingkungan lokal | Docker Desktop belum terpasang dan WSL2 belum aktif. Sementara memakai PHP 8.3 dan PostgreSQL 16 portabel di `%LOCALAPPDATA%\sanad-tools`. Horizon butuh `pcntl`, jadi tidak bisa berjalan di Windows langsung |
+| Penyedia PostgreSQL terkelola | Bagian dari D6 (hosting), belum dipilih |
 
 ## Asumsi
 
@@ -30,4 +31,6 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A7 | Halaman `/_pratinjau` hanya tersedia di lingkungan `local` dan `testing` | Dipakai memeriksa komponen sebelum ada layar sungguhan; berisi data contoh |
 | A8 | Preload font belum dipasang; font memakai `font-display: swap` | Nama file font di-hash Vite. Ditinjau lagi saat hardening Tahap 13 |
 | A9 | Fitur topbar (pencarian, lonceng, profil) dibuat di Tahap 1 bersama data dan login | Tanpa data dan akun, kontrol itu hanya tombol mati (R-26) |
+| A11 | Test memakai PostgreSQL, bukan SQLite | Indeks unik parsial, `jsonb`, trigger, dan `FOR UPDATE` tidak bisa diuji jujur di SQLite |
+| A12 | Pengembangan lokal memakai PostgreSQL 16 portabel di port 5433, bukan PostgreSQL 18 yang sudah ada di port 5432 | Versinya sama dengan target PRD, dan instance 18 tidak terganggu |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

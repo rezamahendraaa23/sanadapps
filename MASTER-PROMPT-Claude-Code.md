@@ -42,7 +42,7 @@ Aturan pemakaian:
 
 ## STACK (terkunci)
 
-Laravel (PHP 8.3+) · MySQL 8 · Livewire 3 + Alpine.js + Tailwind · Redis + Horizon · PWA (service worker + IndexedDB untuk autosave ujian) · Browsershot (PDF dengan teks Arab) · maatwebsite/excel · spatie/laravel-permission (tanpa teams) · Pest (+ Playwright untuk alur kritis). Detail di PRD Sistem §4.
+Laravel (PHP 8.3+) · PostgreSQL 16 (terkelola) · Livewire 3 + Alpine.js + Tailwind · Redis + Horizon · PWA (service worker + IndexedDB untuk autosave ujian) · Browsershot (PDF dengan teks Arab) · maatwebsite/excel · spatie/laravel-permission (tanpa teams) · Pest (+ Playwright untuk alur kritis). Detail di PRD Sistem §4.
 
 ## ATURAN KERAS
 

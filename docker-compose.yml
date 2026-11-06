@@ -4,7 +4,7 @@ services:
     volumes:
       - .:/var/www/html
     depends_on:
-      - mysql
+      - postgres
       - redis
 
   web:
@@ -17,17 +17,16 @@ services:
     depends_on:
       - app
 
-  mysql:
-    image: mysql:8.4
+  postgres:
+    image: postgres:16-alpine
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-sanad}
-      MYSQL_USER: ${DB_USERNAME:-sanad}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-sanad}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-sanad-root}
+      POSTGRES_DB: ${DB_DATABASE:-sanad}
+      POSTGRES_USER: ${DB_USERNAME:-sanad}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sanad}
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -51,6 +50,6 @@ services:
       - "8025:8025"
 
 volumes:
-  mysql-data:
+  postgres-data:
   redis-data:
   minio-data:

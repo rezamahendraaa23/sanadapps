@@ -20,7 +20,7 @@
 | # | Keputusan | Hasil |
 |---|---|---|
 | 1 | Model | **Satu pesantren milik sendiri** (single-tenant). SaaS ditunda; kode dijaga modular agar bisa dikembangkan nanti (lihat D2, R13) |
-| 2 | Stack | **Laravel + MySQL 8** (alasan di §4). Sebelumnya PostgreSQL karena Row Level Security untuk multi-tenant; alasan itu sudah tidak berlaku |
+| 2 | Stack | **Laravel + PostgreSQL 16** (alasan di §4). Pakai PostgreSQL terkelola (managed) agar backup, update, dan restore tidak jadi beban |
 | 3 | Maintainer | Bung Reza (solo/small team) → prioritas: sedikit bahasa, sedikit moving parts |
 | 4 | Skala acuan | ±200 santri, beberapa kelas; ujian serentak ≤ 200 santri (didesain headroom 5×) |
 | 5 | Notifikasi | **WhatsApp via Fonnte** (+ in-app); Lark tidak dipakai untuk wali karena wali bukan karyawan Bumame |
@@ -140,7 +140,7 @@
 │  Worker (Horizon): invoice-gen, notifications, webhooks, pdf, imports    │
 │  Scheduler: tagihan bulanan, reminder, auto-expire, auto-submit ujian    │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  MySQL 8 (satu database)                    │  Redis (cache/queue/sesi)  │
+│  PostgreSQL 16 (satu database)              │  Redis (cache/queue/sesi)  │
 │  Object Storage S3-compatible (foto, bukti TF, dokumen PPDB, PDF)        │
 └──────────────────────────────────────────────────────────────────────────┘
         ▲ Webhook Midtrans            ▲ Webhook status Fonnte
@@ -172,7 +172,7 @@ sequenceDiagram
     autonumber
     participant W as Wali (HP)
     participant A as Aplikasi
-    participant DB as MySQL
+    participant DB as PostgreSQL
     participant M as Midtrans
     participant Q as Queue
     participant F as Fonnte
@@ -215,7 +215,7 @@ sequenceDiagram
     participant K as Kasir (tablet)
     participant R as Reader USB / Kamera QR
     participant A as Aplikasi
-    participant DB as MySQL
+    participant DB as PostgreSQL
     K->>K: Input item belanja, total Rp15.000
     K->>R: Santri tap kartu
     R-->>K: card_uid (diketik seperti keyboard)
@@ -256,11 +256,11 @@ sequenceDiagram
 
 | Layer | Opsi terpilih | Alasan |
 |---|---|---|
-| Bahasa | **PHP 8.3+** | Sudah dikuasai Bung Reza (GCIS PHP/MySQL) → maintenance tercepat |
+| Bahasa | **PHP 8.3+** | Sudah dikuasai Bung Reza (PHP/MySQL via GCIS) → maintenance framework tercepat; PostgreSQL dipelajari seperlunya lewat Eloquent |
 | Framework | **Laravel** (versi stabil terbaru saat mulai) | Queue, scheduler, policy, validasi, storage, testing sudah built-in; semua kebutuhan fitur tertutup tanpa merakit sendiri |
 | UI | **Livewire 3 + Alpine.js + Tailwind CSS** | Satu bahasa (PHP) untuk panel staf & portal; cukup interaktif; tanpa build pipeline SPA yang berat |
 | Halaman ujian | Alpine.js + **Service Worker + IndexedDB** | Autosave offline-tolerant tanpa framework SPA tambahan |
-| Database | **MySQL 8** (InnoDB) | Sudah dikuasai (GCIS), tersedia di XAMPP lokal dan hosting murah; cukup untuk relasi, transaksi, tipe `json`, `CHECK`, dan `SELECT … FOR UPDATE` pada ledger dompet. Alasan awal memilih PostgreSQL (Row Level Security untuk multi-tenant) sudah tidak berlaku |
+| Database | **PostgreSQL 16** (disarankan versi terkelola) | Transaksi dan `CHECK` yang tegas untuk ledger uang, `SELECT … FOR UPDATE`, `jsonb`, indeks unik parsial, tipe `timestamptz`, DDL transaksional (migrasi gagal dibatalkan utuh). Backup, patch, dan PITR diurus penyedia terkelola sehingga beban maintenance kecil |
 | Cache/Queue | **Redis + Laravel Horizon** | Antrean WA, webhook, PDF, import; dashboard antrean siap pakai |
 | Auth | Laravel Fortify/Sanctum; OTP WhatsApp untuk wali | Wali sering lupa sandi → OTP WA lebih ramah |
 | Otorisasi | `spatie/laravel-permission` + Policy | Standar, teruji |
@@ -276,7 +276,7 @@ sequenceDiagram
 
 ### 4.2 Perbandingan yang dipertimbangkan
 
-| Kriteria | **Laravel + MySQL (terpilih)** | Go + MySQL | Rails + MySQL |
+| Kriteria | **Laravel + PostgreSQL (terpilih)** | Go + PostgreSQL | Rails + PostgreSQL |
 |---|---|---|---|
 | Kecepatan bangun fitur CRUD-heavy | Tinggi | Sedang-rendah (lebih verbose) | Tinggi |
 | Kemudahan maintenance oleh 1 orang | **Tertinggi** (sudah dikuasai) | Sedang | Sedang (bahasa ketiga) |
@@ -501,8 +501,8 @@ Format: **ID | Fitur | Deskripsi | Kriteria selesai (DoD)**. Semua fitur otomati
 | Kunci | `id bigint` (internal) + `uuid` (dipakai di URL/API publik) |
 | Konfigurasi tunggal | Satu pesantren: profil di `school_profile` (1 baris), modul di `modules`, integrasi di `integrations`; tidak ada kolom `tenant_id` |
 | Uang | `bigint` dalam **rupiah** (tanpa desimal) |
-| Waktu | `datetime(6)` disimpan UTC, ditampilkan sesuai `school_profile.timezone` (default `Asia/Jakarta`) |
-| Mesin DB | MySQL 8 (InnoDB, `utf8mb4`); kolom fleksibel memakai tipe `json`; `CHECK` aktif (MySQL ≥ 8.0.16); indeks unik parsial diganti kolom *generated* (lihat §6.12) |
+| Waktu | `timestamptz(6)` disimpan UTC, ditampilkan sesuai `school_profile.timezone` (default `Asia/Jakarta`) |
+| Mesin DB | PostgreSQL 16 (encoding UTF-8); kolom fleksibel memakai tipe `jsonb`; `CHECK` dan indeks unik parsial dipakai langsung (lihat §6.12) |
 | Soft delete | `deleted_at` pada santri, wali, ustadz, soal, invoice (void); **ledger & log tidak pernah dihapus** |
 | Kolom umum | `created_at`, `updated_at`, `created_by` (di tabel penting) |
 | Rahasia | Kredensial integrasi disimpan terenkripsi (`encrypted` cast), tidak pernah di-log |
@@ -522,7 +522,7 @@ Kolom umum (`id`, `uuid`, `created_at`, `updated_at`) tidak diulang di tiap tabe
 | timezone | varchar | Default `Asia/Jakarta` |
 | nis_pattern | varchar | Pola NIS otomatis (mis. `{tahun}{urut:4}`) |
 
-**`modules`**: module_key (unik), is_enabled bool, settings json.
+**`modules`**: module_key (unik), is_enabled bool, settings jsonb.
 
 **`users`**
 
@@ -535,14 +535,14 @@ Kolom umum (`id`, `uuid`, `created_at`, `updated_at`) tidak diulang di tiap tabe
 | password | varchar null | Hash; wali boleh tanpa sandi (OTP) |
 | type | enum | `staff`, `guardian`, `student` |
 | is_active | bool | |
-| last_login_at | datetime null | |
+| last_login_at | timestamptz null | |
 | two_factor_secret | text null | Opsional |
 
 Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permissions`, `model_has_roles`, `role_has_permissions`) tanpa mode teams.
 
-**`audit_logs`**: user_id, action, entity_type, entity_id, before json, after json, ip, user_agent, created_at.
-**`integrations`**: provider (`midtrans`/`fonnte`, unik), mode, credentials (encrypted json), settings json, is_active.
-**`webhook_events`**: provider, event_key (unik per provider), payload json, signature_valid bool, processed_at, error.
+**`audit_logs`**: user_id, action, entity_type, entity_id, before jsonb, after jsonb, ip, user_agent, created_at.
+**`integrations`**: provider (`midtrans`/`fonnte`, unik), mode, credentials (encrypted jsonb), settings jsonb, is_active.
+**`webhook_events`**: provider, event_key (unik per provider), payload jsonb, signature_valid bool, processed_at, error.
 
 ### 6.3 Data induk
 
@@ -567,10 +567,10 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 | classroom_id | fk null | Kelas saat ini |
 | dormitory_id | fk null | |
 | user_id | fk null | Akun login santri |
-| extra | json | Field custom (COR-06) |
-| deleted_at | datetime null | |
+| extra | jsonb | Field custom (COR-06) |
+| deleted_at | timestamptz null | |
 
-**`custom_field_definitions`**: entity (`student`), key, label, type (`text`,`number`,`select`,`date`), options json, is_required, sort_order, is_active.
+**`custom_field_definitions`**: entity (`student`), key, label, type (`text`,`number`,`select`,`date`), options jsonb, is_required, sort_order, is_active.
 **`guardians`**: user_id, name, phone_wa, email, address, occupation.
 **`guardian_student`**: guardian_id, student_id, relation (`ayah`,`ibu`,`wali`), is_primary, is_payer, can_receive_wa.
 **`teachers`**: user_id, nip, name, phone, specialization.
@@ -630,13 +630,13 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 | status | enum | `pending`, `review`, `settlement`, `failed`, `expired`, `refunded` |
 | gateway_order_id | varchar null | Unik global |
 | gateway_transaction_id | varchar null | |
-| gateway_payload | json null | Respons terakhir |
+| gateway_payload | jsonb null | Respons terakhir |
 | bank_account_id | fk null | Untuk transfer manual |
 | proof_path | varchar null | Bukti transfer |
-| verified_by, verified_at | fk, datetime null | |
+| verified_by, verified_at | fk, timestamptz null | |
 | reject_reason | text null | |
-| paid_at | datetime null | |
-| expires_at | datetime null | |
+| paid_at | timestamptz null | |
+| expires_at | timestamptz null | |
 
 **`payment_allocations`**: payment_id, invoice_id, amount.
 **`bank_accounts`**: bank_name, account_no, account_holder, is_active, sort_order.
@@ -663,9 +663,9 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 
 **`wallet_topups`**: wallet_id, payment_id, amount, status.
 **`student_cards`**: student_id, card_uid null unique, qr_secret (encrypted), pin_hash null, pin_failed_count, locked_until null, status (`active`,`blocked`,`lost`), issued_at, blocked_at, blocked_reason.
-**`devices`**: name, location, type (`reader_usb`,`camera_qr`), scopes json, api_key_hash, is_active, last_seen_at.
+**`devices`**: name, location, type (`reader_usb`,`camera_qr`), scopes jsonb, api_key_hash, is_active, last_seen_at.
 **`card_scans`**: card_id, device_id, scope (`attendance`,`gate`,`canteen`,`library`,`meal`), result (`ok`,`denied`,`blocked`,`not_found`), reason, scanned_at, ref_type, ref_id.
-**`merchants`**: name, type (`mart`,`warung`,`kantin`), pic_user_id, owner_name null, location, opening_hours json, payment_modes json (`card`,`qr`,`face`), commission_percent decimal(4,2) default 0, pin_threshold null (menimpa ambang sistem), is_active.
+**`merchants`**: name, type (`mart`,`warung`,`kantin`), pic_user_id, owner_name null, location, opening_hours jsonb, payment_modes jsonb (`card`,`qr`,`face`), commission_percent decimal(4,2) default 0, pin_threshold null (menimpa ambang sistem), is_active.
 **`product_categories`**: merchant_id null (null = kategori umum), name, is_restricted bool (kategori yang dapat diblokir wali), sort_order.
 **`merchant_products`**: merchant_id, category_id null, name, barcode null (unik per merchant), price, cost_price null, stock int null (null = tanpa stok), min_stock null, photo_path null, is_active.
 **`stock_movements`**: product_id, type (`in`,`out`,`sale`,`void`,`adjust`), quantity, ref_type null, ref_id null, note, created_by.
@@ -688,16 +688,16 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 | session_id, student_id | fk | Unik (session_id, student_id) |
 | status | enum | `hadir`, `izin`, `sakit`, `alpa`, `terlambat` |
 | method | enum | `manual`, `card`, `qr`, `selfie`, `face` |
-| scanned_at | datetime null | Waktu server |
+| scanned_at | timestamptz null | Waktu server |
 | evidence_path | varchar null | Foto bukti (selfie/wajah); tunduk pada retensi |
 | match_score | decimal(4,3) null | Skor kemiripan (hanya `face`) |
 | geo_lat, geo_lng | decimal null | Lokasi (selfie), opsional |
 | review_status | enum | `none`, `flagged`, `pending`, `approved`, `rejected` |
-| reviewed_by, reviewed_at | fk, datetime null | |
+| reviewed_by, reviewed_at | fk, timestamptz null | |
 | note | text null | |
 
 **`biometric_consents`**: student_id, guardian_id, scope (`face_attendance`), method (`digital`,`paper`), document_path null, granted_at, revoked_at null, ip null.
-**`face_enrollments`**: student_id, consent_id, embedding (`json`), model_version, quality_score, status (`active`,`revoked`), enrolled_by, enrolled_at, revoked_at null. **Hanya embedding yang disimpan, bukan foto enrolment.**
+**`face_enrollments`**: student_id, consent_id, embedding (`jsonb`), model_version, quality_score, status (`active`,`revoked`), enrolled_by, enrolled_at, revoked_at null. **Hanya embedding yang disimpan, bukan foto enrolment.**
 **`grade_components`**: name, weight (persen), is_active.
 **`assessments`**: subject_id, classroom_id, term_id, component_id, title, max_score, assessed_on, exam_id null.
 **`grades`**: assessment_id, student_id, score, note. Unik (assessment_id, student_id).
@@ -721,19 +721,19 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 | body | text | HTML terbatas (disanitasi) |
 | direction | enum | `ltr`, `rtl` |
 | media_path | varchar null | |
-| options | json null | `[{key, text}]` |
-| answer_key | json | Kunci (PG: key; isian: daftar jawaban diterima) |
+| options | jsonb null | `[{key, text}]` |
+| answer_key | jsonb | Kunci (PG: key; isian: daftar jawaban diterima) |
 | points | decimal | |
 | difficulty | smallint null | 1–3 |
-| tags | json | |
-| deleted_at | datetime null | |
+| tags | jsonb | |
+| deleted_at | timestamptz null | |
 
 **`exams`**: title, subject_id, term_id, assessment_id null, audience (`student`,`applicant`), duration_minutes, start_at, end_at, shuffle_questions, shuffle_options, max_attempts, pass_score null, access_code null, show_result_mode (`immediately`,`after_close`,`never`), status (`draft`,`published`,`closed`), created_by.
 **`exam_questions`**: exam_id, question_id, sort_order, points_override null.
 **`exam_targets`**: exam_id, classroom_id null, student_id null.
-**`exam_attempts`**: exam_id, student_id null, applicant_id null, attempt_no, started_at, deadline_at, submitted_at null, status (`in_progress`,`submitted`,`auto_submitted`,`graded`), score null, question_order json, option_order json, ip, user_agent, blur_count, last_seen_at.
-**`exam_answers`**: attempt_id, question_id, answer json, is_correct null, score null, graded_by null, client_seq int, answered_at. Unik (attempt_id, question_id).
-**`exam_events`**: attempt_id, type (`blur`,`focus`,`offline`,`online`,`reconnect`), occurred_at, meta json.
+**`exam_attempts`**: exam_id, student_id null, applicant_id null, attempt_no, started_at, deadline_at, submitted_at null, status (`in_progress`,`submitted`,`auto_submitted`,`graded`), score null, question_order jsonb, option_order jsonb, ip, user_agent, blur_count, last_seen_at.
+**`exam_answers`**: attempt_id, question_id, answer jsonb, is_correct null, score null, graded_by null, client_seq int, answered_at. Unik (attempt_id, question_id).
+**`exam_events`**: attempt_id, type (`blur`,`focus`,`offline`,`online`,`reconnect`), occurred_at, meta jsonb.
 
 ### 6.8 Kesantrian
 
@@ -749,17 +749,17 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 
 **`admission_periods`**: name, academic_year_id, open_at, close_at, quota, registration_fee, status.
 **`admission_steps`**: period_id, name, type (`document`,`exam`,`interview`), weight, exam_id null, sort_order.
-**`applicants`**: period_id, reg_no, name, gender, birth_place, birth_date, address, previous_school, guardian_name, guardian_phone, guardian_email, status (`draft`,`submitted`,`paid`,`verified`,`in_selection`,`accepted`,`rejected`,`waitlist`,`enrolled`), total_score null, student_id null, extra json, access_token_hash.
+**`applicants`**: period_id, reg_no, name, gender, birth_place, birth_date, address, previous_school, guardian_name, guardian_phone, guardian_email, status (`draft`,`submitted`,`paid`,`verified`,`in_selection`,`accepted`,`rejected`,`waitlist`,`enrolled`), total_score null, student_id null, extra jsonb, access_token_hash.
 **`applicant_documents`**: applicant_id, type, file_path, status (`pending`,`approved`,`rejected`), note.
 **`admission_results`**: applicant_id, step_id, score, notes, evaluated_by.
 
 ### 6.10 Notifikasi & lain-lain
 
 **`notification_templates`**: event_key, channel (`whatsapp`,`inapp`,`email`), body, is_enabled.
-**`notification_logs`**: channel, recipient, event_key, payload json, status (`queued`,`sent`,`delivered`,`failed`), provider_message_id null, error null, attempts, sent_at.
+**`notification_logs`**: channel, recipient, event_key, payload jsonb, status (`queued`,`sent`,`delivered`,`failed`), provider_message_id null, error null, attempts, sent_at.
 **`guardian_notification_prefs`**: guardian_id, category, is_enabled.
 **`in_app_notifications`**: user_id, title, body, link, read_at.
-**`student_risk_scores`**: student_id, computed_on, score, level (`low`,`medium`,`high`), reasons json.
+**`student_risk_scores`**: student_id, computed_on, score, level (`low`,`medium`,`high`), reasons jsonb.
 **`alumni_profiles`**: student_id, graduated_on, current_activity, contact_phone, contact_email, notes.
 **`inventory_items`**: dormitory_id null, name, category, quantity, condition, location.
 **`inventory_movements`**: item_id, type (`in`,`out`,`damage`,`repair`,`adjust`), quantity, note, created_by.
@@ -877,7 +877,7 @@ erDiagram
 | `webhook_events` | unique `(provider, event_key)` | Webhook ganda diabaikan |
 | `wallets` | `CHECK (balance >= 0)` | Saldo tak negatif |
 | `wallet_transactions` | unique `(idempotency_key)`; trigger tolak UPDATE/DELETE | Ledger aman |
-| `student_cards` | kolom *generated* `active_student_id` (= `student_id` bila `status='active'`, selain itu NULL) + unique | Satu kartu aktif per santri (MySQL tidak punya partial index) |
+| `student_cards` | unique `(student_id)` **WHERE** `status='active'` (partial) | Satu kartu aktif per santri |
 | `exam_attempts` | unique `(exam_id, student_id, attempt_no)` | Batas percobaan |
 | `exam_answers` | unique `(attempt_id, question_id)` + `UPSERT` dengan `client_seq` lebih besar | Autosave idempoten |
 | `attendance_records` | unique `(session_id, student_id)` | Satu catatan per sesi |
@@ -1364,12 +1364,12 @@ Aturan tambahan: wali tidak pernah melihat data santri yang bukan anaknya (cek r
 | **Data pribadi** | Data anak & kesehatan = sensitif. Terapkan prinsip UU Pelindungan Data Pribadi (UU 27/2022): minimisasi data, persetujuan wali saat PPDB, hak akses/hapus data, retensi terdefinisi. *Checklist kepatuhan perlu ditinjau ahli hukum sebelum rilis komersial.* **Biometrik (wajah):** hanya dengan persetujuan wali yang dapat dicabut, hanya embedding yang disimpan, tidak pernah dipakai di luar absensi, dan dihapus saat santri keluar/lulus. |
 | **Performa** | Halaman utama p95 < 500 ms (cache warm); API autosave ujian p95 < 300 ms; webhook Midtrans dibalas < 2 detik; pencarian santri < 300 ms; headroom 5× (≈1.000 santri ujian bersamaan) tanpa ubah arsitektur |
 | **Ketersediaan** | Target 99,5% bulanan; jendela maintenance di luar jam ujian/jam pembayaran puncak |
-| **Backup** | `mysqldump`/Percona XtraBackup harian + binary log (point-in-time); RPO ≤ 15 menit, RTO ≤ 4 jam; file storage versioned; uji restore tiap kuartal |
+| **Backup** | Snapshot harian + arsip WAL (point-in-time recovery) dari layanan PostgreSQL terkelola; jika self-hosted: `pgBackRest` ke object storage. RPO ≤ 15 menit, RTO ≤ 4 jam; file storage versioned; uji restore tiap kuartal |
 | **Observability** | Sentry (error), Pulse/Horizon (antrean, slow query), log terstruktur dengan `request_id` dan `user_id` |
 | **Idempotensi** | Semua endpoint yang mengubah uang/saldo menerima `Idempotency-Key` |
 | **Aksesibilitas & PWA** | Portal wali/santri bisa di-install; shell ter-cache; halaman ujian tahan offline sementara; target perangkat Android 8+ / Chrome & Safari 2 versi terakhir; hemat data (gambar dikompres, lazy load) |
 | **Lokalisasi** | Bahasa Indonesia; dukungan teks Arab/RTL; format Rupiah, tanggal Indonesia; kalender Hijriah (opsional, tampilan saja) |
-| **Skalabilitas** | Cukup satu server untuk skala ini; bila perlu: aplikasi stateless (sesi di Redis) sehingga mudah diskalakan horizontal, replika baca MySQL, arsipkan `card_scans`, `notification_logs`, `audit_logs` per tahun bila > 10 juta baris |
+| **Skalabilitas** | Cukup satu server untuk skala ini; bila perlu: aplikasi stateless (sesi di Redis) sehingga mudah diskalakan horizontal, replika baca PostgreSQL, arsipkan `card_scans`, `notification_logs`, `audit_logs` per tahun bila > 10 juta baris |
 | **Kualitas** | Coverage test ≥ 70% pada modul keuangan, dompet, ujian; E2E Playwright untuk bayar, top-up, ujian, PPDB |
 
 ---
@@ -1378,7 +1378,7 @@ Aturan tambahan: wali tidak pernah melihat data santri yang bukan anaknya (cek r
 
 | Lingkungan | Tujuan | Catatan |
 |---|---|---|
-| **Local** | Pengembangan | Docker Compose atau XAMPP/Laravel Herd; MySQL, Redis, MinIO, Mailpit |
+| **Local** | Pengembangan | Docker Compose atau Laravel Herd; PostgreSQL, Redis, MinIO, Mailpit |
 | **Staging** | UAT, tes Midtrans sandbox & Fonnte | Data dummy; domain staging |
 | **Production** | Operasional pesantren | Satu VPS (D6), region Indonesia/Singapura |
 
@@ -1392,7 +1392,7 @@ Aturan tambahan: wali tidak pernah melihat data santri yang bukan anaknya (cek r
    ├─────────────────┤
    │ app (PHP-FPM)   │ ◄── Horizon workers + Scheduler (proses terpisah)
    ├─────────────────┤
-   │ MySQL 8         │ ──► dump + binlog ─► Object storage (backup)
+   │ PostgreSQL 16   │ ──► WAL + snapshot ─► Object storage
    │ Redis           │
    └─────────────────┘
         │

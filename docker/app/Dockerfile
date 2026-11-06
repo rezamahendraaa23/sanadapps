@@ -8,6 +8,6 @@ RUN apt-get update \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
-    && install-php-extensions bcmath exif gd intl opcache pcntl pdo_mysql redis zip @composer
+    && install-php-extensions bcmath exif gd intl opcache pcntl pdo_pgsql redis zip @composer
 
 WORKDIR /var/www/html
