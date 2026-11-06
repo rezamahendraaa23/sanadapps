@@ -7,7 +7,7 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | Topik | Keputusan | Tanggal |
 |---|---|---|
 | Identitas pesantren (D1) | Belum ada nama tetap. Nama, logo, alamat, kontak, dan warna semuanya diatur admin di Pengaturan (dibangun di Tahap 1). Selama kosong, aplikasi tampil sebagai SANAD | 7 Nov 2026 |
-| Font | Dikunci: Fraunces (judul dan angka hero), Figtree (UI dan isi), Amiri (Arab utama), Noto Naskh Arabic (Arab cadangan) | 7 Nov 2026 |
+| Font | Permintaan pemilik: lucu, mudah dibaca, tidak berlebihan, tidak kaku. Fredoka (judul dan angka hero), Nunito (UI dan isi), Amiri (Arab utama), Noto Naskh Arabic (Arab cadangan). Menggantikan Fraunces dan Figtree di PRD UI/UX 2.3 | 7 Nov 2026 |
 | Database | PostgreSQL 16, versi terkelola untuk produksi. Menggantikan MySQL 8 di PRD dan master prompt | 7 Nov 2026 |
 | Benturan aturan antislop | Pemilik menyerahkan ke pengembang. Lucide tetap dipakai karena diminta PRD: satu set konsisten dan ringan. Em dash tidak dipakai di antarmuka | 7 Nov 2026 |
 
@@ -40,4 +40,7 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A17 | Ustadz melihat santri lewat wali kelas sampai penugasan mengajar ada di Tahap 6 | Tabel penugasan mengajar belum ada |
 | A18 | SE-03 Tahap 1 hanya menyimpan kredensial. Tes koneksi, URL webhook, dan kanal menyusul di Tahap 3; rekening transfer manual di Tahap 2 | Butuh klien Midtrans, Fonnte, dan tabel `bank_accounts` dari tahap itu |
 | A19 | Kartu modul memakai tombol Aktifkan dan Matikan berlabel, bukan toggle | Status tertulis jelas dan aksi punya kata kerja |
+| A20 | Santri hasil import belum punya sandi; admin membuatnya dari detail santri | Hash per baris melewati batas 30 detik untuk 200 baris dan daftar sandi massal berisiko bocor |
+| A21 | SET-03 di Tahap 1 hanya santri dan wali. Saldo dompet awal menyusul di Tahap 4, tunggakan awal di Tahap 2 | Tabelnya baru ada di tahap itu |
+| A22 | Opsi kirim WA pada pengumuman belum ditampilkan; pengumuman hanya tayang di portal sampai Tahap 3 | Pengiriman Fonnte belum ada, jadi kontrolnya akan mati |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

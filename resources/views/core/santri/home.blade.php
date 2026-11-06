@@ -1,4 +1,7 @@
-@php($student = auth()->user()->student?->load('classroom', 'dormitory'))
+@php
+    $student = auth()->user()->student?->load('classroom', 'dormitory');
+    $announcements = \App\Modules\Core\Models\Announcement::query()->publishedFor(array_filter([$student]))->limit(5)->get();
+@endphp
 
 <x-layouts.portal title="Beranda" role="santri">
     <x-ui.card>
@@ -9,4 +12,6 @@
             <p class="text-sm text-text-muted">Akun ini belum terhubung ke data santri. Hubungi admin pesantren.</p>
         @endif
     </x-ui.card>
+
+    @include('core.partials.announcements', ['announcements' => $announcements])
 </x-layouts.portal>

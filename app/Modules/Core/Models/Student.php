@@ -17,7 +17,7 @@ class Student extends Model
 
     protected $guarded = ['id', 'uuid'];
 
-    protected $attributes = ['extra' => '{}'];
+    protected $attributes = ['extra' => '{}', 'status' => 'active'];
 
     protected function casts(): array
     {

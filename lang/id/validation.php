@@ -3,6 +3,8 @@
 return [
     'required' => ':Attribute wajib diisi.',
     'required_if' => ':Attribute wajib diisi.',
+    'required_unless' => ':Attribute wajib diisi.',
+    'required_with' => ':Attribute wajib diisi.',
     'string' => ':Attribute harus berupa teks.',
     'email' => 'Format email belum benar.',
     'unique' => ':Attribute ini sudah dipakai.',

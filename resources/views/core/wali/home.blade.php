@@ -1,4 +1,7 @@
-@php($children = auth()->user()->guardian?->students()->with('classroom')->orderBy('name')->get() ?? collect())
+@php
+    $children = auth()->user()->guardian?->students()->with('classroom')->orderBy('name')->get() ?? collect();
+    $announcements = \App\Modules\Core\Models\Announcement::query()->publishedFor($children)->limit(5)->get();
+@endphp
 
 <x-layouts.portal title="Beranda" role="wali">
     <section class="flex flex-col gap-3">
@@ -14,4 +17,6 @@
             </x-ui.card>
         @endforelse
     </section>
+
+    @include('core.partials.announcements', ['announcements' => $announcements])
 </x-layouts.portal>

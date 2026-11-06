@@ -20,11 +20,11 @@ return [
         'staff' => [
             ['label' => 'Utama', 'items' => [
                 ['key' => 'home', 'label' => 'Dashboard', 'icon' => 'layout-dashboard', 'route' => 'staff.dashboard', 'module' => 'core'],
-                ['key' => 'announcements', 'label' => 'Pengumuman', 'icon' => 'megaphone', 'route' => 'staff.announcements.index', 'module' => 'core'],
+                ['key' => 'announcements', 'permission' => 'announcements.manage', 'label' => 'Pengumuman', 'icon' => 'megaphone', 'route' => 'staff.announcements.index', 'module' => 'core'],
             ]],
             ['label' => 'Kesantrian', 'items' => [
-                ['key' => 'students', 'label' => 'Santri', 'icon' => 'users', 'route' => 'staff.students.index', 'module' => 'core'],
-                ['key' => 'guardians', 'label' => 'Wali', 'icon' => 'contact', 'route' => 'staff.guardians.index', 'module' => 'core'],
+                ['key' => 'students', 'permission' => ['students.view-all', 'students.view-own-class', 'students.view-own-dormitory'], 'label' => 'Santri', 'icon' => 'users', 'route' => 'staff.students.index', 'module' => 'core'],
+                ['key' => 'guardians', 'permission' => 'students.view-all', 'label' => 'Wali', 'icon' => 'contact', 'route' => 'staff.guardians.index', 'module' => 'core'],
                 ['key' => 'cards', 'label' => 'Kartu Santri', 'icon' => 'id-card', 'route' => 'staff.cards.index', 'module' => 'card'],
                 ['key' => 'leaves', 'label' => 'Perizinan', 'icon' => 'door-open', 'route' => 'staff.leaves.index', 'module' => 'leave'],
                 ['key' => 'gate', 'label' => 'Pos Gerbang', 'icon' => 'shield-check', 'route' => 'staff.gate.index', 'module' => 'gate'],
@@ -32,7 +32,7 @@ return [
                 ['key' => 'health', 'label' => 'Kesehatan', 'icon' => 'heart-pulse', 'route' => 'staff.health.index', 'module' => 'health'],
             ]],
             ['label' => 'Akademik', 'items' => [
-                ['key' => 'classrooms', 'label' => 'Kelas & Asrama', 'icon' => 'school', 'route' => 'staff.classrooms.index', 'module' => 'core'],
+                ['key' => 'classrooms', 'permission' => 'masters.manage', 'label' => 'Kelas & Asrama', 'icon' => 'school', 'route' => 'staff.classrooms.index', 'module' => 'core'],
                 ['key' => 'schedules', 'label' => 'Jadwal', 'icon' => 'calendar-days', 'route' => 'staff.schedules.index', 'module' => 'academic'],
                 ['key' => 'attendance', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
                 ['key' => 'grades', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
