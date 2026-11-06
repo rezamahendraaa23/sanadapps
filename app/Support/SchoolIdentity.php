@@ -2,18 +2,25 @@
 
 namespace App\Support;
 
+use App\Modules\Core\Models\SchoolProfile;
+use Illuminate\Support\Facades\Storage;
+
 /**
- * Sumber tunggal identitas pesantren untuk tampilan. Tahap 1 mengganti sumbernya ke school_profile.
+ * Sumber tunggal identitas pesantren untuk tampilan. Isian di Pengaturan selalu menang atas nilai awal di config.
  */
-final class SchoolIdentity
+class SchoolIdentity
 {
     public const APP_NAME = 'SANAD';
 
     public const TAGLINE = 'Pesantren Digital Ecosystem';
 
+    private ?SchoolProfile $profile = null;
+
+    private bool $loaded = false;
+
     public function name(): ?string
     {
-        $name = trim((string) config('sanad.school.name'));
+        $name = trim((string) ($this->profile()?->name ?: config('sanad.school.name')));
 
         return $name === '' ? null : $name;
     }
@@ -25,11 +32,29 @@ final class SchoolIdentity
 
     public function logoUrl(): ?string
     {
-        return config('sanad.school.logo_url') ?: null;
+        $path = $this->profile()?->logo_path;
+
+        return $path ? Storage::disk('public')->url($path) : (config('sanad.school.logo_url') ?: null);
     }
 
     public function brandCss(): ?string
     {
-        return BrandColor::cssOverrides(config('sanad.school.brand_color'));
+        return BrandColor::cssOverrides($this->profile()?->brand_color ?? config('sanad.school.brand_color'));
+    }
+
+    public function forget(): void
+    {
+        $this->profile = null;
+        $this->loaded = false;
+    }
+
+    private function profile(): ?SchoolProfile
+    {
+        if (! $this->loaded) {
+            $this->profile = SchoolProfile::query()->first();
+            $this->loaded = true;
+        }
+
+        return $this->profile;
     }
 }

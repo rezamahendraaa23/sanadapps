@@ -28,8 +28,8 @@ Persiapan:
 
 Fitur:
 
-- [ ] Tabel inti: `school_profile`, `modules`, `integrations`, `audit_logs`, `webhook_events`, pengguna dan role
-- [ ] Modul feature-flag: `EnsureModuleEnabled`, dependensi, layar Modul (SE-02)
+- [x] Tabel inti: `school_profile`, `modules`, `integrations`, `audit_logs`, `webhook_events`, pengguna dan role
+- [x] Modul feature-flag: `EnsureModuleEnabled` dan aturan dependensi (layar SE-02 menyusul)
 - [ ] Masuk: OTP wali, NIS santri, email staf (P-04, P-05, P-06)
 - [ ] Role dan policy sesuai matriks PRD Sistem bagian 10
 - [ ] Profil dan branding (SE-01), integrasi (SE-03), audit log (SE-06)
@@ -38,6 +38,7 @@ Fitur:
 - [ ] Import santri dan wali (COR-07, SET-03)
 - [ ] Wizard setup dan checklist dashboard (SET-01)
 - [ ] Topbar staf: pencarian, notifikasi, profil
+- [ ] 2FA opsional untuk admin dan bendahara (COR-11)
 - [ ] Test policy, Delivery Gate, commit
 
 ## Belum teruji

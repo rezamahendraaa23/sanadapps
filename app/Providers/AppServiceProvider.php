@@ -2,23 +2,21 @@
 
 namespace App\Providers;
 
+use App\Modules\Core\Models\SchoolProfile;
+use App\Modules\Core\Support\ModuleRegistry;
+use App\Support\SchoolIdentity;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->scoped(ModuleRegistry::class);
+        $this->app->scoped(SchoolIdentity::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        //
+        SchoolProfile::saved(fn () => app(SchoolIdentity::class)->forget());
     }
 }
