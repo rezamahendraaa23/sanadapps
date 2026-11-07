@@ -163,7 +163,8 @@ test('santri di HP: persiapan, mengerjakan, putus koneksi tidak menghilangkan ja
     await expect(grid.getByRole('button', { name: /terjawab/ })).toHaveCount(1);
     await expect(grid.getByRole('button', { name: /belum/ })).toHaveCount(1);
     await noOverflow(page);
-    await grid.getByRole('button', { name: 'Tutup' }).click();
+    await page.keyboard.press('Escape');
+    await expect(grid).toBeHidden();
 
     page.on('dialog', (dialog) => dialog.accept());
     await page.reload();

@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <dl class="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <dl class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-2">
         @foreach ($labels as $key => [$label, $icon])
             <div class="rounded-card border border-border bg-surface p-3">
                 <dt class="flex items-center gap-1 text-sm text-text-muted"><x-ui.icon :name="$icon" size="sm" />{{ $label }}</dt>

@@ -18,7 +18,7 @@
         <div class="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-3 p-3 pb-28">
             <div x-show="warning" x-cloak role="alert" class="flex items-center gap-2 rounded-control bg-warning-soft p-3 text-base font-semibold"><x-ui.icon name="clock-alert" /><span x-text="warning"></span></div>
             <div x-show="!online" x-cloak class="flex items-center gap-2 rounded-control bg-warning-soft p-3 text-sm"><x-ui.icon name="wifi-off" size="sm" />Koneksi terputus. Lanjutkan mengerjakan, jawaban tersimpan di HP.</div>
-            <div x-show="pendingSubmit && !online" x-cloak class="rounded-control bg-info-soft p-3 text-sm">Waktu habis. Jawaban dikirim otomatis begitu tersambung.</div>
+            <div x-show="pendingSubmit && !online" x-cloak class="rounded-control bg-info-soft p-3 text-sm">Ujian dikumpulkan. Jawaban terkirim otomatis begitu tersambung.</div>
 
             <article class="rounded-card border border-border bg-surface p-4 shadow-sm">
                 <div class="mb-3 flex items-center justify-between gap-2 text-sm text-text-muted">
@@ -37,7 +37,7 @@
                                 :class="isChosen(current, option.key) ? 'border-primary bg-primary-soft font-semibold' : 'border-border bg-surface'"
                                 class="flex min-h-12 w-full items-center gap-3 rounded-control border-2 p-3 text-left">
                                 <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full border-2" :class="isChosen(current, option.key) ? 'border-primary' : 'border-text-muted'"><span class="size-3 rounded-full bg-primary" x-show="isChosen(current, option.key)"></span></span>
-                                <span class="min-w-0 flex-1 break-words" :dir="current.direction" :class="current.direction === 'rtl' ? 'font-arabic text-[1.375rem] leading-[2]' : 'text-base'" x-text="option.text"></span>
+                                <span class="min-w-0 flex-1 break-words" dir="auto" :class="optionClass(option)" x-text="option.text"></span>
                             </button>
                         </template>
                     </div>
@@ -51,7 +51,7 @@
                                 :class="isChosen(current, option.key) ? 'border-primary bg-primary-soft font-semibold' : 'border-border bg-surface'"
                                 class="flex min-h-12 w-full items-center gap-3 rounded-control border-2 p-3 text-left">
                                 <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-control border-2" :class="isChosen(current, option.key) ? 'border-primary bg-primary text-on-primary' : 'border-text-muted'"><span x-show="isChosen(current, option.key)"><x-ui.icon name="check" size="sm" /></span></span>
-                                <span class="min-w-0 flex-1 break-words" :dir="current.direction" :class="current.direction === 'rtl' ? 'font-arabic text-[1.375rem] leading-[2]' : 'text-base'" x-text="option.text"></span>
+                                <span class="min-w-0 flex-1 break-words" dir="auto" :class="optionClass(option)" x-text="option.text"></span>
                             </button>
                         </template>
                     </div>
@@ -82,8 +82,8 @@
             </div>
         </nav>
 
-        <div x-show="sheet" x-cloak class="fixed inset-0 z-30 flex items-end justify-center bg-scrim md:items-center" x-on:click.self="sheet = false">
-            <div role="dialog" aria-modal="true" aria-label="Daftar nomor soal" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-modal bg-surface p-4 md:max-w-lg md:rounded-b-modal">
+        <div x-show="sheet" x-cloak class="fixed inset-0 z-30 flex items-end justify-center bg-scrim md:items-center" x-on:click.self="sheet = false" x-on:keydown.escape.window="sheet = false">
+            <div role="dialog" aria-modal="true" aria-label="Daftar nomor soal" x-trap.noscroll="sheet" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-modal bg-surface p-4 md:max-w-lg md:rounded-b-modal">
                 <div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold">Nomor soal</h2><button type="button" class="inline-flex size-11 items-center justify-center" aria-label="Tutup" x-on:click="sheet = false"><x-ui.icon name="x" /></button></div>
                 <div class="grid grid-cols-6 gap-2">
                     <template x-for="(question, position) in questions" :key="question.id">
@@ -101,8 +101,8 @@
             </div>
         </div>
 
-        <div x-show="review" x-cloak class="fixed inset-0 z-30 flex items-end justify-center bg-scrim md:items-center">
-            <div role="alertdialog" aria-modal="true" aria-label="Kumpulkan ujian" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-modal bg-surface p-4 md:max-w-lg md:rounded-b-modal">
+        <div x-show="review" x-cloak class="fixed inset-0 z-30 flex items-end justify-center bg-scrim md:items-center" x-on:keydown.escape.window="review = false">
+            <div role="alertdialog" aria-modal="true" aria-label="Kumpulkan ujian" x-trap.noscroll="review" class="max-h-[85dvh] w-full overflow-y-auto rounded-t-modal bg-surface p-4 md:max-w-lg md:rounded-b-modal">
                 <h2 class="text-lg font-semibold">Tinjau jawaban</h2>
                 <dl class="mt-2 grid grid-cols-3 gap-2 text-center">
                     <div><dd class="font-display font-tabular text-2xl font-semibold" x-text="answeredCount"></dd><dt class="text-sm">Terjawab</dt></div>
@@ -125,8 +125,8 @@
             </div>
         </div>
 
-        <div x-show="blurred && !takenOver" x-cloak class="fixed inset-0 z-40 flex items-center justify-center bg-scrim p-4">
-            <div role="alertdialog" aria-modal="true" aria-label="Tetap di halaman ujian" class="w-full max-w-sm rounded-modal bg-surface p-4">
+        <div x-show="blurred && !takenOver" x-cloak class="fixed inset-0 z-40 flex items-center justify-center bg-scrim p-4" x-on:keydown.escape.window="blurred = false">
+            <div role="alertdialog" aria-modal="true" aria-label="Tetap di halaman ujian" x-trap="blurred && !takenOver" class="w-full max-w-sm rounded-modal bg-surface p-4">
                 <h2 class="text-lg font-semibold">Tetap di halaman ujian</h2>
                 <p class="mt-1 text-base">Kepindahan dari halaman ini tercatat dan terlihat oleh ustadz.</p>
                 <button type="button" class="mt-3 min-h-12 w-full rounded-control bg-primary font-semibold text-on-primary" x-on:click="blurred = false">Lanjut Mengerjakan</button>

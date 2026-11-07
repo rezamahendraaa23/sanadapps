@@ -117,6 +117,10 @@ export function registerExam(Alpine) {
         get doubtCount() { return this.questions.filter((question) => this.doubts[question.id]).length; },
 
         serverNow() { return this.now + this.offset; },
+        // Soal Arab bisa punya opsi Latin: font mengikuti isi opsi, bukan arah soalnya.
+        optionClass(option) {
+            return /[؀-ۿ]/.test(option.text) ? 'font-arabic text-[1.375rem] leading-[2]' : 'text-base';
+        },
         isAnswered(question) {
             const value = this.answers[question.id];
             return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && String(value).trim() !== '';
