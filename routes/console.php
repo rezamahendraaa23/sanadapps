@@ -56,3 +56,6 @@ Schedule::call(function () {
     }
 })->name('OpenPrayerAttendance')->everyMinute()->withoutOverlapping();
 Schedule::call(fn () => app(ManageScreens::class)->pruneEvents())->name('PruneDisplayEvents')->dailyAt('02:30')->timezone(config('sanad.display_timezone'));
+// Cadangan harian pukul 03.00 dan uji restore tiap Ahad (PRD Sistem §11, UAT 11).
+Schedule::command('sanad:backup --prune')->name('Backup')->dailyAt('03:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
+Schedule::command('sanad:backup-drill')->name('BackupDrill')->weeklyOn(0, '04:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();

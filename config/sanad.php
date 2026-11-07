@@ -26,6 +26,14 @@ return [
         'fake' => env('SANAD_FAKE_MIDTRANS', false),
     ],
 
+    // Cadangan aplikasi (sanad:backup). disk diisi nama disk penyimpanan luar (mis. r2) agar salinan keluar server.
+    'backup' => [
+        'path' => env('SANAD_BACKUP_PATH'),
+        'disk' => env('SANAD_BACKUP_DISK'),
+        'pg_bin' => env('SANAD_PG_BIN'),
+        'keep_days' => (int) env('SANAD_BACKUP_KEEP_DAYS', 14),
+    ],
+
     'pdf' => [
         'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
         'no_sandbox' => env('BROWSERSHOT_NO_SANDBOX', false),
