@@ -16,7 +16,7 @@ class E2eSeeder extends Seeder
     {
         abort_if(app()->isProduction(), 403);
 
-        $this->call([ModuleSeeder::class, RoleSeeder::class]);
+        $this->call([ModuleSeeder::class, RoleSeeder::class, FinanceSeeder::class]);
 
         User::create(['name' => 'Admin Uji', 'email' => 'admin@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-admin'])->assignRole('admin');
 

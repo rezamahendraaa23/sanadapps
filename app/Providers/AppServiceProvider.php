@@ -10,6 +10,8 @@ use App\Modules\Core\Policies\GuardianPolicy;
 use App\Modules\Core\Policies\StudentPolicy;
 use App\Modules\Core\Support\LogOtpSender;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Support\Pdf\BrowsershotPdfRenderer;
+use App\Support\Pdf\PdfRenderer;
 use App\Support\SchoolIdentity;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(ModuleRegistry::class);
         $this->app->scoped(SchoolIdentity::class);
         $this->app->bind(OtpSender::class, LogOtpSender::class);
+        $this->app->bind(PdfRenderer::class, BrowsershotPdfRenderer::class);
 
         // Masuk memakai layar sendiri; Fortify hanya dipakai untuk logika 2FA.
         Fortify::ignoreRoutes();

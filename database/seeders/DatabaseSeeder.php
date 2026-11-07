@@ -9,7 +9,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([ModuleSeeder::class, RoleSeeder::class]);
+        $this->call([ModuleSeeder::class, RoleSeeder::class, FinanceSeeder::class]);
 
         // Admin pertama dibuat lewat seeder (PRD UI/UX 5.6); sandinya hanya tampil sekali.
         if ($email = env('SANAD_ADMIN_EMAIL')) {

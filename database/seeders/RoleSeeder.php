@@ -14,9 +14,9 @@ class RoleSeeder extends Seeder
 {
     /** @var array<string, list<string>> */
     public const ROLES = [
-        'admin' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'users.manage', 'settings.manage', 'audit.view'],
-        'bendahara' => ['panel.access', 'students.view-all'],
-        'admin_akademik' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage'],
+        'admin' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'users.manage', 'settings.manage', 'audit.view', 'finance.view', 'finance.manage'],
+        'bendahara' => ['panel.access', 'students.view-all', 'finance.view', 'finance.manage', 'finance.verify'],
+        'admin_akademik' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'finance.view'],
         'ustadz' => ['panel.access', 'students.view-own-class'],
         'musyrif' => ['panel.access', 'students.view-own-dormitory'],
         'petugas_uks' => ['panel.access', 'students.view-all'],

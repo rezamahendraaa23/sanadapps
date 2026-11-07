@@ -15,6 +15,11 @@ return [
     // Nilai awal zona tampilan; ditimpa school_profile.timezone per request. Penyimpanan selalu UTC.
     'display_timezone' => env('SANAD_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
 
+    'pdf' => [
+        'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
+        'no_sandbox' => env('BROWSERSHOT_NO_SANDBOX', false),
+    ],
+
     'navigation' => [
 
         'staff' => [
