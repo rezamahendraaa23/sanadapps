@@ -125,3 +125,33 @@ it('enam kasir berebut stok terakhir: stok 3, tepat 3 terjual dan stok tidak min
     $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
     expect((int) $report['product_stock'])->toBe(0)->and($report['stock_sales'])->toBe(3)->and($report['ledger_differences'])->toBe(0);
 });
+
+it('mulai ujian bersamaan hanya membuat satu attempt', function () {
+    $results = race('exam-start', (string) $this->ids['exam']);
+
+    expect(array_unique($results))->toHaveCount(1);
+
+    $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
+    expect($report['exam_attempts'])->toBe(1);
+});
+
+it('sinkron jawaban bersamaan dengan urutan berbeda: yang tersimpan selalu client_seq terbesar', function () {
+    runWorker('exam-start', '0', (string) $this->ids['exam']);
+
+    $startAt = (string) (microtime(true) + 3);
+    $processes = [];
+
+    foreach ([3, 6, 1, 5, 2, 4] as $seq) {
+        $process = new Process([(new PhpExecutableFinder)->find(), base_path('tests/Concurrency/worker.php'), 'exam-answer', $startAt, $this->ids['exam'].':'.$this->ids['question'].':'.$seq], base_path(), concurrencyEnv());
+        $process->start();
+        $processes[] = $process;
+    }
+
+    foreach ($processes as $process) {
+        $process->wait();
+        expect($process->getExitCode())->toBe(0, $process->getErrorOutput());
+    }
+
+    $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
+    expect($report['exam_answers'])->toBe(1)->and($report['exam_seq'])->toBe(6)->and($report['exam_answer'])->toBe('seq-6');
+});

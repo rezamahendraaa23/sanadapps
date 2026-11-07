@@ -43,6 +43,16 @@ use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
 use App\Modules\Core\Models\Student;
+use App\Modules\Exam\Http\AttemptController;
+use App\Modules\Exam\Livewire\ExamList;
+use App\Modules\Exam\Livewire\ExamMonitor;
+use App\Modules\Exam\Livewire\ExamPrepare;
+use App\Modules\Exam\Livewire\ExamResults;
+use App\Modules\Exam\Livewire\ExamWizard;
+use App\Modules\Exam\Livewire\QuestionBanks;
+use App\Modules\Exam\Livewire\StudentExams;
+use App\Modules\Exam\Models\Exam;
+use App\Modules\Exam\Models\ExamAttempt;
 use App\Modules\Finance\Actions\BuildReceiptPdf;
 use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Finance\Exports\ArrayExport;
@@ -275,6 +285,14 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         });
     });
 
+    Route::prefix('ujian')->name('exams.')->middleware(['module:exam', 'can:exams.manage'])->group(function (): void {
+        Route::get('/', ExamList::class)->name('index');
+        Route::get('/bank-soal', QuestionBanks::class)->name('banks');
+        Route::get('/{exam}/susun', ExamWizard::class)->name('edit');
+        Route::get('/{exam}/monitor', ExamMonitor::class)->name('monitor');
+        Route::get('/{exam}/hasil', ExamResults::class)->name('results');
+    });
+
     Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');
 
     Route::middleware('module:card')->group(function (): void {
@@ -407,6 +425,15 @@ Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')-
     Route::get('/nilai', GradeBook::class)->middleware(['module:grading', 'can:grades.input'])->name('grades');
     Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/mutabaah', MutabaahVerify::class)->middleware('module:tahfidz')->name('mutabaah');
+
+    Route::prefix('ujian')->name('exams.')->middleware(['module:exam', 'can:exams.own'])->group(function (): void {
+        Route::get('/', ExamList::class)->name('index');
+        Route::get('/bank-soal', QuestionBanks::class)->name('banks');
+        Route::get('/{exam}/susun', ExamWizard::class)->name('edit');
+        Route::get('/{exam}/monitor', ExamMonitor::class)->name('monitor');
+        Route::get('/{exam}/hasil', ExamResults::class)->name('results');
+    });
+    Route::get('/ujian-pintas', fn () => redirect()->route('ustadz.exams.index'))->middleware('module:exam')->name('exams');
 });
 
 Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif')->name('musyrif.')->group(function (): void {
@@ -443,6 +470,8 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::view('/', 'core.santri.home')->name('home');
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
     Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
+    Route::get('/ujian', StudentExams::class)->middleware('module:exam')->name('exams');
+    Route::get('/ujian/{exam}/persiapan', ExamPrepare::class)->middleware('module:exam')->name('exams.prepare');
     Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 });
@@ -469,6 +498,25 @@ Route::get('/rapor/{card}', function (ReportCard $card, Request $request, BuildR
 
     return response($pdf->handle($card), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="rapor-'.$card->student->nis.'.pdf"']);
 })->middleware(['auth', 'module:grading'])->name('report-cards.pdf');
+
+Route::middleware(['auth', 'module:exam'])->group(function (): void {
+    Route::middleware('user.type:student')->group(function (): void {
+        Route::get('/ujian/{attempt}', [AttemptController::class, 'show'])->name('exam.take');
+        Route::get('/ujian/{attempt}/selesai', [AttemptController::class, 'done'])->name('exam.done');
+        Route::post('/ujian/{attempt}/jawaban', [AttemptController::class, 'answers'])->middleware('throttle:240,1')->name('exam.answers');
+        Route::post('/ujian/{attempt}/kumpulkan', [AttemptController::class, 'submit'])->name('exam.submit');
+        Route::post('/ujian/{attempt}/peristiwa', [AttemptController::class, 'events'])->middleware('throttle:240,1')->name('exam.events');
+    });
+    Route::get('/ujian-media/{question}', [AttemptController::class, 'media'])->name('exam.media');
+    Route::get('/ujian-template-impor', fn () => Excel::download(new ArrayExport(QuestionBanks::HEADINGS, []), 'template-soal.xlsx'))->middleware('can:exams.import')->name('exam.import-template');
+    Route::get('/ujian-hasil/{exam}/ekspor', function (Exam $exam, Request $request) {
+        abort_unless($exam->canBeManagedBy($request->user()), 403);
+        $rows = $exam->attempts()->with('student:id,name,nis')->whereNot('status', 'in_progress')->orderByDesc('score')->get()
+            ->map(fn ($attempt) => [$attempt->student?->nis, $attempt->student?->name, $attempt->score, ExamAttempt::STATUSES[$attempt->status], $attempt->blur_count])->all();
+
+        return Excel::download(new ArrayExport(['NIS', 'Santri', 'Nilai', 'Status', 'Pindah layar'], $rows), 'hasil-ujian.xlsx');
+    })->name('exam.results-export');
+});
 
 Route::get('/verifikasi-kwitansi/{payment}', fn (Payment $payment) => view('finance.receipts.verify', ['payment' => $payment]))
     ->middleware('throttle:30,1')

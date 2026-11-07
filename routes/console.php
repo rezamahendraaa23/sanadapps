@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
 use App\Modules\Leave\Actions\ManageLeave;
@@ -23,3 +24,4 @@ Schedule::call(fn () => app(SendPaymentReminders::class)->handle())->name('SendP
 Schedule::call(fn () => app(SendAnnouncement::class)->due())->name('SendScheduledAnnouncements')->everyFiveMinutes()->withoutOverlapping();
 Schedule::call(fn () => app(ReconcileWallets::class)->handle())->name('ReconcileWallets')->dailyAt('01:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(ManageLeave::class)->markLate())->name('MarkLateReturns')->everyTenMinutes()->withoutOverlapping();
+Schedule::call(fn () => app(RunAttempt::class)->autoSubmitExpired())->name('AutoSubmitExams')->everyMinute()->withoutOverlapping();

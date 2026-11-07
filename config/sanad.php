@@ -51,7 +51,7 @@ return [
                 ['key' => 'attendance', 'permission' => 'academic.manage', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
                 ['key' => 'grades', 'permission' => 'grades.manage', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
                 ['key' => 'tahfidz', 'permission' => 'tahfidz.input', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
-                ['key' => 'exams', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],
+                ['key' => 'exams', 'permission' => 'exams.manage', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],
             ]],
             ['label' => 'Keuangan', 'items' => [
                 ['key' => 'invoices', 'permission' => 'finance.view', 'label' => 'Tagihan', 'icon' => 'receipt-text', 'route' => 'staff.invoices.index', 'module' => 'finance'],

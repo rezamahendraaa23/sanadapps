@@ -49,6 +49,12 @@
     @endforeach
 
     @if ($role === 'ustadz')
+        @if ($essaysWaiting > 0)
+            <a href="{{ route('ustadz.exams.index') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-warning bg-warning-soft p-4 text-base font-semibold">
+                <span class="min-w-0">{{ $essaysWaiting }} esai belum dikoreksi</span>
+                <x-ui.icon name="chevron-right" class="shrink-0" />
+            </a>
+        @endif
         <x-ui.card title="Jadwal mengajar">
             <nav aria-label="Pilih hari" class="mb-3 flex gap-1 overflow-x-auto pb-1">
                 @foreach (Schedule::DAYS as $number => $name)

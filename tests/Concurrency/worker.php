@@ -5,10 +5,19 @@
  * dengan koneksi database sendiri, lalu bersaing pada satu titik waktu.
  */
 
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Core\Actions\SaveIntegration;
+use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
+use App\Modules\Exam\Actions\RunAttempt;
+use App\Modules\Exam\Actions\SaveQuestion;
+use App\Modules\Exam\Models\Exam;
+use App\Modules\Exam\Models\ExamAnswer;
+use App\Modules\Exam\Models\ExamAttempt;
+use App\Modules\Exam\Models\ExamTarget;
+use App\Modules\Exam\Models\QuestionBank;
 use App\Modules\Finance\Actions\ApplySettlement;
 use App\Modules\Finance\Actions\CreateManualInvoice;
 use App\Modules\Finance\Actions\CreateManualPayment;
@@ -83,7 +92,17 @@ switch ($mode) {
         $product = MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Stok Terakhir', 'price' => 1000]);
         MerchantProduct::query()->whereKey($product->id)->update(['stock' => 3]);
 
-        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id, 'merchant' => $merchant->id, 'product' => $product->id]);
+        // Ujian: enam proses memulai bersamaan, lalu berebut menulis jawaban.
+        $examClass = Classroom::create(['name' => 'Kelas Ujian']);
+        $examineeUser = User::create(['name' => 'Peserta', 'username' => 'K5', 'type' => 'student']);
+        $examinee = Student::create(['nis' => 'K5', 'name' => 'Peserta', 'gender' => 'L', 'status' => 'inactive', 'classroom_id' => $examClass->id, 'user_id' => $examineeUser->id]);
+        $bank = QuestionBank::create(['name' => 'Bank', 'subject_id' => Subject::create(['code' => 'K', 'name' => 'Konkuren'])->id]);
+        $question = app(SaveQuestion::class)->handle($bank, ['type' => 'short', 'body' => 'Isi', 'answer_key' => 'x']);
+        $exam = Exam::create(['title' => 'Konkuren', 'duration_minutes' => 60, 'start_at' => now()->subMinute(), 'end_at' => now()->addHour(), 'status' => 'published', 'max_attempts' => 1]);
+        $exam->questions()->attach($question->id, ['sort_order' => 0]);
+        ExamTarget::create(['exam_id' => $exam->id, 'classroom_id' => $examClass->id]);
+
+        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id, 'merchant' => $merchant->id, 'product' => $product->id, 'exam' => $exam->id, 'question' => $question->id]);
         break;
 
     case 'settle':
@@ -130,6 +149,20 @@ switch ($mode) {
         echo $result->ok ? 'paid' : $result->code;
         break;
 
+    case 'exam-start':
+        $exam = Exam::findOrFail((int) $argument);
+        $student = Student::query()->where('nis', 'K5')->firstOrFail();
+        $waitUntil();
+        echo app(RunAttempt::class)->start($exam, $student, null, null, null)->id;
+        break;
+
+    case 'exam-answer':
+        [$examId, $questionId, $seq] = explode(':', (string) $argument);
+        $attempt = ExamAttempt::query()->where('exam_id', (int) $examId)->firstOrFail();
+        $waitUntil();
+        echo json_encode(app(RunAttempt::class)->saveAnswers($attempt, $attempt->session_token, [['question_id' => (int) $questionId, 'answer' => 'seq-'.$seq, 'client_seq' => (int) $seq]]));
+        break;
+
     case 'generate':
         $waitUntil();
         echo app(GenerateInvoices::class)->run(CarbonImmutable::parse('2030-02-01'))['invoices'];
@@ -151,6 +184,10 @@ switch ($mode) {
             'tap_orders' => PosOrder::query()->whereHas('student', fn ($query) => $query->where('nis', 'K3'))->count(),
             'merchant_balance' => Merchant::query()->where('name', 'Warung Konkuren')->first()?->balance(),
             'ledger_differences' => count(app(ReconcileWallets::class)->handle()),
+            'exam_attempts' => ExamAttempt::query()->count(),
+            'exam_answer' => ExamAnswer::query()->first()?->answer['value'] ?? null,
+            'exam_seq' => ExamAnswer::query()->first()?->client_seq,
+            'exam_answers' => ExamAnswer::query()->count(),
             'product_stock' => MerchantProduct::query()->where('name', 'Stok Terakhir')->value('stock'),
             'stock_sales' => StockMovement::query()->where('type', 'sale')->count(),
         ]);

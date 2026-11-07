@@ -1,4 +1,8 @@
+import { registerExam } from './exam';
+
 document.addEventListener('alpine:init', () => {
+    registerExam(window.Alpine);
+
     // Kamera untuk QR dinamis. BarcodeDetector ada di Chrome Android; di browser lain tombolnya tidak tampil dan kasir memakai reader.
     window.Alpine.data('qrScanner', (formats = ['qr_code']) => ({
         supported: 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia,

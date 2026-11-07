@@ -8,6 +8,7 @@ use App\Modules\Academic\Support\StudentSchedule;
 use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Exam\Models\ExamAnswer;
 use App\Modules\Leave\Models\LeaveRequest;
 use App\Modules\Tahfidz\Models\MutabaahLog;
 use Illuminate\Contracts\View\View;
@@ -43,6 +44,7 @@ class TeacherHome extends Component
             'openSessions' => AttendanceSession::query()->whereDate('session_date', now(config('sanad.display_timezone'))->toDateString())->whereNull('closed_at')->get()->filter(fn ($session) => $session->canBeTakenBy($user))->count(),
             'dormitories' => Dormitory::query()->where('musyrif_user_id', $user->id)->withCount('students')->get(),
             'role' => $role,
+            'essaysWaiting' => app(ModuleRegistry::class)->enabled('exam') ? ExamAnswer::query()->whereNull('graded_by')->whereRaw("COALESCE(answer->>'value', '') <> ''")->whereHas('question', fn ($query) => $query->where('type', 'essay'))->whereHas('attempt', fn ($query) => $query->where('status', '!=', 'in_progress')->whereHas('exam', fn ($exam) => $exam->where('created_by', $user->id)))->count() : 0,
             'mutabaahWaiting' => app(ModuleRegistry::class)->enabled('tahfidz') ? MutabaahLog::query()->whereDate('log_date', now(config('sanad.display_timezone'))->toDateString())->where('status', 'done')->whereNull('verified_by')->whereIn('student_id', Student::query()->visibleTo($user)->select('students.id'))->count() : 0,
             'pendingLeaves' => $role === 'musyrif' ? LeaveRequest::query()->where('status', 'pending')->whereIn('student_id', Student::query()->visibleTo($user)->select('students.id'))->count() : 0,
         ])->layout('components.layouts.portal', ['role' => $role, 'active' => 'home', 'title' => 'Beranda']);

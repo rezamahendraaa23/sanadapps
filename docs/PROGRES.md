@@ -11,12 +11,25 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
 - [x] **Tahap 7:** perizinan dan pos gerbang
 - [x] **Tahap 8:** tahfidz dan mutabaah
-- [ ] **Tahap 9:** ujian online dan PWA (berikutnya)
-- [ ] **Tahap 10:** absensi selfie dan wajah
+- [x] **Tahap 9:** ujian online dan PWA
+- [ ] **Tahap 10:** absensi selfie dan wajah (berikutnya)
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 9
+
+- [x] Bank soal lima jenis, gambar, teks Arab RTL, impor per baris (EXM-01, EXM-02, U-06)
+- [x] Pembuat ujian 4 langkah, acak per tag, kode akses, validasi sebelum terbit (EXM-03, U-07)
+- [x] Acak soal dan opsi per santri, tersimpan di attempt (EXM-04)
+- [x] Halaman ujian HP: timer server, nomor soal, tandai ragu, tinjau (EXM-05, S-03 sampai S-06)
+- [x] Autosave IndexedDB, sinkron idempoten `client_seq`, buka ulang saat putus lewat service worker (EXM-06)
+- [x] Batas waktu dari server, auto-submit tiap menit, ambil alih perangkat (EXM-07, EXM-08)
+- [x] Monitor live 5 detik dengan jumlah pindah layar (EXM-09, U-08)
+- [x] Koreksi otomatis dan esai, analisis butir, kirim ke buku nilai (EXM-10, U-09, AC-04)
+- [x] Uji konkurensi: mulai bersamaan satu attempt, sinkron bersamaan menyimpan seq terbesar
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 8
 
@@ -156,4 +169,5 @@ Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 - Tampilan dan teks Arab belum dicoba di HP Android sungguhan
 - Horizon terpasang dan terkonfigurasi, tetapi belum pernah dijalankan, karena butuh Redis dan `pcntl` (WSL2 atau Docker)
 - Reader kartu USB dan kamera QR di kasir belum dicoba dengan alat sungguhan; pemindaian di uji browser diketik atau disimulasikan
+- Ujian belum diuji beban ratusan santri bersamaan (Tahap 13) dan belum dicoba di HP Android sungguhan
 - Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

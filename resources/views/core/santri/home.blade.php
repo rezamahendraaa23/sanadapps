@@ -24,6 +24,20 @@
         @endif
     @endif
 
+    @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('exam'))
+        @php($openExams = \App\Modules\Exam\Models\Exam::query()->forStudent($student)->where('status', 'published')->where('start_at', '<=', now())->where('end_at', '>', now())->orderBy('end_at')->get())
+        @if ($openExams->isNotEmpty())
+            <x-ui.card title="Ujian tersedia">
+                @foreach ($openExams as $openExam)
+                    <div class="flex items-center justify-between gap-3 border-b border-border py-2 last:border-b-0">
+                        <span class="min-w-0 text-base break-words">{{ $openExam->title }}</span>
+                        <x-ui.button class="shrink-0" :href="route('santri.exams.prepare', $openExam)" wire:navigate>Mulai<span class="sr-only"> {{ $openExam->title }}</span></x-ui.button>
+                    </div>
+                @endforeach
+            </x-ui.card>
+        @endif
+    @endif
+
     @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('wallet'))
         <x-ui.card>
             <p class="text-sm text-text-muted">Saldo</p>

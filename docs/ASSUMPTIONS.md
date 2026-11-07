@@ -101,4 +101,9 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A72 | Referensi 114 surat dimasukkan lewat migrasi, bukan seeder | Data rujukan yang sama di semua lingkungan; validasi setoran bergantung padanya. Jumlah 6236 ayat diuji otomatis |
 | A73 | Peta hafalan menghitung surat yang semua ayatnya tercakup ziyadah (predikat selain rasib), lalu dikelompokkan per juz awal surat | PRD tidak punya tabel batas ayat per juz, jadi peta ini perkiraan tingkat surat, bukan halaman mushaf |
 | A74 | Progres target: bila target halaman kosong, target juz dikonversi 20 halaman per juz | PRD hanya menyebut target halaman atau juz |
+| A75 | Tambahan kolom `exam_attempts.session_token` | Membedakan perangkat agar pengambilalihan sesi (PRD 8.8) bisa ditegakkan |
+| A76 | Jawaban yang tertahan di HP masih diterima 10 menit setelah batas, lalu dinilai ulang dan tercatat sebagai peristiwa `reconnect` | UI/UX 4.3.1 meminta jawaban terkirim begitu online saat waktu habis offline, tetapi harus ada batas. Risiko: santri bisa memutus koneksi lalu menjawab lewat batas sampai 10 menit; ustadz melihat catatannya |
+| A77 | Halaman ujian memakai halaman biasa dengan Alpine, bukan Livewire | Harus tetap berjalan tanpa server |
+| A78 | Kabar ujian ke santri lewat notifikasi aplikasi saat terbit; pengingat H-1 dan saat mulai lewat WhatsApp belum ada | Santri tidak punya nomor WhatsApp di data; PRD 9 menyebut penerima santri |
+| A79 | Multi pilihan dinilai himpunan sama persis, tanpa skor parsial | PRD menyebut parsial sebagai opsi; default paling ketat |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |
