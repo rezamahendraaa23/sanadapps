@@ -72,6 +72,14 @@ class DisplayScreens extends Component
         $this->dispatch('toast', message: 'Perintah terkirim.', tone: 'success');
     }
 
+    public function toggleArabicDigits(string $uuid): void
+    {
+        abort_unless(auth()->user()->can('masjid.settings'), 403);
+        $screen = DisplayScreen::query()->where('uuid', $uuid)->firstOrFail();
+        $screen->update(['arabic_digits' => ! $screen->arabic_digits]);
+        $this->dispatch('toast', message: $screen->arabic_digits ? 'Angka Arab dinyalakan. Layar berganti dalam satu menit.' : 'Angka biasa dipakai lagi. Layar berganti dalam satu menit.', tone: 'success');
+    }
+
     public function revoke(string $uuid, ManageScreens $screens): void
     {
         abort_unless(auth()->user()->can('masjid.settings'), 403);

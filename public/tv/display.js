@@ -27,6 +27,12 @@
     var pairing = null;
 
     function pad(n) { return (n < 10 ? '0' : '') + n; }
+    var AR_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    /* Angka Arab hanya bila layar ini memilihnya di panel. */
+    function num(text) {
+        if (!manifest || !manifest.screen || !manifest.screen.arabic_digits) { return text; }
+        return String(text).replace(/[0-9]/g, function (d) { return AR_DIGITS[+d]; });
+    }
     function escapeHtml(text) {
         return String(text === null || text === undefined ? '' : text).replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -144,27 +150,38 @@
             return item.ticker && (!item.starts_at || item.starts_at <= now) && (!item.ends_at || item.ends_at > now);
         }).map(function (item) { return item.body && item.body.text ? item.body.text : item.title; }).join('   •   ');
     }
-    function autoCards(t) {
+    /* Kartu otomatis: selalu ada sesuatu yang berguna walau pesantren tidak membuat pengumuman. */
+    function autoCards(t, row) {
         var cards = [];
         var i;
-        var today = manifest.kajian.filter(function (k) { return k.day === (t.weekday === 0 ? 7 : t.weekday); });
+        var weekday = t.weekday === 0 ? 7 : t.weekday;
+        var today = manifest.kajian.filter(function (k) { return k.day === weekday; });
         if (today.length) {
             var lines = [];
-            for (i = 0; i < today.length; i++) { lines.push(today[i].time.replace(':', '.') + '  ' + today[i].title + (today[i].speaker ? ' (' + today[i].speaker + ')' : '')); }
-            cards.push({ id: 'kajian', type: 'text', title: 'Kajian hari ini', body: { text: lines.join('\n') }, duration: 12 });
+            for (i = 0; i < today.length; i++) { lines.push(today[i].time.replace(':', '.') + '  ' + today[i].title + (today[i].speaker ? ', ' + today[i].speaker : '') + (today[i].location ? ' di ' + today[i].location : '')); }
+            cards.push({ id: 'kajian', type: 'agenda', kind: 'Kajian hari ini', title: today.length === 1 ? today[0].title : today.length + ' kajian hari ini', body: { text: lines.join('\n') }, duration: 12 });
         }
         if (manifest.khutbah.length) {
             var k = manifest.khutbah[0];
-            var parts = [k.date.split('-').reverse().join('-')];
+            var parts = [];
             if (k.khatib) { parts.push('Khatib: ' + k.khatib); }
             if (k.imam) { parts.push('Imam: ' + k.imam); }
             if (k.theme) { parts.push('Tema: ' + k.theme); }
-            cards.push({ id: 'khutbah', type: 'text', title: 'Jumat berikutnya', body: { text: parts.join('\n') }, duration: 12 });
+            cards.push({ id: 'khutbah', type: 'text', kind: k.date === t.date ? 'Jumat ini' : 'Jumat berikutnya', title: k.date.split('-').reverse().join('.'), body: { text: parts.join('\n') }, duration: 12 });
         }
         if (manifest.duties && manifest.duties.length) {
             var duties = [];
             for (i = 0; i < manifest.duties.length; i++) { duties.push(manifest.duties[i].name + (manifest.duties[i].person ? ': ' + manifest.duties[i].person : '')); }
-            cards.push({ id: 'piket', type: 'text', title: 'Piket hari ini', body: { text: duties.join('\n') }, duration: 12 });
+            cards.push({ id: 'piket', type: 'text', kind: 'Piket hari ini', title: 'Yang bertugas', body: { text: duties.join('\n') }, duration: 12 });
+        }
+        var quotes = manifest.quotes || [];
+        if (quotes.length) {
+            // Satu ayat atau hadis per jam, berganti urut agar tidak berulang terus.
+            var q = quotes[(t.hours + new Date(nowMs()).getUTCDate() * 24) % quotes.length];
+            cards.push({ id: q.id, type: 'quote', body: { arabic: q.arabic, text: q.text, source: q.source }, duration: 15 });
+        }
+        if (row) {
+            cards.push({ id: 'today', type: 'today', duration: 10 });
         }
         return cards;
     }
@@ -177,16 +194,24 @@
         if (item.type === 'video') {
             return { media: true, html: '<video src="' + escapeHtml(item.media) + '" autoplay muted playsinline></video>' };
         }
+        if (item.type === 'today') {
+            var t = localNow();
+            var row = dayRow(t.date);
+            var next = nextPrayer(t, row);
+            var fri = (5 - t.weekday + 7) % 7;
+            return { media: false, html: '<div class="kind">Hari ini</div><h2>' + DAYS[t.weekday] + ', ' + escapeHtml(row ? row.hijri : '') + '</h2><p>' + (next ? 'Berikutnya ' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + ' pukul ' + (row && row[next.prayer] ? row[next.prayer].replace(':', '.') : '') + '.' : '') + (fri === 0 ? '\nHari ini Jumat. Perbanyak sholawat.' : '\n' + fri + ' hari lagi menuju Jumat.') + '</p>' };
+        }
         if (item.type === 'quote') {
-            return { media: false, html: '<div class="arab" lang="ar">' + escapeHtml(body.arabic) + '</div><p>' + escapeHtml(body.text) + '</p><div class="ref">' + escapeHtml(body.source) + '</div>' };
+            return { media: false, html: '<div class="kind">Renungan</div><div class="arab" lang="ar">' + escapeHtml(body.arabic) + '</div><p>' + escapeHtml(body.text) + '</p><div class="ref">' + escapeHtml(body.source) + '</div>' };
         }
         var kinds = { text: 'Pengumuman', agenda: 'Agenda', obituary: 'Kabar duka' };
-        return { media: false, html: (kinds[item.type] ? '<div class="kind">' + kinds[item.type] + '</div>' : '') + '<h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(body.text) + '</p>' };
+        var kind = item.kind || kinds[item.type];
+        return { media: false, html: (kind ? '<div class="kind">' + escapeHtml(kind) + '</div>' : '') + '<h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(body.text) + '</p>' };
     }
 
     /* Bergilir per slide, atau daftar maksimal 3 item bersamaan. */
     function slotHtml(t, row) {
-        var items = activeContents(t, row).concat(autoCards(t));
+        var items = activeContents(t, row).concat(autoCards(t, row));
         if (!items.length) { return { key: 'empty', cls: '', html: '<p class="empty">Selamat datang di ' + escapeHtml(manifest.identity.name) + '.</p>' }; }
 
         if (manifest.screen.pattern === 'list') {
@@ -210,8 +235,8 @@
     }
 
     function header(t, row) {
-        var logo = manifest.identity.logo ? '<img src="' + escapeHtml(manifest.identity.logo) + '" alt="">' : '';
-        return '<div class="head"><div class="brand">' + logo + '<div><b>' + escapeHtml(manifest.identity.name) + '</b><span>Jadwal sholat dan informasi</span></div></div>'
+        var logo = manifest.identity.logo ? '<img src="' + escapeHtml(manifest.identity.logo) + '" alt="">' : '<i class="mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill-rule="evenodd"><path d="M32 4l2.2 4.6L32 12l-2.2-3.4z"/><path d="M32 12c-11 0-19 7.6-19 17v2h38v-2c0-9.4-8-17-19-17z"/><path d="M11 33h42v25H11zM27 58V46a5 5 0 0 1 10 0v12z"/><path d="M2 24h6v34H2zM56 24h6v34h-6z"/><path d="M5 17l3 7H2zM59 17l3 7h-6z"/></svg></i>';
+        return '<div class="head"><div class="brand">' + logo + '<div><b>' + escapeHtml(manifest.identity.name) + '</b><span>' + escapeHtml(manifest.identity.school && manifest.identity.school !== manifest.identity.name ? manifest.identity.school : 'Jadwal sholat dan informasi') + '</span></div></div>'
             + '<div class="cal">' + DAYS[t.weekday] + ', ' + t.label + (row ? '<span>' + escapeHtml(row.hijri) + '</span>' : '') + '</div></div>';
     }
 
@@ -225,7 +250,7 @@
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
             var past = row && toMinutes(row[key]) <= t.minutes && !(next && next.prayer === key);
-            html += '<div class="slotime' + (next && next.prayer === key ? ' is-next' : '') + (past ? ' past' : '') + '"><b>' + escapeHtml(prayerLabel(key, t.weekday)) + '</b><span>' + (row ? row[key].replace(':', '.') : '-') + '</span></div>';
+            html += '<div class="slotime' + (next && next.prayer === key ? ' is-next' : '') + (past ? ' past' : '') + '"><b>' + escapeHtml(prayerLabel(key, t.weekday)) + '</b><span>' + (row ? num(row[key].replace(':', '.')) : '-') + '</span></div>';
         }
         return '<div class="line"><div class="track"></div><div class="fill" id="fill" style="width:' + (progress * 100).toFixed(2) + '%"></div>' + html + '</div>';
     }
@@ -244,12 +269,12 @@
 
     function paint(key, cls, html) {
         if (key !== renderedKey) {
-            root.className = cls;
+            root.className = cls + (manifest && manifest.screen && manifest.screen.arabic_digits ? ' ar-digits' : '');
             root.innerHTML = html;
             renderedKey = key;
         }
     }
-    function setText(id, text) { var el = document.getElementById(id); if (el && el.textContent !== text) { el.textContent = text; } }
+    function setText(id, text) { text = num(text); var el = document.getElementById(id); if (el && el.textContent !== text) { el.textContent = text; } }
 
     function renderPairing() {
         if (!pairing) { paint('pair-wait', 'pair', '<div class="full"><div class="box"><h1>Menyiapkan layar…</h1></div></div>'); return; }

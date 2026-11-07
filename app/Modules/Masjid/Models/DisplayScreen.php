@@ -20,7 +20,7 @@ class DisplayScreen extends Model
 
     protected function casts(): array
     {
-        return ['brightness_schedule' => 'array', 'is_active' => 'boolean', 'last_seen_at' => 'immutable_datetime'];
+        return ['brightness_schedule' => 'array', 'is_active' => 'boolean', 'arabic_digits' => 'boolean', 'last_seen_at' => 'immutable_datetime'];
     }
 
     public function device(): BelongsTo

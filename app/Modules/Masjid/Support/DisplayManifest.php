@@ -16,6 +16,7 @@ use App\Modules\Masjid\Models\MasjidProfile;
 use App\Modules\Masjid\Models\PrayerTime;
 use App\Modules\Masjid\Models\Quote;
 use App\Support\SchoolDate;
+use App\Support\SchoolIdentity;
 use Carbon\CarbonImmutable;
 use DateTimeZone;
 
@@ -38,8 +39,10 @@ class DisplayManifest
         $zone = new DateTimeZone($profile->timezone);
 
         $data = [
-            'screen' => ['name' => $screen->name, 'profile' => $screen->profile, 'orientation' => $screen->orientation, 'pattern' => $screen->content_pattern, 'brightness' => $screen->brightness_schedule],
-            'identity' => ['name' => $profile->name ?: $school->name, 'logo' => $school->logo_path ? asset('storage/'.$school->logo_path) : null],
+            'screen' => ['name' => $screen->name, 'profile' => $screen->profile, 'orientation' => $screen->orientation, 'pattern' => $screen->content_pattern, 'brightness' => $screen->brightness_schedule, 'arabic_digits' => (bool) $screen->arabic_digits],
+            'identity' => ['name' => $profile->name ?: $school->name, 'school' => $school->name, 'logo' => app(SchoolIdentity::class)->logoUrl()],
+            // Pustaka terverifikasi ikut bergilir walau tidak dijadikan konten, agar layar tidak kosong.
+            'quotes' => Quote::query()->whereNotNull('verified_at')->where('is_active', true)->orderBy('id')->limit(60)->get()->map(fn (Quote $quote) => ['id' => 'q'.$quote->id, 'arabic' => $quote->text_ar, 'text' => $quote->text_id, 'source' => $quote->source_ref])->values()->all(),
             'tz_offset_minutes' => (int) ($zone->getOffset($today) / 60),
             'countdown_minutes' => $profile->countdown_minutes,
             'friday_mode' => $profile->friday_mode,
