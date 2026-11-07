@@ -73,6 +73,11 @@ return [
                 ['key' => 'ppdb-applicants', 'permission' => 'ppdb.view', 'label' => 'Pendaftar', 'icon' => 'user-plus', 'route' => 'staff.ppdb.applicants.index', 'module' => 'ppdb'],
                 ['key' => 'ppdb-selection', 'permission' => 'ppdb.view', 'label' => 'Seleksi', 'icon' => 'list-checks', 'route' => 'staff.ppdb.selection.index', 'module' => 'ppdb'],
             ]],
+            ['label' => 'Masjid', 'items' => [
+                ['key' => 'masjid', 'permission' => ['masjid.settings', 'masjid.schedule'], 'label' => 'Jadwal Sholat', 'icon' => 'clock', 'route' => 'staff.masjid.index', 'module' => 'masjid_prayer'],
+                ['key' => 'masjid-contents', 'permission' => 'masjid.content', 'label' => 'Konten Layar', 'icon' => 'megaphone', 'route' => 'staff.masjid.contents', 'module' => 'masjid_display'],
+                ['key' => 'masjid-screens', 'permission' => 'masjid.screens', 'label' => 'Layar TV', 'icon' => 'monitor', 'route' => 'staff.masjid.screens', 'module' => 'masjid_display'],
+            ]],
             ['label' => 'Lainnya', 'items' => [
                 ['key' => 'analytics', 'permission' => 'analytics.view', 'label' => 'Analitik Risiko', 'icon' => 'triangle-alert', 'route' => 'staff.analytics.index', 'module' => 'analytics'],
                 ['key' => 'alumni', 'permission' => 'alumni.manage', 'label' => 'Alumni', 'icon' => 'user-check', 'route' => 'staff.alumni.index', 'module' => 'alumni'],

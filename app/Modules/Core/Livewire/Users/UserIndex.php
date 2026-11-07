@@ -32,6 +32,8 @@ class UserIndex extends Component
         'pengelola_merchant' => 'Pengelola merchant',
         'penjaga_gerbang' => 'Penjaga gerbang',
         'panitia_ppdb' => 'Panitia PPDB',
+        'masjid_manager' => 'Takmir masjid',
+        'masjid_content' => 'Humas masjid',
     ];
 
     #[Url(as: 'cari', except: '')]

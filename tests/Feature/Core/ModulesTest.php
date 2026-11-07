@@ -16,7 +16,7 @@ beforeEach(function () {
 });
 
 it('menanam semua modul PRD dengan nilai default', function () {
-    expect(Module::count())->toBe(26)
+    expect(Module::count())->toBe(29)
         ->and(Module::where('module_key', 'finance')->value('is_enabled'))->toBeTrue()
         ->and(Module::where('module_key', 'face_attendance')->value('is_enabled'))->toBeFalse();
 });

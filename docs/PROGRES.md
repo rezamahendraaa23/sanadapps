@@ -15,8 +15,20 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 10:** absensi wajah dan persetujuan wali (selfie dihapus atas keputusan pemilik)
 - [x] **Tahap 11:** PPDB
 - [x] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
-- [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
+- [x] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 12b
+
+- [x] Jadwal sholat metode Kemenag dengan golden test 4 kota sepanjang 2026, selisih maksimal 1 menit (MSJ-PRY-01 sampai 14)
+- [x] Koreksi, ubah manual per tanggal, iqamah, Jumat, Ramadan, tanggal hijriah dengan penetapan manual
+- [x] Pembanding dari API jadwal resmi dan impor manual, cadangan ke hitungan sendiri
+- [x] Layar TV offline-first: pairing kode, token yang bisa dicabut, mode adzan dan iqamah dari jadwal tersimpan, jam dari server (MSJ-DSP, MSJ-DEV)
+- [x] Konten dengan persetujuan, darurat, ayat terverifikasi, pengumuman SANAD tayang di TV
+- [x] Privasi layar: nama santri hanya dengan persetujuan wali, manifest tanpa data sensitif
+- [x] Sambungan ke SANAD: jadwal berjangkar, sesi absensi sholat otomatis, kartu sholat berikutnya di portal santri
+- [ ] Aplikasi Android TV: kode ada, **belum dibangun dan belum dicoba di TV**
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 12
 
@@ -208,4 +220,5 @@ Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 - Ujian belum diuji beban ratusan santri bersamaan (Tahap 13) dan belum dicoba di HP Android sungguhan
 - Absen wajah baru diuji pada foto contoh, belum pada kamera dan santri sungguhan, dan butuh tinjauan hukum UU PDP sebelum diaktifkan. Pos otomatis tanpa tombol belum teruji dengan wajah bergerak. Kamera wajah baru diuji dengan kamera tiruan Chrome, belum di perangkat sungguhan
 - Satu E2E Tahap 4 sekali menggantung lebih dari 10 detik pada satu pindah halaman, tanpa jejak di log dan tidak muncul lagi di uji penuh berikutnya. Penyebabnya belum diketahui
+- Layar TV baru diuji di Chrome desktop, belum di Android TV, belum uji 72 jam, belum dilihat dari jarak 8 meter
 - Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

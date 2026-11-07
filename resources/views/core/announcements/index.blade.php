@@ -46,6 +46,12 @@
                     Kirim juga lewat WhatsApp ke wali
                 </label>
             @endif
+            @if ($tvEnabled)
+                <label class="flex min-h-11 items-center gap-3 text-base">
+                    <input type="checkbox" wire:model="show_on_tv" class="size-5 accent-primary">
+                    Tayangkan di layar TV masjid
+                </label>
+            @endif
         </form>
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>

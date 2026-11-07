@@ -13,6 +13,13 @@
         </a>
     @endif
 
+    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('masjid_display'))
+        <a href="{{ route('wali.display-consent') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4">
+            <span class="flex min-w-0 items-center gap-3 text-base font-semibold"><x-ui.icon name="monitor" />Nama anak di layar masjid</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     <x-ui.card title="Notifikasi">
         @if ($unread > 0)
             <x-slot:actions>

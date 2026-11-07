@@ -34,6 +34,9 @@ final class ModuleCatalog
         'alumni' => ['name' => 'Alumni', 'description' => 'Data alumni dan kelulusan.', 'default' => false, 'depends' => ['core']],
         'inventory' => ['name' => 'Inventaris asrama', 'description' => 'Barang, mutasi, kondisi.', 'default' => false, 'depends' => ['core']],
         'duty_roster' => ['name' => 'Jadwal piket', 'description' => 'Piket santri dan ustadz.', 'default' => false, 'depends' => ['core']],
+        'masjid_prayer' => ['name' => 'Jadwal sholat masjid', 'description' => 'Hitung jadwal metode Kemenag, koreksi, iqamah, Jumat, Ramadan.', 'default' => false, 'depends' => ['core']],
+        'masjid_display' => ['name' => 'Layar TV masjid', 'description' => 'Jadwal dan pengumuman di TV, tetap jalan saat internet putus.', 'default' => false, 'depends' => ['core', 'masjid_prayer']],
+        'masjid_public' => ['name' => 'Halaman jadwal jamaah', 'description' => 'Halaman web jadwal sholat dan pengumuman publik.', 'default' => false, 'depends' => ['masjid_prayer']],
         'export_dapodik' => ['name' => 'Ekspor Dapodik/EMIS', 'description' => 'Ekspor file sesuai template.', 'default' => false, 'depends' => ['core']],
     ];
 

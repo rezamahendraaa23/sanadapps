@@ -6,6 +6,8 @@ use App\Modules\Core\Models\Announcement;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Masjid\Actions\ManageContent;
+use App\Modules\Masjid\Models\DisplayContent;
 use App\Modules\Notification\Actions\SendAnnouncement;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -36,9 +38,11 @@ class AnnouncementIndex extends Component
 
     public bool $send_wa = false;
 
+    public bool $show_on_tv = false;
+
     public function create(): void
     {
-        $this->reset('editingId', 'title', 'body', 'audience', 'audience_id', 'publish_at', 'send_wa');
+        $this->reset('editingId', 'title', 'body', 'audience', 'audience_id', 'publish_at', 'send_wa', 'show_on_tv');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-pengumuman');
     }
@@ -53,6 +57,7 @@ class AnnouncementIndex extends Component
             'audience' => $announcement->audience,
             'audience_id' => (string) $announcement->audience_id,
             'send_wa' => (bool) $announcement->send_wa,
+            'show_on_tv' => DisplayContent::query()->where('announcement_id', $announcement->id)->whereNot('status', 'archived')->exists(),
             'publish_at' => (string) $announcement->publish_at?->setTimezone(config('sanad.display_timezone'))->format('Y-m-d\TH:i'),
         ]);
         $this->resetErrorBag();
@@ -82,13 +87,19 @@ class AnnouncementIndex extends Component
         ];
 
         if ($this->editingId) {
-            Announcement::query()->findOrFail($this->editingId)->update($data);
+            $announcement = Announcement::query()->findOrFail($this->editingId);
+            $announcement->update($data);
         } else {
             $announcement = Announcement::create([...$data, 'created_by' => auth()->id()]);
 
             if ($this->send_wa && ! $announcement->publish_at->isFuture()) {
                 app(SendAnnouncement::class)->handle($announcement);
             }
+        }
+
+        // Ditandai tayang di TV secara sadar; pengumuman berpenerima kelas atau asrama tidak otomatis tayang (PRD Masjid 8.3).
+        if (app(ModuleRegistry::class)->enabled('masjid_display') && auth()->user()->can('masjid.content')) {
+            app(ManageContent::class)->syncAnnouncement($announcement, $this->show_on_tv, auth()->user());
         }
 
         $this->dispatch('close-modal', 'form-pengumuman');
@@ -108,6 +119,7 @@ class AnnouncementIndex extends Component
             'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'waEnabled' => app(ModuleRegistry::class)->enabled('notification_wa'),
+            'tvEnabled' => app(ModuleRegistry::class)->enabled('masjid_display') && auth()->user()->can('masjid.content'),
         ]);
     }
 }

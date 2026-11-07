@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PaymentSettled::class, MarkApplicantPaid::class);
         Event::listen(LeaveEvent::class, PenalizeLateReturn::class);
 
+        Gate::define('masjid.access', fn ($user) => $user->canAny(['masjid.settings', 'masjid.schedule']));
         Gate::define('discipline.access', fn ($user) => $user->canAny(['discipline.view', 'discipline.record']));
         Gate::define('exams.import', fn ($user) => $user->canAny(['exams.manage', 'exams.own']));
         Gate::define('merchants.access', fn ($user) => $user->canAny(['merchants.manage', 'merchants.own', 'pos.view']));

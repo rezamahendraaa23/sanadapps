@@ -104,6 +104,12 @@ use App\Modules\Leave\Livewire\GateToday;
 use App\Modules\Leave\Livewire\GuardianLeaves;
 use App\Modules\Leave\Livewire\LeaveDesk;
 use App\Modules\Leave\Models\GateLog;
+use App\Modules\Masjid\Http\DisplayController;
+use App\Modules\Masjid\Http\PublicMasjidController;
+use App\Modules\Masjid\Livewire\DisplayContents;
+use App\Modules\Masjid\Livewire\DisplayScreens;
+use App\Modules\Masjid\Livewire\GuardianDisplayConsent;
+use App\Modules\Masjid\Livewire\MasjidSettings;
 use App\Modules\Notification\Http\FonnteWebhookController;
 use App\Modules\Notification\Livewire\GuardianMore;
 use App\Modules\Notification\Livewire\Templates;
@@ -164,6 +170,13 @@ Route::middleware('module:ppdb')->prefix('ppdb')->name('ppdb.')->group(function 
     Route::post('/ujian/{attempt}/peristiwa', [AttemptController::class, 'events'])->middleware('throttle:240,1')->name('exam.events');
     Route::get('/ujian-media/{question}', [AttemptController::class, 'media'])->name('exam.media');
 });
+
+Route::get('/display', [DisplayController::class, 'page'])->middleware('module:masjid_display')->name('display');
+Route::middleware('module:masjid_public')->group(function (): void {
+    Route::get('/masjid', [PublicMasjidController::class, 'today'])->name('masjid.public');
+    Route::get('/masjid/jadwal.pdf', [PublicMasjidController::class, 'monthPdf'])->name('masjid.public.month');
+});
+Route::get('/panel-masjid/media/{content}', [DisplayController::class, 'staffMedia'])->middleware(['auth', 'can:masjid.content'])->name('display.media.staff');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/masuk', Login::class)->name('login');
@@ -327,6 +340,15 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/{exam}/hasil', ExamResults::class)->name('results');
     });
 
+    Route::middleware(['module:masjid_prayer', 'can:masjid.access'])->group(function (): void {
+        Route::get('/masjid', MasjidSettings::class)->name('masjid.index');
+        Route::get('/masjid/jadwal.pdf', [PublicMasjidController::class, 'monthPdf'])->name('masjid.month-pdf');
+    });
+    Route::middleware('module:masjid_display')->group(function (): void {
+        Route::get('/masjid/layar', DisplayScreens::class)->middleware('can:masjid.screens')->name('masjid.screens');
+        Route::get('/masjid/layar/{screen}/pratinjau', [DisplayController::class, 'preview'])->middleware('can:masjid.screens')->name('masjid.preview');
+        Route::get('/masjid/konten', DisplayContents::class)->middleware('can:masjid.content')->name('masjid.contents');
+    });
     Route::get('/pelanggaran', DisciplineBoard::class)->middleware('module:discipline')->middleware('can:discipline.access')->name('discipline.index');
     Route::get('/kesehatan', HealthDesk::class)->middleware('module:health')->name('health.index');
     Route::get('/analitik', RiskBoard::class)->middleware(['module:analytics', 'can:analytics.view'])->name('analytics.index');
@@ -525,6 +547,7 @@ Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif'
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
     Route::view('/', 'core.wali.home')->name('home');
     Route::get('/lainnya', GuardianMore::class)->name('more');
+    Route::get('/persetujuan-layar', GuardianDisplayConsent::class)->middleware('module:masjid_display')->name('display-consent');
     Route::get('/persetujuan-wajah', GuardianFaceConsent::class)->middleware('module:face_attendance')->name('face-consent');
     Route::get('/perkembangan', StudentAcademics::class)->name('progress');
     Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');

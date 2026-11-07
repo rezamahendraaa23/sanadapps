@@ -24,6 +24,16 @@
         @endif
     @endif
 
+    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('masjid_prayer'))
+        @php($nextPrayer = \App\Modules\Masjid\Models\PrayerTime::next(\App\Modules\Masjid\Models\MasjidProfile::current()->timezone))
+        @if ($nextPrayer)
+            <p class="flex items-center justify-between gap-3 rounded-card border border-border bg-surface p-4 text-base">
+                <span class="flex items-center gap-2"><x-ui.icon name="clock" size="sm" />Sholat berikutnya: <strong>{{ $nextPrayer[0] }}</strong></span>
+                <span class="font-display font-tabular text-xl font-semibold">{{ str_replace(':', '.', $nextPrayer[1]) }}</span>
+            </p>
+        @endif
+    @endif
+
     @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('face_attendance'))
         <p class="flex items-center gap-2 rounded-card border border-border bg-surface p-4 text-sm">
             <x-ui.icon name="scan-face" size="sm" />

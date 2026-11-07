@@ -10,6 +10,9 @@ use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
 use App\Modules\Leave\Actions\ManageLeave;
+use App\Modules\Masjid\Actions\ApplyPrayerToSanad;
+use App\Modules\Masjid\Actions\ComputePrayerTimes;
+use App\Modules\Masjid\Actions\ManageScreens;
 use App\Modules\Notification\Actions\SendAnnouncement;
 use App\Modules\Notification\Actions\SendPaymentReminders;
 use App\Modules\Payment\Actions\SyncPayment;
@@ -41,3 +44,15 @@ Schedule::call(function () {
     }
 })->name('ComputeRiskScores')->dailyAt('03:00')->timezone(config('sanad.display_timezone'));
 Schedule::call(fn () => app(SyncAlumni::class)->handle())->name('SyncAlumni')->dailyAt('03:30')->timezone(config('sanad.display_timezone'));
+Schedule::call(function () {
+    if (app(ModuleRegistry::class)->enabled('masjid_prayer')) {
+        app(ComputePrayerTimes::class)->handle();
+        app(ApplyPrayerToSanad::class)->shiftAnchoredSchedules();
+    }
+})->name('ComputePrayerTimes')->dailyAt('00:10')->timezone(config('sanad.display_timezone'));
+Schedule::call(function () {
+    if (app(ModuleRegistry::class)->enabled('masjid_prayer') && app(ModuleRegistry::class)->enabled('attendance')) {
+        app(ApplyPrayerToSanad::class)->openAttendance();
+    }
+})->name('OpenPrayerAttendance')->everyMinute()->withoutOverlapping();
+Schedule::call(fn () => app(ManageScreens::class)->pruneEvents())->name('PruneDisplayEvents')->dailyAt('02:30')->timezone(config('sanad.display_timezone'));
