@@ -15,6 +15,9 @@ return [
     // Nilai awal zona tampilan; ditimpa school_profile.timezone per request. Penyimpanan selalu UTC.
     'display_timezone' => env('SANAD_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
 
+    // fake atau faceapi. Lihat PRD Sistem, Catatan D8.
+    'face_driver' => env('FACE_DRIVER', 'fake'),
+
     // Mematikan pengiriman WA, dipakai uji konkurensi yang tidak berkaitan dengan notifikasi.
     'notifications_off' => env('SANAD_NOTIFICATIONS_OFF', false),
 

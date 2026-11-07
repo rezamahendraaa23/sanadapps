@@ -4,6 +4,7 @@ namespace App\Modules\Academic\Livewire;
 
 use App\Modules\Academic\Actions\EnrollFace;
 use App\Modules\Academic\Actions\ManageBiometricConsent;
+use App\Modules\Academic\Face\FaceInput;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Models\BiometricConsent;
 use App\Modules\Academic\Models\FaceEnrollment;
@@ -76,6 +77,29 @@ class FaceEnrollments extends Component
         $this->dispatch('toast', message: 'Wajah terdaftar. Fotonya tidak disimpan.', tone: 'success');
     }
 
+    /**
+     * Pengenal di browser: yang dikirim hanya angka, foto tidak pernah meninggalkan kamera.
+     *
+     * @param  list<list<float>>  $descriptors
+     */
+    public function enrollDescriptors(array $descriptors, EnrollFace $action, FaceMatcher $matcher): void
+    {
+        $student = $this->student();
+        abort_if($student === null, 403);
+        abort_unless($matcher->runsInBrowser(), 403);
+        $this->resetErrorBag();
+
+        try {
+            $action->handle($student, array_map(fn ($descriptor) => new FaceInput(descriptor: is_array($descriptor) ? $descriptor : []), array_values($descriptors)), auth()->id());
+        } catch (AcademicException $exception) {
+            $this->addError('photos', $exception->getMessage());
+
+            return;
+        }
+
+        $this->dispatch('toast', message: 'Wajah terdaftar. Fotonya tidak disimpan.', tone: 'success');
+    }
+
     public function erase(ManageBiometricConsent $consents): void
     {
         $student = $this->student();
@@ -130,6 +154,7 @@ class FaceEnrollments extends Component
             'enrolledCount' => FaceEnrollment::query()->where('status', 'active')->count(),
             'matcherAvailable' => $matcher->available(),
             'matcherVersion' => $matcher->modelVersion(),
+            'runsInBrowser' => $matcher->runsInBrowser(),
         ]);
     }
 }

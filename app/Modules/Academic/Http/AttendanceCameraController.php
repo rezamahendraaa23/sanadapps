@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Http;
 
 use App\Modules\Academic\Actions\RecordFaceAttendance;
+use App\Modules\Academic\Face\FaceInput;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Livewire\AttendanceToday;
 use App\Modules\Academic\Models\AttendanceRecord;
@@ -40,6 +41,9 @@ class AttendanceCameraController
             'session' => $session,
             'available' => $matcher->available(),
             'config' => [
+                'browser' => $matcher->runsInBrowser(),
+                'modelUrl' => asset('vendor/face-api/model'),
+                'libraryUrl' => asset('vendor/face-api/face-api.js'),
                 'challengeUrl' => route('attendance.face.challenge', $session),
                 'scanUrl' => route('attendance.face.scan', $session),
             ],
@@ -54,11 +58,11 @@ class AttendanceCameraController
         return response()->json($faces->challenge('user:'.$request->user()->id));
     }
 
-    public function faceScan(Request $request, AttendanceSession $session, RecordFaceAttendance $faces): JsonResponse
+    public function faceScan(Request $request, AttendanceSession $session, RecordFaceAttendance $faces, FaceMatcher $matcher): JsonResponse
     {
         abort_unless($session->canBeTakenBy($request->user()), 403);
-        $data = $request->validate(['photo' => 'required|image|max:8192', 'liveness_frame' => 'required|image|max:8192', 'liveness_token' => 'required|string']);
+        [$input, $evidence] = FaceInput::fromRequest($request, $matcher);
 
-        return response()->json($faces->scan($session, $data['photo'], $data['liveness_frame'], $data['liveness_token'], 'user:'.$request->user()->id));
+        return response()->json($faces->scan($session, $input, $evidence, (string) $request->input('liveness_token'), 'user:'.$request->user()->id));
     }
 }

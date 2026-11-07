@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Actions;
 
+use App\Modules\Academic\Face\FaceInput;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Face\FaceQualityException;
 use App\Modules\Academic\Models\AttendanceRecord;
@@ -43,7 +44,7 @@ class RecordFaceAttendance
      *
      * @return array{ok: bool, outcome: string, message: string, name: string|null, fallback: bool}
      */
-    public function scan(AttendanceSession $session, UploadedFile $photo, UploadedFile $frame, string $token, string $subject): array
+    public function scan(AttendanceSession $session, FaceInput $input, ?UploadedFile $evidence, string $token, string $subject): array
     {
         if (! $this->modules->enabled('face_attendance') || ! $this->matcher->available() || ! in_array('face', $session->allowed_modes ?? [], true)) {
             return $this->result(false, 'unavailable', 'Absen wajah tidak tersedia untuk sesi ini. Pakai kartu atau manual.', fallback: true);
@@ -59,9 +60,7 @@ class RecordFaceAttendance
             return $this->result(false, 'expired', 'Tantangan kedaluwarsa. Coba lagi.');
         }
 
-        $photoBytes = (string) file_get_contents($photo->getRealPath());
-
-        if (! $this->matcher->isLive($challenge['challenge'], $photoBytes, (string) file_get_contents($frame->getRealPath()))) {
+        if (! $this->matcher->isLive($challenge['challenge'], $input)) {
             $failures = Cache::increment($this->failureKey($session, $subject));
             Cache::put($this->failureKey($session, $subject), $failures, now()->addMinutes(15));
 
@@ -83,7 +82,7 @@ class RecordFaceAttendance
         }
 
         try {
-            $match = $this->matcher->identify($photoBytes, $candidates->mapWithKeys(fn (FaceEnrollment $candidate) => [$candidate->student_id => $candidate->embedding])->all());
+            $match = $this->matcher->identify($input, $candidates->mapWithKeys(fn (FaceEnrollment $candidate) => [$candidate->student_id => $candidate->embedding])->all());
         } catch (FaceQualityException $exception) {
             return $this->result(false, 'quality', $exception->getMessage());
         }
@@ -97,9 +96,10 @@ class RecordFaceAttendance
             return $this->result(false, 'rejected', 'Wajah tidak dikenali. Pakai kartu atau manual.', fallback: true);
         }
 
-        $confident = $bestScore >= $thresholds['upper'];
+        // Dua santri hampir sama mirip, misalnya kakak beradik: manusia yang memutuskan.
+        $confident = $bestScore >= $thresholds['upper'] && ! $match->ambiguous;
 
-        return DB::transaction(function () use ($session, $best, $bestScore, $confident, $photo): array {
+        return DB::transaction(function () use ($session, $best, $bestScore, $confident, $evidence): array {
             $record = AttendanceRecord::query()->where('session_id', $session->id)->where('student_id', $best->student_id)->lockForUpdate()->firstOrFail();
 
             if ($record->scanned_at !== null && $record->review_status !== 'rejected') {
@@ -109,7 +109,7 @@ class RecordFaceAttendance
             $record->update($confident
                 ? ['status' => AttendanceClock::status($session), 'method' => 'face', 'scanned_at' => now(), 'match_score' => $bestScore, 'review_status' => 'none', 'note' => null]
                 // Foto hanya disimpan bila manusia perlu melihatnya.
-                : ['method' => 'face', 'scanned_at' => now(), 'match_score' => $bestScore, 'review_status' => 'pending', 'evidence_path' => $this->images->store($photo, 'attendance-evidence'), 'note' => null]);
+                : ['method' => 'face', 'scanned_at' => now(), 'match_score' => $bestScore, 'review_status' => 'pending', 'evidence_path' => $evidence ? $this->images->store($evidence, 'attendance-evidence') : null, 'note' => null]);
 
             return $confident
                 ? $this->result(true, 'present', 'Hadir tercatat.', $best->student->name)

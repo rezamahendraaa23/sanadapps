@@ -3,8 +3,7 @@
 namespace App\Modules\Academic\Face;
 
 /**
- * Batas ke teknologi pencocokan wajah yang belum diputuskan (PRD Sistem, Catatan D8). Implementasinya bisa
- * adapter ke perangkat jadi (Jalur A) atau layanan sendiri (Jalur B), jadi SANAD hanya menyimpan template
+ * Batas ke teknologi pencocokan wajah (PRD Sistem, Catatan D8). SANAD hanya menyimpan template
  * yang dikembalikan dan tidak tahu cara pencocokannya.
  */
 interface FaceMatcher
@@ -17,12 +16,22 @@ interface FaceMatcher
     public function modelVersion(): string;
 
     /**
-     * @param  list<string>  $images  Isi berkas foto dari beberapa sudut.
+     * True bila wajah diolah di browser, jadi halaman kamera memuat modelnya dan mengirim angka, bukan gambar.
+     */
+    public function runsInBrowser(): bool;
+
+    /**
+     * @return array{upper: float, lower: float}
+     */
+    public function defaultThresholds(): array;
+
+    /**
+     * @param  list<FaceInput|string>  $inputs  Beberapa pengambilan dari sudut berbeda.
      * @return FaceTemplate Yang disimpan SANAD; tidak pernah berisi foto.
      *
-     * @throws FaceQualityException Ada foto yang tidak cukup baik.
+     * @throws FaceQualityException
      */
-    public function enroll(array $images): FaceTemplate;
+    public function enroll(array $inputs): FaceTemplate;
 
     /**
      * Identifikasi 1:N terhadap santri peserta sesi.
@@ -30,9 +39,9 @@ interface FaceMatcher
      * @param  array<int, array<int|string, mixed>>  $templates  id santri ke template hasil enroll().
      * @return FaceMatch|null Kandidat terbaik, null bila tidak ada kandidat.
      *
-     * @throws FaceQualityException Gambar tidak cukup baik untuk dicocokkan.
+     * @throws FaceQualityException
      */
-    public function identify(string $image, array $templates): ?FaceMatch;
+    public function identify(FaceInput|string $input, array $templates): ?FaceMatch;
 
-    public function isLive(string $challenge, string $firstFrame, string $secondFrame): bool;
+    public function isLive(string $challenge, FaceInput $input): bool;
 }

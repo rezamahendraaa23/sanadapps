@@ -42,7 +42,7 @@
 | D5 | Integrasi langsung ke Dapodik/EMIS | Belum jelas ada API terbuka untuk kebutuhan ini | Ekspor **file** (xlsx/csv) sesuai template |
 | D6 | Penyedia hosting & lokasi data | Belum dipilih | Rekomendasi: satu VPS di region Indonesia/Singapura |
 | D7 | Perangkat kartu (RFID/NFC) | Belum dibeli | Didesain pakai **reader USB mode keyboard (HID)** + kamera QR di browser (tanpa firmware khusus) |
-| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; sebelum modul aktif, absen memakai manual, kartu, atau QR. Dua jalur dan glosarium: lihat Catatan D8 |
+| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; sebelum modul aktif, absen memakai manual, kartu, atau QR. Jalur dan glosarium: lihat Catatan D8 |
 
 *D3 dihapus pada v2.0 (mode Midtrans akun platform tidak relevan untuk satu pesantren).*
 
@@ -56,16 +56,17 @@
 - **Liveness detection / anti-spoofing:** memastikan yang di depan kamera orang asli, bukan foto atau layar.
 - **Face attendance / contactless attendance:** absen otomatis saat wajah terdeteksi.
 
-*Dua jalur implementasi, diputuskan lewat PoC:*
+*Jalur implementasi, diputuskan lewat PoC:*
 
 | Jalur | Kelebihan | Kekurangan |
 |---|---|---|
 | **A. Perangkat jadi:** terminal absen wajah dari merek yang ada di pasaran (mis. ZKTeco, Hikvision, Dahua) | Cepat; liveness dan kamera tahan cahaya sudah ada; ada relai pintu | Integrasi ke SANAD bergantung pada API/SDK perangkat (belum diverifikasi); data wajah tersimpan di perangkat |
 | **B. Dibangun sendiri:** layanan Python + InsightFace/ArcFace via ONNX, embedding di `face_enrollments` | Data di server pesantren; fleksibel | Liveness dan ketahanan cahaya harus dibangun dan diuji sendiri |
+| **C. Di browser:** `@vladmandic/face-api` memuat model dari server sendiri, wajah menjadi 128 angka, server menghitung jarak. Dipakai untuk uji coba atas pilihan pemilik, mengikuti sistem absen DW-nya | Tanpa beli perangkat dan tanpa layanan Python; data di server pesantren | Angka dikirim oleh browser, jadi tablet harus diawasi; cek gerakan sederhana bukan anti-spoofing penuh; akurasi 1:N belum diuji di lokasi |
 
-- **Syarat untuk kedua jalur:** persetujuan wali, hanya embedding, fallback kartu/manual, pembayaran dengan wajah selalu butuh PIN.
+- **Syarat untuk semua jalur:** persetujuan wali, hanya embedding, fallback kartu/manual, pembayaran dengan wajah selalu butuh PIN.
 - **Cara memilih:** jalur dipilih setelah PoC memakai kamera dan cahaya di lokasi. Pengembang tidak memilih vendor sendiri.
-- **Abstraksi `FaceMatcher`:** implementasinya bisa berupa adapter ke perangkat (Jalur A) atau layanan sendiri (Jalur B), sehingga SANAD tidak bergantung pada salah satunya.
+- **Abstraksi `FaceMatcher`:** implementasinya bisa berupa adapter ke perangkat (Jalur A), layanan sendiri (Jalur B), atau mesin di browser (Jalur C), sehingga SANAD tidak bergantung pada salah satunya.
 - **Klaim vendor:** harga, SDK, atau kompatibilitas merek tertentu tidak diklaim sebelum diverifikasi dari dokumentasi resmi vendor.
 
 ---

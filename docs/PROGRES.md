@@ -27,7 +27,8 @@ Diperbarui setiap ada langkah selesai.
 - [x] Persetujuan wali digital dan kertas, cabut menghapus data saat itu juga, enrol terblokir tanpa persetujuan (ATT-08, W-14, U-15)
 - [x] API perangkat untuk tablet (`/device/attendance/face`)
 - [x] Foto bukti hanya untuk pengabsen sesi, setiap akses tercatat di audit
-- [ ] Teknologi pengenal wajah sungguhan: **belum ada**, tergantung PoC D8. Sekarang hanya tiruan dan tertutup di produksi
+- [x] Pengenal wajah sungguhan lewat face-api di browser (Jalur C), model disimpan di server sendiri
+- [ ] Uji coba di lokasi dengan santri, kamera, dan cahaya sungguhan: **belum dilakukan**
 - [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 9
@@ -182,6 +183,6 @@ Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 - Horizon terpasang dan terkonfigurasi, tetapi belum pernah dijalankan, karena butuh Redis dan `pcntl` (WSL2 atau Docker)
 - Reader kartu USB dan kamera QR di kasir belum dicoba dengan alat sungguhan; pemindaian di uji browser diketik atau disimulasikan
 - Ujian belum diuji beban ratusan santri bersamaan (Tahap 13) dan belum dicoba di HP Android sungguhan
-- Absen wajah belum pernah dicoba dengan pengenal wajah sungguhan (D8) dan butuh tinjauan hukum UU PDP sebelum diaktifkan. Kamera wajah baru diuji dengan kamera tiruan Chrome, belum di perangkat sungguhan
+- Absen wajah baru diuji pada foto contoh, belum pada kamera dan santri sungguhan, dan butuh tinjauan hukum UU PDP sebelum diaktifkan. Pos otomatis tanpa tombol belum teruji dengan wajah bergerak. Kamera wajah baru diuji dengan kamera tiruan Chrome, belum di perangkat sungguhan
 - Satu E2E Tahap 4 sekali menggantung lebih dari 10 detik pada satu pindah halaman, tanpa jejak di log dan tidak muncul lagi di uji penuh berikutnya. Penyebabnya belum diketahui
 - Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

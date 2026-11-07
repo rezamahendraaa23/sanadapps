@@ -26,14 +26,24 @@ class FakeFaceMatcher implements FaceMatcher
         return 'fake-luma-16';
     }
 
-    public function enroll(array $images): FaceTemplate
+    public function runsInBrowser(): bool
+    {
+        return false;
+    }
+
+    public function defaultThresholds(): array
+    {
+        return ['upper' => 0.80, 'lower' => 0.60];
+    }
+
+    public function enroll(array $inputs): FaceTemplate
     {
         $vectors = [];
         $qualities = [];
 
-        foreach (array_values($images) as $index => $image) {
+        foreach (array_values($inputs) as $index => $input) {
             try {
-                [$vectors[], $qualities[]] = $this->embed($image);
+                [$vectors[], $qualities[]] = $this->embed(FaceInput::wrap($input)->image);
             } catch (FaceQualityException $exception) {
                 throw new FaceQualityException('Foto '.($index + 1).': '.$exception->getMessage());
             }
@@ -50,9 +60,9 @@ class FakeFaceMatcher implements FaceMatcher
         return new FaceTemplate(array_map(fn (float $value) => round($value / $length, 6), $average), min($qualities));
     }
 
-    public function identify(string $image, array $templates): ?FaceMatch
+    public function identify(FaceInput|string $input, array $templates): ?FaceMatch
     {
-        [$probe] = $this->embed($image);
+        [$probe] = $this->embed(FaceInput::wrap($input)->image);
         $best = null;
 
         foreach ($templates as $studentId => $template) {
@@ -128,8 +138,8 @@ class FakeFaceMatcher implements FaceMatcher
         return max(0.0, min(1.0, ($dot + 1) / 2));
     }
 
-    public function isLive(string $challenge, string $firstFrame, string $secondFrame): bool
+    public function isLive(string $challenge, FaceInput $input): bool
     {
-        return self::$forcedLive ?? ($firstFrame !== '' && $secondFrame !== '' && ! hash_equals(md5($firstFrame), md5($secondFrame)));
+        return self::$forcedLive ?? ($input->image !== '' && $input->secondFrame !== '' && ! hash_equals(md5($input->image), md5($input->secondFrame)));
     }
 }

@@ -7,6 +7,7 @@ use App\Modules\Academic\Actions\PurgeAttendanceEvidence;
 use App\Modules\Academic\Actions\RecordAttendance;
 use App\Modules\Academic\Actions\RecordFaceAttendance;
 use App\Modules\Academic\Actions\ReviewAttendance;
+use App\Modules\Academic\Face\FaceInput;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Face\FaceQualityException;
 use App\Modules\Academic\Face\FakeFaceMatcher;
@@ -118,7 +119,7 @@ function faceScan($context, ?float $score = 0.9, ?AttendanceSession $session = n
     $faces = app(RecordFaceAttendance::class);
     $challenge = $faces->challenge($subject);
 
-    return $faces->scan($session ?? $context->faceSession, faceUpload(1), faceUpload(2, 'gerak.jpg'), $challenge['token'], $subject);
+    return $faces->scan($session ?? $context->faceSession, FaceInput::fromFiles(faceUpload(1), faceUpload(2, 'gerak.jpg')), faceUpload(1), $challenge['token'], $subject);
 }
 
 describe('sesi dan mode', function () {
@@ -301,20 +302,20 @@ describe('wajah', function () {
         $faces = app(RecordFaceAttendance::class);
 
         foreach ([false, false, true] as $fallback) {
-            $result = $faces->scan($this->faceSession, faceUpload(1), faceUpload(2), $faces->challenge('a')['token'], 'a');
+            $result = $faces->scan($this->faceSession, FaceInput::fromFiles(faceUpload(1), faceUpload(2)), faceUpload(1), $faces->challenge('a')['token'], 'a');
             expect($result['outcome'])->toBe('liveness')->and($result['fallback'])->toBe($fallback);
         }
 
         FakeFaceMatcher::$forcedLive = null;
         FakeFaceMatcher::$forcedScore = 0.9;
         $token = $faces->challenge('a')['token'];
-        expect($faces->scan($this->faceSession, faceUpload(1), faceUpload(2), $token, 'b')['outcome'])->toBe('expired')
-            ->and($faces->scan($this->faceSession, faceUpload(1), faceUpload(2), $token, 'a')['outcome'])->toBe('expired');
+        expect($faces->scan($this->faceSession, FaceInput::fromFiles(faceUpload(1), faceUpload(2)), faceUpload(1), $token, 'b')['outcome'])->toBe('expired')
+            ->and($faces->scan($this->faceSession, FaceInput::fromFiles(faceUpload(1), faceUpload(2)), faceUpload(1), $token, 'a')['outcome'])->toBe('expired');
     });
 
     it('frame identik gagal liveness pada matcher tiruan; kualitas buruk ditolak', function () {
         $matcher = app(FaceMatcher::class);
-        expect($matcher->isLive('x', faceImage(1), faceImage(1)))->toBeFalse()->and($matcher->isLive('x', faceImage(1), faceImage(2)))->toBeTrue();
+        expect($matcher->isLive('x', new FaceInput(faceImage(1), secondFrame: faceImage(1))))->toBeFalse()->and($matcher->isLive('x', new FaceInput(faceImage(1), secondFrame: faceImage(2))))->toBeTrue();
 
         $dark = imagecreatetruecolor(300, 300);
         ob_start();

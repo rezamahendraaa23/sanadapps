@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Actions;
 
+use App\Modules\Academic\Face\FaceInput;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Face\FaceQualityException;
 use App\Modules\Academic\Models\BiometricConsent;
@@ -20,7 +21,7 @@ class EnrollFace
     /**
      * Foto hanya dibaca untuk menghasilkan embedding; tidak ada yang disimpan (ATT-08).
      *
-     * @param  list<string>  $images  Isi berkas gambar.
+     * @param  list<FaceInput|string>  $images
      */
     public function handle(Student $student, array $images, int $enrolledBy): FaceEnrollment
     {

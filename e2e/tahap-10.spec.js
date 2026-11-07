@@ -144,8 +144,11 @@ test('wajah: tanpa persetujuan diblok, wali setuju, daftar, pindai di pos, wali 
 
     await musyrif.goto(kioskUrl);
     await expect(musyrif.getByRole('button', { name: 'Mulai Pindai' })).toBeEnabled();
-    await musyrif.getByRole('button', { name: 'Mulai Pindai' }).click();
-    await expect(musyrif.getByRole('status').filter({ hasText: 'Menunggu konfirmasi musyrif' })).toBeVisible({ timeout: 20_000 });
+    // Kamera tiruan kadang memberi dua frame yang sama saat tab tidak aktif; pos memang meminta coba lagi.
+    await expect(async () => {
+        await musyrif.getByRole('button', { name: 'Mulai Pindai' }).click();
+        await expect(musyrif.getByRole('status').filter({ hasText: 'Menunggu konfirmasi musyrif' })).toBeVisible({ timeout: 6_000 });
+    }).toPass({ timeout: 40_000 });
     await musyrif.goto('/musyrif/absensi/tinjauan');
     await pageReady(musyrif);
     await musyrif.getByRole('button', { name: /^Hadir Santri Tiga/ }).click();

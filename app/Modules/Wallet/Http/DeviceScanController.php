@@ -4,6 +4,8 @@ namespace App\Modules\Wallet\Http;
 
 use App\Modules\Academic\Actions\RecordAttendance;
 use App\Modules\Academic\Actions\RecordFaceAttendance;
+use App\Modules\Academic\Face\FaceInput;
+use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Leave\Actions\GateScan;
@@ -81,9 +83,10 @@ class DeviceScanController
         return response()->json($faces->challenge('device:'.$device->id));
     }
 
-    public function face(Request $request, ModuleRegistry $modules, RecordFaceAttendance $faces): JsonResponse
+    public function face(Request $request, ModuleRegistry $modules, RecordFaceAttendance $faces, FaceMatcher $matcher): JsonResponse
     {
-        $data = $request->validate(['session_id' => 'required|uuid', 'photo' => 'required|image|max:8192', 'liveness_frame' => 'required|image|max:8192', 'liveness_token' => 'required|string']);
+        $data = $request->validate(['session_id' => 'required|uuid']);
+        [$input, $evidence] = FaceInput::fromRequest($request, $matcher);
 
         /** @var Device $device */
         $device = $request->attributes->get('device');
@@ -94,7 +97,7 @@ class DeviceScanController
 
         $session = AttendanceSession::query()->where('uuid', $data['session_id'])->firstOrFail();
 
-        return response()->json($faces->scan($session, $data['photo'], $data['liveness_frame'], $data['liveness_token'], 'device:'.$device->id));
+        return response()->json($faces->scan($session, $input, $evidence, (string) $request->input('liveness_token'), 'device:'.$device->id));
     }
 
     public function attendance(Request $request, ModuleRegistry $modules, RecordAttendance $attendance): JsonResponse

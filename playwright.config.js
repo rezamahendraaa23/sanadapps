@@ -31,6 +31,7 @@ export default defineConfig({
             SESSION_DRIVER: 'file',
             MAIL_MAILER: 'array',
             SANAD_FAKE_MIDTRANS: '1',
+            FACE_DRIVER: 'fake',
         },
     },
 });

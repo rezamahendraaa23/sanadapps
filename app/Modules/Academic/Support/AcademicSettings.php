@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Support;
 
+use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Support\ModuleRegistry;
 
@@ -55,7 +56,9 @@ final class AcademicSettings
     {
         $rules = self::attendance();
 
-        return ['upper' => (float) ($rules['face_upper'] ?? 0.80), 'lower' => (float) ($rules['face_lower'] ?? 0.60)];
+        $defaults = app(FaceMatcher::class)->defaultThresholds();
+
+        return ['upper' => (float) ($rules['face_upper'] ?? $defaults['upper']), 'lower' => (float) ($rules['face_lower'] ?? $defaults['lower'])];
     }
 
     public static function predicate(float $score): string

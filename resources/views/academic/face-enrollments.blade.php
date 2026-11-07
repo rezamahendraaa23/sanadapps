@@ -36,8 +36,8 @@
                     <x-ui.button variant="danger" class="mt-2" wire:click="erase" wire:confirm="Hapus data wajah {{ $student->name }}?" wire:loading.attr="disabled" wire:target="erase">Hapus Data Wajah</x-ui.button>
                 @endif
 
-                <div class="mt-4 flex flex-col gap-3" x-data="faceEnroll({{ \App\Modules\Academic\Actions\EnrollFace::MIN_PHOTOS }})">
-                    <div x-show="error" x-cloak role="alert" class="rounded-control bg-warning-soft p-3 text-base"><span x-text="error"></span> Pilih foto dari berkas di bawah.</div>
+                <div class="mt-4 flex flex-col gap-3" x-data="faceEnroll(@js(['needed' => \App\Modules\Academic\Actions\EnrollFace::MIN_PHOTOS, 'browser' => $runsInBrowser, 'libraryUrl' => asset('vendor/face-api/face-api.js'), 'modelUrl' => asset('vendor/face-api/model')]))">
+                    <div x-show="error" x-cloak role="alert" class="rounded-control bg-warning-soft p-3 text-base"><span x-text="error"></span> @unless ($runsInBrowser) Pilih foto dari berkas di bawah. @endunless</div>
                     <div x-show="!error" class="relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-card bg-text">
                         <video x-ref="video" autoplay playsinline muted class="size-full -scale-x-100 object-cover" aria-label="Kamera"></video>
                         <div class="pointer-events-none absolute inset-[12%] rounded-[50%] border-2 border-on-primary"></div>
@@ -48,6 +48,8 @@
                         <x-ui.button variant="secondary" x-show="shots.length > 0" x-on:click="shots = []">Ulangi</x-ui.button>
                         <x-ui.button x-show="shots.length >= needed" x-bind:disabled="busy" x-on:click="send()">Simpan Wajah</x-ui.button>
                     </div>
+                    <p x-show="notice" x-cloak role="status" class="text-center text-base font-semibold" x-text="notice"></p>
+                    @unless ($runsInBrowser)
                     <div class="flex flex-col gap-1">
                         <label for="field-photos" class="text-sm font-semibold">Atau pilih foto</label>
                         <input id="field-photos" type="file" accept="image/jpeg,image/png" multiple wire:model="photos" class="min-h-11 w-full text-base">
@@ -55,6 +57,7 @@
                             <x-ui.button variant="secondary" class="self-start" wire:click="enroll" wire:loading.attr="disabled" wire:target="enroll,photos">Simpan {{ count($photos) }} Foto</x-ui.button>
                         @endif
                     </div>
+                    @endunless
                     @error('photos')<p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>@enderror
                     @error('photos.*')<p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>@enderror
                 </div>
