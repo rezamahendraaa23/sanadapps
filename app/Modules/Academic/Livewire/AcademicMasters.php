@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Livewire;
 
+use App\Modules\Academic\Models\BiometricConsent;
 use App\Modules\Academic\Models\GradeComponent;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Models\TeachingAssignment;
@@ -10,6 +11,7 @@ use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Teacher;
+use App\Modules\Core\Support\ModuleRegistry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -53,10 +55,35 @@ class AcademicMasters extends Component
     /** @var list<string> */
     public array $verification_modes = [];
 
+    public bool $geofence_enabled = false;
+
+    public string $geofence_lat = '';
+
+    public string $geofence_lng = '';
+
+    public string $geofence_radius = '100';
+
+    public string $selfie_retention = '30';
+
+    public string $face_upper = '0,80';
+
+    public string $face_lower = '0,60';
+
     public function mount(): void
     {
         $this->late_tolerance = (string) AcademicSettings::lateTolerance();
         $this->verification_modes = AcademicSettings::verificationModes();
+        $fence = AcademicSettings::geofence();
+        $faces = AcademicSettings::faceThresholds();
+        $this->fill([
+            'geofence_enabled' => $fence['enabled'],
+            'geofence_lat' => $fence['lat'] === null ? '' : (string) $fence['lat'],
+            'geofence_lng' => $fence['lng'] === null ? '' : (string) $fence['lng'],
+            'geofence_radius' => (string) $fence['radius'],
+            'selfie_retention' => (string) AcademicSettings::selfieRetentionDays(),
+            'face_upper' => str_replace('.', ',', number_format($faces['upper'], 2, '.', '')),
+            'face_lower' => str_replace('.', ',', number_format($faces['lower'], 2, '.', '')),
+        ]);
     }
 
     public function selectTab(string $tab): void
@@ -153,14 +180,37 @@ class AcademicMasters extends Component
     public function saveRules(): void
     {
         $this->resetErrorBag();
+        $upper = str_replace(',', '.', $this->face_upper);
+        $lower = str_replace(',', '.', $this->face_lower);
         $this->validate([
             'late_tolerance' => 'required|integer|min:0|max:120',
             'verification_modes' => 'required|array|min:1',
-            'verification_modes.*' => 'in:manual,card,qr',
-        ], ['verification_modes.required' => 'Pilih minimal satu cara absen.'], ['late_tolerance' => 'toleransi']);
+            'verification_modes.*' => 'in:manual,card,qr,selfie,face',
+            'geofence_lat' => $this->geofence_enabled ? 'required|numeric|between:-90,90' : 'nullable',
+            'geofence_lng' => $this->geofence_enabled ? 'required|numeric|between:-180,180' : 'nullable',
+            'geofence_radius' => 'required|integer|min:10|max:5000',
+            'selfie_retention' => 'required|integer|min:1|max:365',
+        ], ['verification_modes.required' => 'Pilih minimal satu cara absen.'], ['late_tolerance' => 'toleransi', 'geofence_lat' => 'lintang', 'geofence_lng' => 'bujur', 'geofence_radius' => 'radius', 'selfie_retention' => 'masa simpan']);
+
+        if (! is_numeric($upper) || ! is_numeric($lower) || (float) $upper > 1 || (float) $lower < 0 || (float) $upper <= (float) $lower) {
+            $this->addError('face_upper', 'Ambang atas harus lebih besar dari ambang bawah, keduanya 0 sampai 1.');
+
+            return;
+        }
 
         $module = Module::query()->where('module_key', 'attendance')->firstOrFail();
-        $module->update(['settings' => [...($module->settings ?? []), 'late_tolerance' => (int) $this->late_tolerance, 'verification_modes' => array_values($this->verification_modes)]]);
+        $module->update(['settings' => [
+            ...($module->settings ?? []),
+            'late_tolerance' => (int) $this->late_tolerance,
+            'verification_modes' => array_values($this->verification_modes),
+            'geofence_enabled' => $this->geofence_enabled,
+            'geofence_lat' => filled($this->geofence_lat) ? (float) $this->geofence_lat : null,
+            'geofence_lng' => filled($this->geofence_lng) ? (float) $this->geofence_lng : null,
+            'geofence_radius' => (int) $this->geofence_radius,
+            'selfie_retention' => (int) $this->selfie_retention,
+            'face_upper' => (float) $upper,
+            'face_lower' => (float) $lower,
+        ]]);
 
         $this->dispatch('toast', message: 'Aturan absensi tersimpan.', tone: 'success');
     }
@@ -178,6 +228,8 @@ class AcademicMasters extends Component
             'components' => $components,
             'totalWeight' => (int) $components->where('is_active', true)->sum('weight'),
             'types' => Subject::TYPES,
+            'faceModule' => app(ModuleRegistry::class)->enabled('face_attendance'),
+            'consentCount' => BiometricConsent::query()->active()->count(),
         ]);
     }
 }

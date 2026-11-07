@@ -6,11 +6,10 @@ use App\Modules\Academic\Events\AttendanceClosed;
 use App\Modules\Academic\Models\AttendanceRecord;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Academic\Support\AcademicException;
-use App\Modules\Academic\Support\AcademicSettings;
+use App\Modules\Academic\Support\AttendanceClock;
 use App\Modules\Wallet\Actions\RecordScan;
 use App\Modules\Wallet\Support\CardResolver;
 use App\Modules\Wallet\Support\QrToken;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 class RecordAttendance
@@ -37,7 +36,9 @@ class RecordAttendance
                 }
 
                 if ($status !== $record->status) {
-                    $record->update(['status' => $status]);
+                    // Koreksi langsung oleh pengabsen menyelesaikan antrean tinjauan catatan itu.
+                    $reviewed = in_array($record->review_status, ['flagged', 'pending'], true) || $record->sampled;
+                    $record->update(['status' => $status] + ($reviewed ? ['review_status' => 'approved', 'sampled' => false, 'reviewed_by' => $userId, 'reviewed_at' => now()] : []));
                 }
             }
 
@@ -84,24 +85,17 @@ class RecordAttendance
                 return ['ok' => false, 'message' => $card->student->name.' bukan peserta sesi ini.', 'name' => $card->student->name, 'status' => null];
             }
 
-            if ($record->scanned_at !== null) {
+            // Kartu tetap jalan bila selfie ditolak atau wajah masih menunggu: selalu ada cara lain.
+            if ($record->scanned_at !== null && ! in_array($record->review_status, ['rejected', 'pending'], true)) {
                 return ['ok' => true, 'message' => 'Sudah tercatat.', 'name' => $card->student->name, 'status' => $record->status];
             }
 
             QrToken::consume($credential);
 
-            $record->update(['status' => $this->statusNow($session), 'method' => $resolved['method'], 'scanned_at' => now()]);
+            $record->update(['status' => AttendanceClock::status($session), 'method' => $resolved['method'], 'scanned_at' => now(), 'review_status' => 'none', 'sampled' => false]);
             $this->scan->handle($card, $deviceId, 'attendance', 'ok', null, 'attendance_session', $session->id);
 
             return ['ok' => true, 'message' => AttendanceRecord::STATUSES[$record->status], 'name' => $card->student->name, 'status' => $record->status];
         });
-    }
-
-    private function statusNow(AttendanceSession $session): string
-    {
-        $zone = config('sanad.display_timezone');
-        $start = CarbonImmutable::parse($session->session_date->toDateString().' '.$session->start_time, $zone);
-
-        return now($zone)->greaterThan($start->addMinutes(AcademicSettings::lateTolerance())) ? 'terlambat' : 'hadir';
     }
 }

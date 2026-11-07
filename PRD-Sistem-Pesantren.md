@@ -42,9 +42,31 @@
 | D5 | Integrasi langsung ke Dapodik/EMIS | Belum jelas ada API terbuka untuk kebutuhan ini | Ekspor **file** (xlsx/csv) sesuai template |
 | D6 | Penyedia hosting & lokasi data | Belum dipilih | Rekomendasi: satu VPS di region Indonesia/Singapura |
 | D7 | Perangkat kartu (RFID/NFC) | Belum dibeli | Didesain pakai **reader USB mode keyboard (HID)** + kamera QR di browser (tanpa firmware khusus) |
-| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; mode **selfie** tersedia lebih dulu sebagai alternatif tanpa pencocokan otomatis |
+| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; mode **selfie** tersedia lebih dulu sebagai alternatif tanpa pencocokan otomatis. Dua jalur dan glosarium: lihat Catatan D8 |
 
 *D3 dihapus pada v2.0 (mode Midtrans akun platform tidak relevan untuk satu pesantren).*
+
+**Catatan D8: pengenalan wajah**
+
+*Glosarium:*
+
+- **Face enrollment:** mengambil beberapa foto santri lalu menyimpannya sebagai embedding (bukan foto penuh).
+- **Face recognition 1:N (identifikasi):** satu wajah dicocokkan ke seluruh santri terdaftar; dipakai untuk absen otomatis.
+- **Face verification 1:1:** wajah dicocokkan dengan satu identitas yang sudah diklaim (mis. wajah + PIN di kasir).
+- **Liveness detection / anti-spoofing:** memastikan yang di depan kamera orang asli, bukan foto atau layar.
+- **Face attendance / contactless attendance:** absen otomatis saat wajah terdeteksi.
+
+*Dua jalur implementasi, diputuskan lewat PoC:*
+
+| Jalur | Kelebihan | Kekurangan |
+|---|---|---|
+| **A. Perangkat jadi:** terminal absen wajah dari merek yang ada di pasaran (mis. ZKTeco, Hikvision, Dahua) | Cepat; liveness dan kamera tahan cahaya sudah ada; ada relai pintu | Integrasi ke SANAD bergantung pada API/SDK perangkat (belum diverifikasi); data wajah tersimpan di perangkat |
+| **B. Dibangun sendiri:** layanan Python + InsightFace/ArcFace via ONNX, embedding di `face_enrollments` | Data di server pesantren; fleksibel | Liveness dan ketahanan cahaya harus dibangun dan diuji sendiri |
+
+- **Syarat untuk kedua jalur:** persetujuan wali, hanya embedding, fallback kartu/manual, pembayaran dengan wajah selalu butuh PIN.
+- **Cara memilih:** jalur dipilih setelah PoC memakai kamera dan cahaya di lokasi. Pengembang tidak memilih vendor sendiri.
+- **Abstraksi `FaceMatcher`:** implementasinya bisa berupa adapter ke perangkat (Jalur A) atau layanan sendiri (Jalur B), sehingga SANAD tidak bergantung pada salah satunya.
+- **Klaim vendor:** harga, SDK, atau kompatibilitas merek tertentu tidak diklaim sebelum diverifikasi dari dokumentasi resmi vendor.
 
 ---
 
@@ -271,7 +293,7 @@ sequenceDiagram
 | WhatsApp | HTTP API **Fonnte** via Laravel HTTP client (token terenkripsi di pengaturan) | Pilihan user; detail endpoint dikonfirmasi dari dokumentasi Fonnte saat implementasi |
 | PDF | **Browsershot (headless Chromium)** | Teks Arab (rapor, kartu, soal) perlu shaping/RTL benar; dompdf lemah di Arabic. *Wajib diuji di awal implementasi.* |
 | Excel | `maatwebsite/excel` | Import santri/soal, ekspor laporan |
-| Pengenalan wajah *(opsional, D8)* | **Kandidat:** layanan kecil terpisah (Python + model ONNX keluarga ArcFace/InsightFace); embedding disimpan di `face_enrollments`, ±200 wajah cukup dicocokkan di memori layanan | Hanya kandidat; diputuskan setelah PoC akurasi & latensi di perangkat nyata. API cloud pihak ketiga dihindari dulu karena data biometrik anak keluar dari kendali (UU PDP) |
+| Pengenalan wajah *(opsional, D8)* | **Kandidat (Jalur B, Catatan D8):** layanan kecil terpisah (Python + model ONNX keluarga ArcFace/InsightFace); embedding disimpan di `face_enrollments`, ±200 wajah cukup dicocokkan di memori layanan | Hanya kandidat; Jalur A (perangkat jadi) dan Jalur B diputuskan setelah PoC akurasi & latensi di perangkat nyata. API cloud pihak ketiga dihindari dulu karena data biometrik anak keluar dari kendali (UU PDP) |
 | Storage | S3-compatible (Cloudflare R2 / MinIO) via Flysystem | Murah, mudah backup |
 | Monitoring | Sentry + Laravel Pulse (+ Horizon) | Deteksi error & antrean gagal |
 | Test | Pest (unit/feature), Playwright (alur ujian & bayar) | Alur kritis butuh E2E |
@@ -395,7 +417,7 @@ Format: **ID | Fitur | Deskripsi | Kriteria selesai (DoD)**. Semua fitur otomati
 | ATT-04 | Rekap & laporan | Persentase kehadiran per santri/kelas/periode | Ekspor xlsx/PDF |
 | ATT-05 | Mode verifikasi per pesantren | Admin memilih mode yang diizinkan: `manual`, `card`, `qr`, `selfie`, `face`; bisa lebih dari satu, dan dapat ditimpa per sesi | Santri hanya bisa absen dengan mode yang diizinkan sesi tersebut; mode `face` hanya muncul jika modul aktif |
 | ATT-06 | Absensi selfie | Santri memotret diri lewat HP/tablet; foto disimpan sebagai bukti, dengan waktu server dan lokasi opsional (geofence) | Foto di luar radius atau tanpa lokasi ditandai `flagged`; musyrif meninjau antrean + sampel acak; foto bukti terhapus otomatis setelah masa retensi |
-| ATT-07 | Absensi wajah (`face_attendance`) | Pencocokan wajah santri di tablet gerbang/kelas dengan liveness check | Skor ≥ ambang atas → hadir otomatis; zona abu-abu → menunggu konfirmasi musyrif; gagal → fallback kartu/manual (aturan §8.9b) |
+| ATT-07 | Absensi wajah (`face_attendance`) | Pencocokan wajah santri (identifikasi 1:N) di tablet gerbang/kelas dengan liveness check; perangkat mengikuti jalur yang dipilih di Catatan D8 | Skor ≥ ambang atas → hadir otomatis; zona abu-abu → menunggu konfirmasi musyrif; gagal → fallback kartu/manual (aturan §8.9b) |
 | ATT-08 | Persetujuan & enrolment biometrik | Wali memberi persetujuan digital/kertas; petugas mendaftarkan wajah di sesi terawasi | Tanpa persetujuan aktif, santri tidak bisa di-enroll; pencabutan menghapus data wajah ≤ 24 jam |
 | ATT-09 | Antrean tinjauan absensi | Daftar absensi `flagged`/`pending` dengan foto bukti dan skor | Musyrif setujui/tolak; keputusan tercatat di audit log |
 | GRD-01 | Komponen & bobot | Harian, tugas, UTS, UAS, ujian online | Total bobot divalidasi = 100% |

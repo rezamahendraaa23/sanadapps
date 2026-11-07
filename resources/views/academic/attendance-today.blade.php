@@ -1,7 +1,10 @@
 <div class="flex flex-col gap-4">
-    @can('academic.manage')
-        <div class="flex justify-end"><x-ui.button variant="secondary" icon="chart-column" :href="route('staff.attendance.recap')" wire:navigate>Rekap Absensi</x-ui.button></div>
-    @endcan
+    <div class="flex flex-wrap justify-end gap-2">
+        <x-ui.button variant="secondary" icon="list-checks" :href="$reviewUrl" wire:navigate>Tinjauan{{ $reviewCount > 0 ? ' ('.$reviewCount.')' : '' }}</x-ui.button>
+        @can('academic.manage')
+            <x-ui.button variant="secondary" icon="chart-column" :href="route('staff.attendance.recap')" wire:navigate>Rekap Absensi</x-ui.button>
+        @endcan
+    </div>
 
     @if (! $hasTerm)
         <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada term aktif. Hubungi admin akademik." class="py-2" /></x-ui.card>

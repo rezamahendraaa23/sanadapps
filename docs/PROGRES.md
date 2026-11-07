@@ -12,11 +12,23 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 7:** perizinan dan pos gerbang
 - [x] **Tahap 8:** tahfidz dan mutabaah
 - [x] **Tahap 9:** ujian online dan PWA
-- [ ] **Tahap 10:** absensi selfie dan wajah (berikutnya)
+- [x] **Tahap 10:** absensi selfie dan wajah
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 10
+
+- [x] Mode absen selfie dan wajah per pesantren dan per sesi (ATT-05, SE-07)
+- [x] Selfie: kamera, kode acak, geofence, antre saat putus, sampel 5%, retensi foto (ATT-06, S-10)
+- [x] Antrean tinjauan dengan terima massal, alasan tolak, pintasan H dan T (U-14)
+- [x] Wajah di balik `FaceMatcher`: ambang atas dan bawah, liveness 3 kali lalu cadangan (ATT-07)
+- [x] Persetujuan wali digital dan kertas, cabut menghapus data saat itu juga, enrol terblokir tanpa persetujuan (ATT-08, W-14, U-15)
+- [x] API perangkat untuk tablet (`/device/attendance/face`)
+- [x] Foto bukti hanya untuk pengabsen sesi, setiap akses tercatat di audit
+- [ ] Teknologi pengenal wajah sungguhan: **belum ada**, tergantung PoC D8. Sekarang hanya tiruan dan tertutup di produksi
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 9
 
@@ -170,4 +182,6 @@ Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 - Horizon terpasang dan terkonfigurasi, tetapi belum pernah dijalankan, karena butuh Redis dan `pcntl` (WSL2 atau Docker)
 - Reader kartu USB dan kamera QR di kasir belum dicoba dengan alat sungguhan; pemindaian di uji browser diketik atau disimulasikan
 - Ujian belum diuji beban ratusan santri bersamaan (Tahap 13) dan belum dicoba di HP Android sungguhan
+- Absen wajah belum pernah dicoba dengan pengenal wajah sungguhan (D8) dan butuh tinjauan hukum UU PDP sebelum diaktifkan. Kamera selfie baru diuji dengan kamera tiruan Chrome, belum di HP sungguhan
+- Satu E2E Tahap 4 sekali menggantung lebih dari 10 detik pada satu pindah halaman, tanpa jejak di log dan tidak muncul lagi di uji penuh berikutnya. Penyebabnya belum diketahui
 - Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

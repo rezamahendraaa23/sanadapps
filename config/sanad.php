@@ -49,6 +49,7 @@ return [
                 ['key' => 'subjects', 'permission' => 'academic.manage', 'label' => 'Mapel & Penugasan', 'icon' => 'book-marked', 'route' => 'staff.subjects.index', 'module' => 'academic'],
                 ['key' => 'schedules', 'permission' => 'academic.manage', 'label' => 'Jadwal', 'icon' => 'calendar-days', 'route' => 'staff.schedules.index', 'module' => 'academic'],
                 ['key' => 'attendance', 'permission' => 'academic.manage', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
+                ['key' => 'face', 'permission' => 'face.enroll', 'label' => 'Pendaftaran Wajah', 'icon' => 'scan-face', 'route' => 'staff.face', 'module' => 'face_attendance'],
                 ['key' => 'grades', 'permission' => 'grades.manage', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
                 ['key' => 'tahfidz', 'permission' => 'tahfidz.input', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
                 ['key' => 'exams', 'permission' => 'exams.manage', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],

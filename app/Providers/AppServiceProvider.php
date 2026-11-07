@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Modules\Academic\Face\FaceMatcher;
+use App\Modules\Academic\Face\FakeFaceMatcher;
 use App\Modules\Core\Contracts\OtpSender;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\SchoolProfile;
@@ -34,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Teknologi wajah belum diputuskan (D8). Driver lain didaftarkan di sini setelah PoC.
+        $this->app->bind(FaceMatcher::class, FakeFaceMatcher::class);
         $this->app->scoped(ModuleRegistry::class);
         $this->app->scoped(SchoolIdentity::class);
         $this->app->bind(OtpSender::class, FonnteOtpSender::class);

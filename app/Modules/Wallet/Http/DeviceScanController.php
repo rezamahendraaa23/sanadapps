@@ -3,6 +3,7 @@
 namespace App\Modules\Wallet\Http;
 
 use App\Modules\Academic\Actions\RecordAttendance;
+use App\Modules\Academic\Actions\RecordFaceAttendance;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Leave\Actions\GateScan;
@@ -66,6 +67,34 @@ class DeviceScanController
         $student = $card->student()->with('classroom:id,name')->first();
 
         return response()->json(['ok' => true, 'result' => 'ok', 'student' => ['uuid' => $student->uuid, 'name' => $student->name, 'nis' => $student->nis, 'classroom' => $student->classroom?->name]]);
+    }
+
+    public function faceChallenge(Request $request, ModuleRegistry $modules, RecordFaceAttendance $faces): JsonResponse
+    {
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+
+        if (! $modules->enabled('face_attendance') || ! in_array('attendance', $device->scopes, true)) {
+            return response()->json(['ok' => false, 'message' => 'Perangkat ini tidak berhak untuk absensi.'], 403);
+        }
+
+        return response()->json($faces->challenge('device:'.$device->id));
+    }
+
+    public function face(Request $request, ModuleRegistry $modules, RecordFaceAttendance $faces): JsonResponse
+    {
+        $data = $request->validate(['session_id' => 'required|uuid', 'photo' => 'required|image|max:8192', 'liveness_frame' => 'required|image|max:8192', 'liveness_token' => 'required|string']);
+
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+
+        if (! $modules->enabled('face_attendance') || ! in_array('attendance', $device->scopes, true)) {
+            return response()->json(['ok' => false, 'message' => 'Perangkat ini tidak berhak untuk absensi.'], 403);
+        }
+
+        $session = AttendanceSession::query()->where('uuid', $data['session_id'])->firstOrFail();
+
+        return response()->json($faces->scan($session, $data['photo'], $data['liveness_frame'], $data['liveness_token'], 'device:'.$device->id));
     }
 
     public function attendance(Request $request, ModuleRegistry $modules, RecordAttendance $attendance): JsonResponse

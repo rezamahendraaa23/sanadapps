@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Livewire;
 
 use App\Modules\Academic\Actions\OpenAttendanceSession;
+use App\Modules\Academic\Actions\ReviewAttendance;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Academic\Models\Schedule;
 use App\Modules\Academic\Models\TeachingScope;
@@ -124,7 +125,9 @@ class AttendanceToday extends Component
             'openedBySchedule' => $sessions->whereNotNull('schedule_id')->keyBy('schedule_id'),
             'dormSessions' => $sessions->whereNull('schedule_id'),
             'dormitories' => $this->dormitories(),
-            'modes' => array_intersect_key(['manual' => 'Manual', 'card' => 'Tap kartu', 'qr' => 'Pindai QR'], array_flip(AcademicSettings::verificationModes())),
+            'modes' => AcademicSettings::modeOptions(),
+            'reviewCount' => app(ReviewAttendance::class)->queueFor($user)->count(),
+            'reviewUrl' => route($role ? $role.'.attendance.review' : 'staff.attendance.review'),
             'hasTerm' => StudentSchedule::activeTerm() !== null,
         ])->layout($role ? 'components.layouts.portal' : 'components.layouts.staff', $role ? ['role' => $role, 'active' => 'attendance', 'title' => 'Absensi'] : ['active' => 'attendance']);
     }

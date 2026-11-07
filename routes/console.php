@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Academic\Actions\ManageBiometricConsent;
+use App\Modules\Academic\Actions\PurgeAttendanceEvidence;
 use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
@@ -25,3 +27,5 @@ Schedule::call(fn () => app(SendAnnouncement::class)->due())->name('SendSchedule
 Schedule::call(fn () => app(ReconcileWallets::class)->handle())->name('ReconcileWallets')->dailyAt('01:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(ManageLeave::class)->markLate())->name('MarkLateReturns')->everyTenMinutes()->withoutOverlapping();
 Schedule::call(fn () => app(RunAttempt::class)->autoSubmitExpired())->name('AutoSubmitExams')->everyMinute()->withoutOverlapping();
+Schedule::call(fn () => app(PurgeAttendanceEvidence::class)->handle())->name('PurgeAttendanceEvidence')->dailyAt('02:00')->timezone(config('sanad.display_timezone'));
+Schedule::call(fn () => app(ManageBiometricConsent::class)->sweep())->name('SweepFaceData')->dailyAt('02:15')->timezone(config('sanad.display_timezone'));

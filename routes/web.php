@@ -2,11 +2,15 @@
 
 use App\Http\Middleware\EnsurePreviewAllowed;
 use App\Modules\Academic\Actions\BuildReportCardPdf;
+use App\Modules\Academic\Http\AttendanceCameraController;
 use App\Modules\Academic\Livewire\AcademicMasters;
 use App\Modules\Academic\Livewire\AttendanceRecap;
+use App\Modules\Academic\Livewire\AttendanceReview;
 use App\Modules\Academic\Livewire\AttendanceSheet;
 use App\Modules\Academic\Livewire\AttendanceToday;
+use App\Modules\Academic\Livewire\FaceEnrollments;
 use App\Modules\Academic\Livewire\GradeBook;
+use App\Modules\Academic\Livewire\GuardianFaceConsent;
 use App\Modules\Academic\Livewire\ReportCards;
 use App\Modules\Academic\Livewire\ScheduleBuilder;
 use App\Modules\Academic\Livewire\StudentAcademics;
@@ -223,6 +227,8 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
             return response($pdf->render(view('academic.pdf.attendance', ['rows' => $rows, 'from' => $from, 'to' => $to, 'classroom' => $classroom?->name])->render()), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="rekap-absensi.pdf"']);
         })->middleware('can:academic.manage')->name('attendance.pdf');
         Route::get('/absensi/sesi/{session}', AttendanceSheet::class)->name('attendance.session');
+        Route::get('/absensi/tinjauan', AttendanceReview::class)->middleware('can:academic.manage')->name('attendance.review');
+        Route::get('/wajah', FaceEnrollments::class)->middleware(['module:face_attendance', 'can:face.enroll'])->name('face');
     });
 
     Route::middleware('module:grading')->group(function (): void {
@@ -421,6 +427,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')->name('ustadz.')->group(function (): void {
     Route::get('/', TeacherHome::class)->name('home');
     Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
+    Route::get('/absensi/tinjauan', AttendanceReview::class)->middleware('module:attendance')->name('attendance.review');
     Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
     Route::get('/nilai', GradeBook::class)->middleware(['module:grading', 'can:grades.input'])->name('grades');
     Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');
@@ -442,12 +449,14 @@ Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif'
     Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/mutabaah', MutabaahVerify::class)->middleware('module:tahfidz')->name('mutabaah');
     Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
+    Route::get('/absensi/tinjauan', AttendanceReview::class)->middleware('module:attendance')->name('attendance.review');
     Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
 });
 
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
     Route::view('/', 'core.wali.home')->name('home');
     Route::get('/lainnya', GuardianMore::class)->name('more');
+    Route::get('/persetujuan-wajah', GuardianFaceConsent::class)->middleware('module:face_attendance')->name('face-consent');
     Route::get('/perkembangan', StudentAcademics::class)->name('progress');
     Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
@@ -471,6 +480,8 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
     Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
     Route::get('/ujian', StudentExams::class)->middleware('module:exam')->name('exams');
+    Route::get('/absen/{session}', [AttendanceCameraController::class, 'selfie'])->middleware('module:attendance')->name('selfie');
+    Route::post('/absen/{session}', [AttendanceCameraController::class, 'storeSelfie'])->middleware(['module:attendance', 'throttle:30,1'])->name('selfie.store');
     Route::get('/ujian/{exam}/persiapan', ExamPrepare::class)->middleware('module:exam')->name('exams.prepare');
     Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
@@ -498,6 +509,15 @@ Route::get('/rapor/{card}', function (ReportCard $card, Request $request, BuildR
 
     return response($pdf->handle($card), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="rapor-'.$card->student->nis.'.pdf"']);
 })->middleware(['auth', 'module:grading'])->name('report-cards.pdf');
+
+Route::middleware(['auth', 'user.type:staff', 'module:attendance'])->group(function (): void {
+    Route::get('/absensi-bukti/{record}', [AttendanceCameraController::class, 'evidence'])->name('attendance.evidence');
+    Route::middleware('module:face_attendance')->group(function (): void {
+        Route::get('/absensi-wajah/{session}', [AttendanceCameraController::class, 'kiosk'])->name('attendance.face');
+        Route::post('/absensi-wajah/{session}/tantangan', [AttendanceCameraController::class, 'faceChallenge'])->middleware('throttle:60,1')->name('attendance.face.challenge');
+        Route::post('/absensi-wajah/{session}/pindai', [AttendanceCameraController::class, 'faceScan'])->middleware('throttle:60,1')->name('attendance.face.scan');
+    });
+});
 
 Route::middleware(['auth', 'module:exam'])->group(function (): void {
     Route::middleware('user.type:student')->group(function (): void {

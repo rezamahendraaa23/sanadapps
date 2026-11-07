@@ -19,4 +19,5 @@ XAMPP masih PHP 8.2, jadi jangan pakai `php` bawaan. PHP 8.3 portabel ada di `%L
 - Warna hanya lewat token di `resources/css/tokens.css`. Test menolak hex mentah di view.
 - Komponen ada di `resources/views/components/ui`. Jangan membuat gaya satu kali per layar.
 - Identitas pesantren selalu lewat `App\Support\SchoolIdentity`, tidak pernah ditulis di kode.
+- Perintah mematikan proses: pastikan dulu PID dan namanya, jangan pakai `/T`. `netstat` di Windows bisa melaporkan PID 0.
 - Antarmuka berbahasa Indonesia, tanpa em dash, tanpa emoji.

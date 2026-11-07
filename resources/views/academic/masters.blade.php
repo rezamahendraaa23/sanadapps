@@ -81,13 +81,40 @@
                 <x-ui.input label="Toleransi terlambat (menit)" name="late_tolerance" inputmode="numeric" required wire:model="late_tolerance" />
                 <fieldset>
                     <legend class="text-sm font-semibold">Cara absen yang diizinkan</legend>
-                    @foreach (['manual' => 'Manual oleh ustadz atau musyrif', 'card' => 'Tap kartu', 'qr' => 'Pindai QR'] as $key => $label)
+                    @foreach (['manual' => 'Manual oleh ustadz atau musyrif', 'card' => 'Tap kartu', 'qr' => 'Pindai QR', 'selfie' => 'Selfie dari HP santri'] + ($faceModule ? ['face' => 'Wajah di pos'] : []) as $key => $label)
                         <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" value="{{ $key }}" wire:model="verification_modes" class="size-5 accent-primary">{{ $label }}</label>
                     @endforeach
                     @error('verification_modes')
                         <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
                     @enderror
                 </fieldset>
+                <fieldset class="flex flex-col gap-3 border-t border-border pt-3">
+                    <legend class="text-sm font-semibold">Selfie</legend>
+                    <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model.live="geofence_enabled" class="size-5 accent-primary">Batasi lokasi selfie</label>
+                    @if ($geofence_enabled)
+                        <div class="grid grid-cols-2 gap-3">
+                            <x-ui.input label="Lintang pusat" name="geofence_lat" inputmode="decimal" required wire:model="geofence_lat" />
+                            <x-ui.input label="Bujur pusat" name="geofence_lng" inputmode="decimal" required wire:model="geofence_lng" />
+                        </div>
+                        <x-ui.input label="Radius (meter)" name="geofence_radius" inputmode="numeric" required wire:model="geofence_radius" />
+                    @endif
+                    <x-ui.input label="Simpan foto bukti (hari)" name="selfie_retention" inputmode="numeric" required wire:model="selfie_retention" />
+                </fieldset>
+                @if ($faceModule)
+                    <fieldset class="flex flex-col gap-3 border-t border-border pt-3">
+                        <legend class="text-sm font-semibold">Ambang wajah</legend>
+                        <div class="grid grid-cols-2 gap-3">
+                            <x-ui.input label="Hadir otomatis mulai" name="face_upper" inputmode="decimal" required wire:model="face_upper" />
+                            <x-ui.input label="Ditolak di bawah" name="face_lower" inputmode="decimal" required wire:model="face_lower" />
+                        </div>
+                        <p class="text-sm text-text-muted">Di antara keduanya menunggu konfirmasi musyrif. Angka ini titik mulai, kalibrasi dulu di perangkat dan cahaya sungguhan.</p>
+                        @if ($consentCount === 0)
+                            <x-ui.banner tone="warning" role="alert">Modul wajah aktif, tetapi belum ada wali yang setuju. Santri belum bisa didaftarkan.</x-ui.banner>
+                        @else
+                            <p class="text-sm"><span class="font-tabular font-semibold">{{ $consentCount }}</span> santri sudah disetujui wali.</p>
+                        @endif
+                    </fieldset>
+                @endif
                 <x-ui.button type="submit" class="self-start" wire:loading.attr="disabled" wire:target="saveRules">Simpan Aturan</x-ui.button>
             </form>
         </x-ui.card>

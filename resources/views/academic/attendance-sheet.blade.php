@@ -33,6 +33,26 @@
         <x-ui.icon name="wifi-off" class="mt-0.5 shrink-0" />Tidak tersambung. Perubahan tersimpan di HP ini, tekan Simpan setelah tersambung lagi.
     </div>
 
+    @if ($session->source === 'selfie' && ! $session->isClosed())
+        <x-ui.card>
+            <p class="flex items-start gap-2 text-base"><x-ui.icon name="camera" class="mt-0.5 shrink-0" />Santri absen sendiri dari HP lewat berandanya. Yang tidak bisa, tandai manual di bawah atau tap kartu.</p>
+        </x-ui.card>
+    @endif
+
+    @if ($session->source === 'face' && ! $session->isClosed())
+        <x-ui.card>
+            <x-ui.button icon="scan-face" :href="route('attendance.face', $session)">Buka Kamera Wajah</x-ui.button>
+            <p class="mt-2 text-sm text-text-muted">Santri tanpa data wajah atau yang gagal dikenali: tandai manual di bawah atau tap kartu.</p>
+        </x-ui.card>
+    @endif
+
+    @if ($reviewCount > 0)
+        <a href="{{ $reviewUrl }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-warning bg-warning-soft p-4 text-base font-semibold">
+            <span class="min-w-0">{{ $reviewCount }} absensi menunggu tinjauan</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     @if ($scanning)
         <x-ui.card title="Siap memindai">
             <form wire:submit="submitScan" x-data x-init="$nextTick(() => $el.querySelector('input').focus())">
