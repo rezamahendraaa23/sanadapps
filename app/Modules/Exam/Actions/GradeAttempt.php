@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exam\Actions;
 
+use App\Modules\Admission\Actions\ScoreApplicant;
 use App\Modules\Exam\Models\ExamAnswer;
 use App\Modules\Exam\Models\ExamAttempt;
 use App\Modules\Exam\Models\Question;
@@ -60,6 +61,8 @@ class GradeAttempt
                 'score' => $maximum > 0 ? round($earned / $maximum * 100, 2) : 0,
                 'status' => $pending ? ($attempt->status === 'graded' ? 'submitted' : $attempt->status) : 'graded',
             ]);
+
+            app(ScoreApplicant::class)->syncFromExam($attempt);
         });
     }
 

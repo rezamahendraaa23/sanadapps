@@ -16,7 +16,7 @@
         <x-ui.card title="Koreksi esai">
             <div class="grid gap-4 md:grid-cols-2">
                 <div class="min-w-0">
-                    <p class="text-sm text-text-muted">{{ $essay->attempt->student?->name }}</p>
+                    <p class="text-sm text-text-muted">{{ $essay->attempt->student?->name ?? $essay->attempt->applicant?->name }}</p>
                     <div dir="{{ $essay->question->direction }}" class="mt-1 text-base break-words">{!! $essay->question->body !!}</div>
                     <p dir="{{ $essay->question->direction }}" class="mt-2 rounded-control bg-bg p-3 text-base break-words whitespace-pre-line">{{ $essay->answer['value'] ?? '' }}</p>
                 </div>
@@ -65,7 +65,7 @@
                 <tbody>
                     @foreach ($attempts as $attempt)
                         <tr wire:key="a-{{ $attempt->uuid }}">
-                            <x-ui.td label="Santri"><span class="break-words">{{ $attempt->student?->name }}</span></x-ui.td>
+                            <x-ui.td label="Santri"><span class="break-words">{{ $attempt->student?->name ?? $attempt->applicant?->name }}</span></x-ui.td>
                             <x-ui.td label="Status">{{ $statusLabels[$attempt->status] }}</x-ui.td>
                             <x-ui.td label="Pindah layar" class="text-right"><span class="font-tabular">{{ $attempt->blur_count }}</span></x-ui.td>
                             <x-ui.td label="Nilai" class="text-right"><span class="font-tabular font-semibold">{{ $attempt->score === null ? '-' : rtrim(rtrim(number_format($attempt->score, 2, ',', ''), '0'), ',') }}</span></x-ui.td>

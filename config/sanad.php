@@ -69,9 +69,9 @@ return [
                 ['key' => 'cash', 'permission' => 'finance.view', 'label' => 'Laporan Kas', 'icon' => 'landmark', 'route' => 'staff.cash.index', 'module' => 'finance'],
             ]],
             ['label' => 'PPDB', 'items' => [
-                ['key' => 'ppdb-periods', 'label' => 'Periode', 'icon' => 'calendar-range', 'route' => 'staff.ppdb.periods.index', 'module' => 'ppdb'],
-                ['key' => 'ppdb-applicants', 'label' => 'Pendaftar', 'icon' => 'user-plus', 'route' => 'staff.ppdb.applicants.index', 'module' => 'ppdb'],
-                ['key' => 'ppdb-selection', 'label' => 'Seleksi', 'icon' => 'list-checks', 'route' => 'staff.ppdb.selection.index', 'module' => 'ppdb'],
+                ['key' => 'ppdb-periods', 'permission' => 'ppdb.view', 'label' => 'Periode', 'icon' => 'calendar-range', 'route' => 'staff.ppdb.periods.index', 'module' => 'ppdb'],
+                ['key' => 'ppdb-applicants', 'permission' => 'ppdb.view', 'label' => 'Pendaftar', 'icon' => 'user-plus', 'route' => 'staff.ppdb.applicants.index', 'module' => 'ppdb'],
+                ['key' => 'ppdb-selection', 'permission' => 'ppdb.view', 'label' => 'Seleksi', 'icon' => 'list-checks', 'route' => 'staff.ppdb.selection.index', 'module' => 'ppdb'],
             ]],
             ['label' => 'Lainnya', 'items' => [
                 ['key' => 'analytics', 'label' => 'Analitik Risiko', 'icon' => 'triangle-alert', 'route' => 'staff.analytics.index', 'module' => 'analytics'],

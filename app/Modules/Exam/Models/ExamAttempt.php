@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exam\Models;
 
+use App\Modules\Admission\Models\Applicant;
 use App\Modules\Core\Models\Student;
 use App\Support\Concerns\HasPublicUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,11 @@ class ExamAttempt extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function applicant(): BelongsTo
+    {
+        return $this->belongsTo(Applicant::class);
     }
 
     public function answers(): HasMany

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exam\Actions;
 
+use App\Modules\Admission\Models\Applicant;
 use App\Modules\Core\Models\Student;
 use App\Modules\Exam\Models\Exam;
 use App\Modules\Exam\Models\ExamAttempt;
@@ -28,6 +29,23 @@ class RunAttempt
     {
         $this->assertTargeted($exam, $student);
 
+        return $this->open($exam, 'student_id', $student->id, $code, $ip, $userAgent);
+    }
+
+    /**
+     * Ujian seleksi tanpa akun santri (EXM-12).
+     */
+    public function startForApplicant(Exam $exam, Applicant $applicant, ?string $code, ?string $ip, ?string $userAgent): ExamAttempt
+    {
+        if ($exam->audience !== 'applicant' || $applicant->status !== 'in_selection' || ! $applicant->period->steps()->where('exam_id', $exam->id)->exists()) {
+            throw new ExamException('Ujian ini bukan untuk Anda.');
+        }
+
+        return $this->open($exam, 'applicant_id', $applicant->id, $code, $ip, $userAgent);
+    }
+
+    private function open(Exam $exam, string $column, int $ownerId, ?string $code, ?string $ip, ?string $userAgent): ExamAttempt
+    {
         if (! $exam->isOpen()) {
             throw new ExamException($exam->status !== 'published' ? 'Ujian ini tidak dibuka.' : ($exam->start_at->isFuture() ? 'Ujian belum dimulai.' : 'Waktu ujian sudah berakhir.'));
         }
@@ -37,8 +55,8 @@ class RunAttempt
         }
 
         try {
-            return DB::transaction(function () use ($exam, $student, $ip, $userAgent): ExamAttempt {
-                $active = ExamAttempt::query()->where('exam_id', $exam->id)->where('student_id', $student->id)->where('status', 'in_progress')->lockForUpdate()->first();
+            return DB::transaction(function () use ($exam, $column, $ownerId, $ip, $userAgent): ExamAttempt {
+                $active = ExamAttempt::query()->where('exam_id', $exam->id)->where($column, $ownerId)->where('status', 'in_progress')->lockForUpdate()->first();
 
                 if ($active !== null) {
                     if ($active->deadline_at->isPast()) {
@@ -50,7 +68,7 @@ class RunAttempt
                     }
                 }
 
-                $used = ExamAttempt::query()->where('exam_id', $exam->id)->where('student_id', $student->id)->count();
+                $used = ExamAttempt::query()->where('exam_id', $exam->id)->where($column, $ownerId)->count();
 
                 if ($used >= $exam->max_attempts) {
                     throw new ExamException('Batas percobaan ujian ini sudah habis.');
@@ -79,7 +97,7 @@ class RunAttempt
 
                 return ExamAttempt::create([
                     'exam_id' => $exam->id,
-                    'student_id' => $student->id,
+                    $column => $ownerId,
                     'attempt_no' => $used + 1,
                     'started_at' => now(),
                     // Batas selalu dari server: durasi atau akhir jendela, mana yang lebih dulu.
@@ -94,7 +112,7 @@ class RunAttempt
             });
         } catch (UniqueConstraintViolationException) {
             // Dua ketukan bersamaan: yang kalah memakai attempt yang baru dibuat.
-            return ExamAttempt::query()->where('exam_id', $exam->id)->where('student_id', $student->id)->where('status', 'in_progress')->firstOrFail();
+            return ExamAttempt::query()->where('exam_id', $exam->id)->where($column, $ownerId)->where('status', 'in_progress')->firstOrFail();
         }
     }
 
@@ -248,7 +266,7 @@ class RunAttempt
                 'type' => $question->type,
                 'body' => $question->body,
                 'direction' => $question->direction,
-                'media' => $question->media_path ? route('exam.media', $question) : null,
+                'media' => $question->media_path ? route($attempt->applicant_id ? 'ppdb.exam.media' : 'exam.media', $question) : null,
                 'points' => (float) ($question->pivot->points_override ?? $question->points),
                 'options' => collect($attempt->option_order[$id] ?? [])->map(fn (string $key) => ['key' => $key, 'text' => $options[$key]['text'] ?? ''])->values()->all(),
             ];

@@ -13,10 +13,22 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 8:** tahfidz dan mutabaah
 - [x] **Tahap 9:** ujian online dan PWA
 - [x] **Tahap 10:** absensi wajah dan persetujuan wali (selfie dihapus atas keputusan pemilik)
-- [ ] **Tahap 11:** PPDB
+- [x] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 11
+
+- [x] Periode, kuota, biaya, tahap berbobot 100%, form tutup otomatis (PPD-01, PD-01)
+- [x] Wizard publik dari HP tanpa akun dengan OTP, draf tiap langkah (PPD-02, P-02)
+- [x] Unggah dokumen dengan pengecilan di HP, pratinjau, periksa per dokumen (PPD-03, PD-03)
+- [x] Tagihan biaya daftar, status sudah bayar saat lunas (PPD-04)
+- [x] Seleksi berbobot, nilai ujian online masuk otomatis, peringkat, kuota terkunci (PPD-05, EXM-12)
+- [x] Pengumuman sekarang atau terjadwal, keputusan tersembunyi sebelum diumumkan (PPD-06)
+- [x] Daftar ulang satu klik: santri, wali, dompet, tagihan uang masuk (PPD-07)
+- [x] Cek status publik dengan nomor dan OTP (PPD-08, P-03)
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 10
 

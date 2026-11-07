@@ -82,6 +82,18 @@ class QueueNotification
     }
 
     /**
+     * Ke nomor yang belum punya akun, seperti calon wali PPDB.
+     *
+     * @param  array<string, string|int|null>  $variables
+     */
+    public function toPhone(string $eventKey, string $phone, array $variables, ?string $dedupe = null): bool
+    {
+        $message = $this->renderBody($eventKey, $variables);
+
+        return $message !== null && $this->queue($eventKey, $phone, $message, $dedupe);
+    }
+
+    /**
      * @param  array<string, string|int|null>  $variables
      */
     public function renderBody(string $eventKey, array $variables): ?string

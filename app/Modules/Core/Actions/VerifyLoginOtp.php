@@ -13,12 +13,12 @@ class VerifyLoginOtp
     /**
      * @return array{OtpResult, int} Hasil dan sisa percobaan.
      */
-    public function handle(string $phone, string $code): array
+    public function handle(string $phone, string $code, string $purpose = RequestLoginOtp::PURPOSE): array
     {
-        return DB::transaction(function () use ($phone, $code): array {
+        return DB::transaction(function () use ($phone, $code, $purpose): array {
             $otp = OtpCode::query()
                 ->where('phone', $phone)
-                ->where('purpose', RequestLoginOtp::PURPOSE)
+                ->where('purpose', $purpose)
                 ->whereNull('consumed_at')
                 ->latest('id')
                 ->lockForUpdate()

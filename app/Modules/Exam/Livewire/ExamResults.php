@@ -41,7 +41,7 @@ class ExamResults extends Component
 
     private function nextEssay(): ?ExamAnswer
     {
-        return ExamAnswer::query()->with(['question', 'attempt.student:id,name'])
+        return ExamAnswer::query()->with(['question', 'attempt.student:id,name', 'attempt.applicant:id,name'])
             ->whereHas('attempt', fn ($query) => $query->where('exam_id', $this->exam->id)->whereIn('status', ['submitted', 'auto_submitted', 'graded']))
             ->whereHas('question', fn ($query) => $query->where('type', 'essay'))
             ->whereNull('graded_by')->whereNotNull('answer')
@@ -97,7 +97,7 @@ class ExamResults extends Component
     public function render(ManageExam $exams): View
     {
         [$layout, $params] = $this->examLayout('Hasil Ujian');
-        $attempts = ExamAttempt::query()->with('student:id,name,nis,classroom_id')->where('exam_id', $this->exam->id)->whereNot('status', 'in_progress')->orderByDesc('score')->get();
+        $attempts = ExamAttempt::query()->with(['student:id,name,nis,classroom_id', 'applicant:id,name'])->where('exam_id', $this->exam->id)->whereNot('status', 'in_progress')->orderByDesc('score')->get();
         $graded = $attempts->where('status', 'graded');
         $questions = $this->exam->questions()->withTrashed()->get();
 

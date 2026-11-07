@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exam\Livewire;
 
+use App\Modules\Admission\Models\Applicant;
 use App\Modules\Exam\Actions\ManageExam;
 use App\Modules\Exam\Models\Exam;
 use App\Modules\Exam\Models\ExamAttempt;
@@ -38,8 +39,10 @@ class ExamMonitor extends Component
     public function render(ManageExam $exams): View
     {
         [$layout, $params] = $this->examLayout('Monitor Ujian');
-        $students = $exams->targetStudents($this->exam);
-        $attempts = ExamAttempt::query()->withCount('answers')->where('exam_id', $this->exam->id)->orderByDesc('attempt_no')->get()->unique('student_id')->keyBy('student_id');
+        $applicantExam = $this->exam->audience === 'applicant';
+        $ownerKey = $applicantExam ? 'applicant_id' : 'student_id';
+        $students = $applicantExam ? Applicant::query()->where('status', 'in_selection')->whereHas('period.steps', fn ($query) => $query->where('exam_id', $this->exam->id))->orderBy('name')->get() : $exams->targetStudents($this->exam);
+        $attempts = ExamAttempt::query()->withCount('answers')->where('exam_id', $this->exam->id)->orderByDesc('attempt_no')->get()->unique($ownerKey)->keyBy($ownerKey);
         $total = $this->exam->questions()->count();
         $cutoff = now()->subSeconds(self::DISCONNECTED_SECONDS);
 

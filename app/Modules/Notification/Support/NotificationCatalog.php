@@ -16,12 +16,19 @@ final class NotificationCatalog
         'attendance' => ['label' => 'Alpa dan terlambat', 'critical' => false, 'module' => 'attendance'],
         'academic' => ['label' => 'Rapor terbit', 'critical' => false, 'module' => 'grading'],
         'leave' => ['label' => 'Status izin dan terlambat kembali', 'critical' => true, 'module' => 'leave'],
+        'ppdb' => ['label' => 'Status pendaftaran PPDB', 'critical' => true, 'module' => 'ppdb'],
         'gate' => ['label' => 'Keluar masuk gerbang', 'critical' => false, 'module' => 'gate'],
         'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
     ];
 
     /** @var array<string, array{label: string, category: string|null, variables: list<string>, body: string}> */
     public const EVENTS = [
+        'ppdb_status' => [
+            'label' => 'Status PPDB berubah',
+            'category' => 'ppdb',
+            'variables' => ['nama_calon', 'no_daftar', 'status', 'langkah', 'link'],
+            'body' => "Assalamu'alaikum.\nPendaftaran {nama_calon} ({no_daftar}): {status}.\n{langkah}\nCek status: {link}",
+        ],
         'invoice_issued' => [
             'label' => 'Tagihan terbit',
             'category' => 'billing',

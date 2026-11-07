@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Modules\Academic\Face\FaceApiMatcher;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Face\FakeFaceMatcher;
+use App\Modules\Admission\Listeners\MarkApplicantPaid;
 use App\Modules\Core\Contracts\OtpSender;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\SchoolProfile;
@@ -12,6 +13,7 @@ use App\Modules\Core\Models\Student;
 use App\Modules\Core\Policies\GuardianPolicy;
 use App\Modules\Core\Policies\StudentPolicy;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Finance\Events\PaymentSettled;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Policies\InvoicePolicy;
@@ -57,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         SchoolProfile::saved(fn () => app(SchoolIdentity::class)->forget());
         Paginator::defaultView('components.ui.pagination');
         Event::subscribe(SendFinanceNotifications::class);
+        Event::listen(PaymentSettled::class, MarkApplicantPaid::class);
 
         Gate::define('exams.import', fn ($user) => $user->canAny(['exams.manage', 'exams.own']));
         Gate::define('merchants.access', fn ($user) => $user->canAny(['merchants.manage', 'merchants.own', 'pos.view']));

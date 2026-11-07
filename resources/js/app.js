@@ -1,8 +1,10 @@
+import { registerAdmission } from './admission';
 import { registerAttendanceCamera } from './attendance';
 import { registerExam } from './exam';
 
 document.addEventListener('alpine:init', () => {
     registerExam(window.Alpine);
+    registerAdmission(window.Alpine);
     registerAttendanceCamera(window.Alpine);
 
     // Kamera untuk QR dinamis. BarcodeDetector ada di Chrome Android; di browser lain tombolnya tidak tampil dan kasir memakai reader.

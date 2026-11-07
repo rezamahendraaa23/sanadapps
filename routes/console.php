@@ -2,6 +2,7 @@
 
 use App\Modules\Academic\Actions\ManageBiometricConsent;
 use App\Modules\Academic\Actions\PurgeAttendanceEvidence;
+use App\Modules\Admission\Actions\AdmissionFlow;
 use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
@@ -29,3 +30,5 @@ Schedule::call(fn () => app(ManageLeave::class)->markLate())->name('MarkLateRetu
 Schedule::call(fn () => app(RunAttempt::class)->autoSubmitExpired())->name('AutoSubmitExams')->everyMinute()->withoutOverlapping();
 Schedule::call(fn () => app(PurgeAttendanceEvidence::class)->handle())->name('PurgeAttendanceEvidence')->dailyAt('02:00')->timezone(config('sanad.display_timezone'));
 Schedule::call(fn () => app(ManageBiometricConsent::class)->sweep())->name('SweepFaceData')->dailyAt('02:15')->timezone(config('sanad.display_timezone'));
+Schedule::call(fn () => app(AdmissionFlow::class)->announceDue())->name('AnnounceAdmissions')->everyFiveMinutes()->withoutOverlapping();
+Schedule::call(fn () => app(AdmissionFlow::class)->closeExpired())->name('CloseAdmissionPeriods')->everyFiveMinutes();

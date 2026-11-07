@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exam\Http;
 
+use App\Modules\Admission\Models\Applicant;
 use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Exam\Models\ExamAttempt;
 use App\Modules\Exam\Models\Question;
@@ -23,7 +24,21 @@ class AttemptController
 
     private function own(Request $request, ExamAttempt $attempt): void
     {
-        abort_unless($request->user()->student?->id === $attempt->student_id, 403);
+        if ($attempt->applicant_id !== null) {
+            abort_unless(Applicant::current()?->id === $attempt->applicant_id, 403);
+
+            return;
+        }
+
+        abort_unless($attempt->student_id !== null && $request->user()?->student?->id === $attempt->student_id, 403);
+    }
+
+    /**
+     * Pendaftar memakai rute publik karena tidak punya akun.
+     */
+    private function routeName(ExamAttempt $attempt, string $name): string
+    {
+        return ($attempt->applicant_id !== null ? 'ppdb.exam.' : 'exam.').$name;
     }
 
     public function show(Request $request, ExamAttempt $attempt): View|RedirectResponse
@@ -31,13 +46,13 @@ class AttemptController
         $this->own($request, $attempt);
 
         if (! $attempt->isOpen()) {
-            return redirect()->route('exam.done', $attempt);
+            return redirect()->route($this->routeName($attempt, 'done'), $attempt);
         }
 
         if ($attempt->deadline_at->isPast()) {
             $this->attempts->autoSubmitExpired();
 
-            return redirect()->route('exam.done', $attempt);
+            return redirect()->route($this->routeName($attempt, 'done'), $attempt);
         }
 
         $attempt->load('exam');
@@ -53,10 +68,10 @@ class AttemptController
                 'deadline' => $attempt->deadline_at->toIso8601ZuluString('millisecond'),
                 'serverTime' => now()->toIso8601ZuluString('millisecond'),
                 'urls' => [
-                    'answers' => route('exam.answers', $attempt),
-                    'submit' => route('exam.submit', $attempt),
-                    'events' => route('exam.events', $attempt),
-                    'done' => route('exam.done', $attempt),
+                    'answers' => route($this->routeName($attempt, 'answers'), $attempt),
+                    'submit' => route($this->routeName($attempt, 'submit'), $attempt),
+                    'events' => route($this->routeName($attempt, 'events'), $attempt),
+                    'done' => route($this->routeName($attempt, 'done'), $attempt),
                 ],
             ],
         ]);
@@ -82,9 +97,9 @@ class AttemptController
         try {
             $this->attempts->submit($attempt, $data['token']);
 
-            return response()->json(['ok' => true, 'done' => route('exam.done', $attempt)]);
+            return response()->json(['ok' => true, 'done' => route($this->routeName($attempt, 'done'), $attempt)]);
         } catch (AttemptGone $gone) {
-            return response()->json(['ok' => false, 'reason' => $gone->reason, 'message' => $gone->getMessage(), 'done' => route('exam.done', $attempt)], 409);
+            return response()->json(['ok' => false, 'reason' => $gone->reason, 'message' => $gone->getMessage(), 'done' => route($this->routeName($attempt, 'done'), $attempt)], 409);
         }
     }
 
@@ -100,9 +115,15 @@ class AttemptController
         return response()->json(['ok' => true]);
     }
 
-    public function done(Request $request, ExamAttempt $attempt): View
+    public function done(Request $request, ExamAttempt $attempt): View|RedirectResponse
     {
         $this->own($request, $attempt);
+
+        if ($attempt->applicant_id !== null) {
+            session()->flash('toast', 'Jawaban terkirim.');
+
+            return redirect()->route('ppdb.status');
+        }
 
         return view('exam.done', ['attempt' => $attempt->load('exam')]);
     }
@@ -110,8 +131,10 @@ class AttemptController
     public function media(Request $request, Question $question): Response
     {
         $user = $request->user();
-        $student = $user->student;
-        $allowed = $user->can('exams.manage') || $user->can('exams.own')
+        $student = $user?->student;
+        $applicant = Applicant::current();
+        $allowed = $user?->can('exams.manage') || $user?->can('exams.own')
+            || ($applicant !== null && ExamAttempt::query()->where('applicant_id', $applicant->id)->whereHas('exam.questions', fn ($query) => $query->whereKey($question->id))->exists())
             || ($student !== null && ExamAttempt::query()->where('student_id', $student->id)->whereHas('exam.questions', fn ($query) => $query->whereKey($question->id))->exists());
 
         abort_unless($allowed && $question->media_path && Storage::disk('local')->exists($question->media_path), 404);

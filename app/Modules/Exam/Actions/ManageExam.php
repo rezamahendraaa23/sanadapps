@@ -42,7 +42,7 @@ class ManageExam
             $problems[] = 'Belum ada soal.';
         }
 
-        if ($exam->targets()->count() === 0) {
+        if ($exam->audience === 'student' && $exam->targets()->count() === 0) {
             $problems[] = 'Belum ada sasaran kelas atau santri.';
         }
 

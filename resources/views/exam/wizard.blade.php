@@ -54,6 +54,12 @@
         </x-ui.card>
     @else
         <x-ui.card title="Sasaran">
+            @can('ppdb.manage')
+                <div class="mb-3 max-w-xs"><x-ui.select label="Peserta" name="audience" :options="['student' => 'Santri', 'applicant' => 'Calon santri (PPDB)']" wire:model.live="audience" /></div>
+            @endcan
+            @if ($audience === 'applicant')
+                <p class="text-base">Ujian dibuka untuk pendaftar yang masuk seleksi, setelah dipilih di tahap seleksi periode PPDB.</p>
+            @else
             <fieldset>
                 <legend class="text-sm font-semibold">Kelas</legend>
                 <div class="grid gap-1 md:grid-cols-3">
@@ -71,6 +77,7 @@
                     <p wire:key="t-{{ $target->id }}" class="mt-1 flex min-h-11 items-center justify-between gap-2 text-base"><span class="min-w-0 break-words">{{ $target->name }}</span><button type="button" wire:click="removeStudent({{ $target->id }})" class="inline-flex size-11 items-center justify-center rounded-control hover:bg-primary-soft" aria-label="Hapus {{ $target->name }}"><x-ui.icon name="x" /></button></p>
                 @endforeach
             </div>
+            @endif
         </x-ui.card>
         <x-ui.card title="Tinjau">
             <p class="text-base">{{ $exam->title }}: {{ $chosen->count() }} soal, {{ $totalPoints }} poin, {{ $exam->duration_minutes }} menit, {{ $participantCount }} peserta.</p>

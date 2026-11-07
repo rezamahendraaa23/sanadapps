@@ -17,6 +17,13 @@ use App\Modules\Academic\Livewire\StudentAcademics;
 use App\Modules\Academic\Livewire\TeacherHome;
 use App\Modules\Academic\Models\ReportCard;
 use App\Modules\Academic\Support\AttendanceStats;
+use App\Modules\Admission\Http\ApplicantFileController;
+use App\Modules\Admission\Livewire\AdmissionPeriods;
+use App\Modules\Admission\Livewire\AdmissionSelection;
+use App\Modules\Admission\Livewire\AdmissionStatus;
+use App\Modules\Admission\Livewire\AdmissionWizard;
+use App\Modules\Admission\Livewire\ApplicantDetail;
+use App\Modules\Admission\Livewire\ApplicantList;
 use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Exports\ImportErrorsExport;
 use App\Modules\Core\Exports\ImportTemplateExport;
@@ -136,6 +143,18 @@ Route::view('/', 'home')->name('home');
 
 Route::post('/webhooks/fonnte/{secret}', FonnteWebhookController::class)->middleware('throttle:240,1')->name('webhooks.fonnte');
 Route::post('/webhooks/midtrans', MidtransWebhookController::class)->middleware('throttle:120,1')->name('webhooks.midtrans');
+
+Route::middleware('module:ppdb')->prefix('ppdb')->name('ppdb.')->group(function (): void {
+    Route::get('/daftar', AdmissionWizard::class)->name('register');
+    Route::get('/status', AdmissionStatus::class)->name('status');
+    Route::get('/dokumen/{document}', [ApplicantFileController::class, 'own'])->name('document');
+    Route::get('/ujian/{attempt}', [AttemptController::class, 'show'])->name('exam.take');
+    Route::get('/ujian/{attempt}/selesai', [AttemptController::class, 'done'])->name('exam.done');
+    Route::post('/ujian/{attempt}/jawaban', [AttemptController::class, 'answers'])->middleware('throttle:240,1')->name('exam.answers');
+    Route::post('/ujian/{attempt}/kumpulkan', [AttemptController::class, 'submit'])->name('exam.submit');
+    Route::post('/ujian/{attempt}/peristiwa', [AttemptController::class, 'events'])->middleware('throttle:240,1')->name('exam.events');
+    Route::get('/ujian-media/{question}', [AttemptController::class, 'media'])->name('exam.media');
+});
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/masuk', Login::class)->name('login');
@@ -297,6 +316,14 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/{exam}/susun', ExamWizard::class)->name('edit');
         Route::get('/{exam}/monitor', ExamMonitor::class)->name('monitor');
         Route::get('/{exam}/hasil', ExamResults::class)->name('results');
+    });
+
+    Route::prefix('ppdb')->name('ppdb.')->middleware(['module:ppdb', 'can:ppdb.view'])->group(function (): void {
+        Route::get('/periode', AdmissionPeriods::class)->name('periods.index');
+        Route::get('/pendaftar', ApplicantList::class)->name('applicants.index');
+        Route::get('/pendaftar/{applicant}', ApplicantDetail::class)->name('applicants.show');
+        Route::get('/seleksi', AdmissionSelection::class)->name('selection.index');
+        Route::get('/dokumen/{document}', [ApplicantFileController::class, 'staff'])->name('document');
     });
 
     Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');

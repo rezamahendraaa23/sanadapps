@@ -64,6 +64,8 @@ class ExamWizard extends Component
 
     public string $student_search = '';
 
+    public string $audience = 'student';
+
     public function mount(Exam $exam): void
     {
         abort_unless($exam->canBeManagedBy(auth()->user()), 403);
@@ -82,6 +84,7 @@ class ExamWizard extends Component
             'access_code' => (string) $exam->access_code,
             'show_result_mode' => $exam->show_result_mode,
             'pass_score' => $exam->pass_score === null ? '' : (string) $exam->pass_score,
+            'audience' => $exam->audience,
             'classrooms' => $exam->targets()->whereNotNull('classroom_id')->pluck('classroom_id')->map(fn ($id) => (string) $id)->all(),
         ]);
         $this->step = max(1, min(4, $this->step));
@@ -253,6 +256,11 @@ class ExamWizard extends Component
         session()->flash('toast', 'Ujian terbit.');
 
         return $this->redirect($this->examRoute('index'), navigate: true);
+    }
+
+    public function updatedAudience(): void
+    {
+        $this->exam->update(['audience' => $this->audience === 'applicant' ? 'applicant' : 'student']);
     }
 
     public function updatedClassrooms(): void
