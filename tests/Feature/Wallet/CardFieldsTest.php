@@ -31,20 +31,20 @@ function cardHtml($context): string
 }
 
 it('bawaan: tidak memuat data yang gampang berubah', function () {
-    expect(CardFields::selected())->toBe(['entry_year']);
+    expect(CardFields::selected())->toBe([]);
 
-    expect(cardHtml($this))->toContain('Ahmad')->toContain('Masuk')->toContain('2026')->not->toContain('Kelas Mawar')->not->toContain('Abu Bakar')->not->toContain('2026/2027');
+    expect(cardHtml($this))->toContain('Ahmad')->not->toContain('ANGKATAN')->not->toContain('Kelas Mawar')->not->toContain('Abu Bakar')->not->toContain('2026/2027');
 });
 
 it('admin memilih isi kartu; pilihan yang tidak dikenal dibuang; kasir tidak bisa', function () {
     $admin = tap(User::create(['name' => 'Admin', 'email' => 'a@uji.test', 'type' => 'staff']))->assignRole('admin');
     $this->actingAs($admin);
 
-    Livewire::test(CardAdmin::class)->assertSet('cardFields', ['entry_year'])
+    Livewire::test(CardAdmin::class)->assertSet('cardFields', [])
         ->set('cardFields', ['classroom', 'dormitory', 'academic_year', 'aneh'])->call('saveCardFields');
 
     expect(CardFields::selected())->toBe(['classroom', 'dormitory', 'academic_year']);
-    expect(cardHtml($this))->toContain('Kelas Mawar')->toContain('Abu Bakar')->toContain('2026/2027')->not->toContain('Masuk');
+    expect(cardHtml($this))->toContain('Kelas Mawar')->toContain('Abu Bakar')->toContain('2026/2027')->not->toContain('ANGKATAN');
 
     $this->actingAs(tap(User::create(['name' => 'Bendahara', 'email' => 'b@uji.test', 'type' => 'staff']))->assignRole('kasir'));
     Livewire::test(CardAdmin::class)->call('saveCardFields')->assertForbidden();

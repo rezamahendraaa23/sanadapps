@@ -10,14 +10,14 @@ use App\Modules\Core\Models\Module;
 final class CardFields
 {
     public const OPTIONS = [
-        'entry_year' => ['label' => 'Tahun masuk', 'changes' => false],
+        'entry_year' => ['label' => 'Angkatan (tahun masuk)', 'changes' => false],
         'birth' => ['label' => 'Tempat dan tanggal lahir', 'changes' => false],
         'classroom' => ['label' => 'Kelas', 'changes' => true],
         'dormitory' => ['label' => 'Asrama', 'changes' => true],
         'academic_year' => ['label' => 'Tahun ajaran', 'changes' => true],
     ];
 
-    public const DEFAULTS = ['entry_year'];
+    public const DEFAULTS = [];
 
     /**
      * @return list<string>
