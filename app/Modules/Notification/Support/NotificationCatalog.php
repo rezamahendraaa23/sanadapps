@@ -15,6 +15,8 @@ final class NotificationCatalog
         'spend' => ['label' => 'Setiap belanja kartu', 'critical' => false, 'default' => false, 'module' => 'pos'],
         'attendance' => ['label' => 'Alpa dan terlambat', 'critical' => false, 'module' => 'attendance'],
         'academic' => ['label' => 'Rapor terbit', 'critical' => false, 'module' => 'grading'],
+        'leave' => ['label' => 'Status izin dan terlambat kembali', 'critical' => true, 'module' => 'leave'],
+        'gate' => ['label' => 'Keluar masuk gerbang', 'critical' => false, 'module' => 'gate'],
         'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
     ];
 
@@ -91,6 +93,42 @@ final class NotificationCatalog
             'category' => 'academic',
             'variables' => ['nama_wali', 'nama_santri', 'term', 'link'],
             'body' => "Assalamu'alaikum {nama_wali}.\nRapor {nama_santri} untuk {term} sudah terbit.\nLihat di sini: {link}",
+        ],
+        'leave_requested' => [
+            'label' => 'Izin baru (ke musyrif)',
+            'category' => null,
+            'variables' => ['nama_santri', 'jenis', 'waktu', 'link'],
+            'body' => "Izin {jenis} untuk {nama_santri}, {waktu}.\nSetujui atau tolak: {link}",
+        ],
+        'leave_decided' => [
+            'label' => 'Izin disetujui atau ditolak',
+            'category' => 'leave',
+            'variables' => ['nama_wali', 'nama_santri', 'keputusan', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nIzin {nama_santri}: {keputusan}.\nDetail dan QR izin: {link}",
+        ],
+        'leave_late' => [
+            'label' => 'Terlambat kembali',
+            'category' => 'leave',
+            'variables' => ['nama_santri', 'batas'],
+            'body' => '{nama_santri} belum kembali atau terlambat. Batas kembali {batas}.',
+        ],
+        'gate_movement' => [
+            'label' => 'Keluar atau masuk gerbang',
+            'category' => 'gate',
+            'variables' => ['nama_wali', 'nama_santri', 'arah', 'waktu'],
+            'body' => "Assalamu'alaikum {nama_wali}.\n{nama_santri} {arah} gerbang pukul {waktu}.",
+        ],
+        'gate_denied' => [
+            'label' => 'Ditolak di gerbang (ke musyrif)',
+            'category' => null,
+            'variables' => ['nama_santri', 'alasan', 'waktu'],
+            'body' => '{nama_santri} ditolak di gerbang pukul {waktu}: {alasan}',
+        ],
+        'gate_override' => [
+            'label' => 'Keluar darurat',
+            'category' => 'leave',
+            'variables' => ['nama_santri', 'alasan', 'waktu'],
+            'body' => '{nama_santri} keluar darurat pukul {waktu}: {alasan}',
         ],
         'stock_low' => [
             'label' => 'Stok menipis (ke pengelola)',

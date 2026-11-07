@@ -14,6 +14,9 @@ use App\Modules\Finance\Events\ProofRejected;
 use App\Modules\Finance\Events\ProofSubmitted;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Support\Rupiah;
+use App\Modules\Leave\Events\GateEvent;
+use App\Modules\Leave\Events\LeaveEvent;
+use App\Modules\Leave\Models\LeaveRequest;
 use App\Modules\Notification\Actions\QueueNotification;
 use App\Modules\Pos\Events\PayoutUpdated;
 use App\Modules\Pos\Events\StockLow;
@@ -168,6 +171,88 @@ class SendFinanceNotifications
         ], 'Rapor '.$card->student->name.' terbit', $link, 'report:'.$card->id);
     }
 
+    public function leaveEvent(LeaveEvent $event): void
+    {
+        $leave = $event->leave->load('student.dormitory.musyrif');
+        $student = $leave->student;
+        $zone = config('sanad.display_timezone');
+        $musyrif = $student->dormitory?->musyrif;
+
+        if ($event->kind === 'requested') {
+            foreach ($musyrif ? [$musyrif] : User::permission('leave.manage')->where('is_active', true)->get() as $user) {
+                $this->notifications->toStaff('leave_requested', $user, [
+                    'nama_santri' => $student->name,
+                    'jenis' => LeaveRequest::TYPES[$leave->type],
+                    'waktu' => $leave->start_at->setTimezone($zone)->translatedFormat('j M, H.i'),
+                    'link' => $user->hasRole('musyrif') ? route('musyrif.leaves') : route('staff.leaves.index'),
+                ], 'Izin baru: '.$student->name, $user->hasRole('musyrif') ? route('musyrif.leaves') : route('staff.leaves.index'));
+            }
+
+            return;
+        }
+
+        $link = route('wali.leaves', ['anak' => $student->uuid]);
+
+        if ($event->kind === 'decided') {
+            $decision = $leave->status === 'approved' ? 'Disetujui' : 'Ditolak, '.$leave->reject_reason;
+
+            $this->notifications->toGuardians('leave_decided', [$student], fn (Guardian $guardian) => [
+                'nama_wali' => $guardian->name,
+                'nama_santri' => $student->name,
+                'keputusan' => $decision,
+                'link' => $link,
+            ], 'Izin '.$student->name.': '.($leave->status === 'approved' ? 'disetujui' : 'ditolak'), $link, 'leave-decided:'.$leave->id);
+
+            return;
+        }
+
+        $late = fn () => ['nama_santri' => $student->name, 'batas' => $leave->end_at->setTimezone($zone)->translatedFormat('j M, H.i')];
+        $this->notifications->toGuardians('leave_late', [$student], fn (Guardian $guardian) => $late(), $student->name.' terlambat kembali', $link, 'leave-late:'.$leave->id);
+
+        if ($musyrif) {
+            $this->notifications->toStaff('leave_late', $musyrif, $late(), $student->name.' terlambat kembali', route('musyrif.leaves'));
+        }
+    }
+
+    public function gateEvent(GateEvent $event): void
+    {
+        $log = $event->log->load('student.dormitory.musyrif');
+        $student = $log->student;
+
+        if ($student === null) {
+            return;
+        }
+
+        $time = $log->occurred_at->setTimezone(config('sanad.display_timezone'))->format('H.i');
+        $musyrif = $student->dormitory?->musyrif;
+
+        if ($log->result === 'denied') {
+            if ($musyrif) {
+                $this->notifications->toStaff('gate_denied', $musyrif, ['nama_santri' => $student->name, 'alasan' => (string) $log->deny_reason, 'waktu' => $time], $student->name.' ditolak di gerbang', route('musyrif.leaves'));
+            }
+
+            return;
+        }
+
+        if ($log->result === 'override') {
+            $vars = ['nama_santri' => $student->name, 'alasan' => (string) $log->note, 'waktu' => $time];
+            $this->notifications->toGuardians('gate_override', [$student], fn () => $vars, $student->name.' keluar darurat', route('wali.leaves', ['anak' => $student->uuid]), 'gate-override:'.$log->id);
+
+            if ($musyrif) {
+                $this->notifications->toStaff('gate_override', $musyrif, $vars, $student->name.' keluar darurat', route('musyrif.leaves'));
+            }
+
+            return;
+        }
+
+        $this->notifications->toGuardians('gate_movement', [$student], fn (Guardian $guardian) => [
+            'nama_wali' => $guardian->name,
+            'nama_santri' => $student->name,
+            'arah' => $log->direction === 'out' ? 'keluar dari' : 'masuk ke',
+            'waktu' => $time,
+        ], $student->name.($log->direction === 'out' ? ' keluar' : ' masuk').' gerbang', route('wali.leaves', ['anak' => $student->uuid]), 'gate:'.$log->id);
+    }
+
     public function stockLow(StockLow $event): void
     {
         $merchant = $event->product->merchant;
@@ -274,6 +359,8 @@ class SendFinanceNotifications
             CardBlocked::class => 'cardBlocked',
             AttendanceClosed::class => 'attendanceClosed',
             ReportCardPublished::class => 'reportCardPublished',
+            LeaveEvent::class => 'leaveEvent',
+            GateEvent::class => 'gateEvent',
             StockLow::class => 'stockLow',
             PayoutUpdated::class => 'payoutUpdated',
         ] as $event => $method) {

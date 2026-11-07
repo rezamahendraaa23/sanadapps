@@ -1,6 +1,6 @@
 # MASTER PROMPT — SANAD, Pesantren Digital Ecosystem (untuk Claude Code di VS Code)
 
-> Cara pakai: taruh `PRD-Sistem-Pesantren.md`, `PRD-UIUX-Pesantren.md`, dan folder `referensi/` (3 gambar UI) di root proyek. Pasang skill dulu (langkah 0 di bawah), lalu tempel **seluruh isi blok di bawah garis** ke Claude Code.
+> Cara pakai: taruh `PRD-Sistem-Pesantren.md`, `PRD-UIUX-Pesantren.md`, `PRD-Masjid-Display.md`, dan folder `referensi/` (3 gambar UI) di root proyek. Pasang skill dulu (langkah 0 di bawah), lalu tempel **seluruh isi blok di bawah garis** ke Claude Code.
 
 Pasang skill (sekali, di terminal proyek):
 
@@ -19,8 +19,9 @@ Kamu adalah Senior Full-Stack Engineer dan UI Engineer yang membangun **sistem i
 ## SUMBER KEBENARAN
 
 1. `PRD-Sistem-Pesantren.md` — fitur, tabel database, API, aturan bisnis, RBAC, NFR, UAT. **Ikuti persis.** Jangan mengubah nama tabel, `module_key`, status, atau aturan bisnis tanpa bertanya.
-2. `PRD-UIUX-Pesantren.md` — design system, layar (ID seperti W-01, S-05, K-03), alur, komponen, microcopy, daftar periksa penerimaan desain.
-3. Folder `referensi/` — tiga gambar referensi visual. **Lihat semuanya sebelum merancang UI.** Pinjam prinsipnya (satu kartu hero, kartu tiket bergerigi, arsiran untuk status menunggu, kalender titik), **jangan menyalin tampilannya**.
+2. `PRD-Masjid-Display.md` — modul jadwal sholat & papan pengumuman TV; dikerjakan di Tahap 12b, terhubung ke SANAD lewat `module_key`, `announcements`, `devices`, `schedules`.
+3. `PRD-UIUX-Pesantren.md` — design system, layar (ID seperti W-01, S-05, K-03), alur, komponen, microcopy, daftar periksa penerimaan desain.
+4. Folder `referensi/` — tiga gambar referensi visual. **Lihat semuanya sebelum merancang UI.** Pinjam prinsipnya (satu kartu hero, kartu tiket bergerigi, arsiran untuk status menunggu, kalender titik), **jangan menyalin tampilannya**.
 
 Jika dua dokumen bertentangan: PRD Sistem menang untuk data/aturan, PRD UI/UX menang untuk tampilan/interaksi. Jika ada celah, tulis asumsi di `docs/ASSUMPTIONS.md` dan lanjut; tanyakan hanya untuk keputusan yang tidak bisa dibatalkan atau yang ditandai "Belum diputuskan — perlu konfirmasi user" di PRD.
 
@@ -78,6 +79,7 @@ Kerjakan **berurutan**. Setiap tahap harus: lulus test, lulus Delivery Gate, lal
 | 10 | Absensi selfie lalu wajah (di balik `FaceMatcher`), persetujuan wali, antrean tinjauan | Sistem §5.6 (ATT), §8.9b |
 | 11 | PPDB | Sistem §5.10 |
 | 12 | Pelanggaran, kesehatan (UKS), analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS | Sistem §5.9, §5.12 |
+| 12b | **Modul Masjid** (opsional, di balik feature flag): jadwal sholat Kemenag + uji pembanding, layar TV offline-first, CMS dan persetujuan, pairing perangkat, aplikasi pembungkus Android TV (WebView, proyek Android terpisah di folder `apps/android-tv-display`) | `PRD-Masjid-Display.md` (seluruhnya) |
 | 13 | Hardening: uji beban ujian & kasir, uji keamanan (policy/IDOR), backup & restore, dokumentasi runbook, jalankan seluruh UAT PRD Sistem §15 | Sistem §11, §15 |
 
 Mulai dari **Tahap 0**. Sebelum menulis kode, lakukan ini dan laporkan singkat:

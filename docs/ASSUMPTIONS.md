@@ -92,4 +92,10 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A63 | PDF rapor dibuat saat diunduh dari angka yang sudah dibekukan di `report_card_items`, kolom `pdf_path` belum dipakai | Tidak perlu penyimpanan berkas; isi tetap sama karena itemnya tidak berubah setelah terbit |
 | A64 | Nilai dinormalkan ke skala 100 memakai nilai maksimum penilaian; bobot dibagi hanya dari komponen yang ada penilaiannya | Rumus PRD 8.10 tidak menyebut penilaian dengan maksimum selain 100 atau komponen yang kosong |
 | A65 | Izin aktif belum mengubah alpa menjadi izin saat absensi | Modul perizinan baru ada di Tahap 7, disambungkan di tahap itu |
+| A66 | Tinjauan pencatatan manual disimpan di tabel `gate_log_reviews`, bukan kolom di `gate_logs` | `gate_logs` wajib tidak bisa diubah (PRD 8.11b), padahal status tinjauan berubah |
+| A67 | Tambahan kolom `leave_requests.first_approved_by` dan `late_notified_at` | Dua tingkat persetujuan (LEV-02) dan pemberitahuan terlambat sekali saja |
+| A68 | Santri yang kembali terlambat tetap berstatus `late`, papan memakai `returned_at IS NULL` untuk membedakan yang masih di luar | PRD menyatakan papan membaca `out` dan `late`, tetapi juga bahwa masuk terlambat berstatus `late` dan hilang dari papan |
+| A69 | Override darurat cukup lewat akun musyrif atau admin yang sedang masuk, tanpa PIN terpisah | K-04 menyebut PIN musyrif, tetapi PRD Sistem tidak punya kolom PIN untuk staf. Penjaga tetap tidak bisa melakukannya |
+| A70 | Toleransi bawaan: kembali 15 menit, boleh keluar lebih awal 30 menit | PRD menyebut bisa diatur tanpa nilai bawaan |
+| A71 | Tombol Panggil Musyrif mengirim notifikasi aplikasi, bukan WhatsApp | Harus seketika dan tidak ikut jeda antrean WhatsApp |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

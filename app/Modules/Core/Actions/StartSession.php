@@ -34,6 +34,10 @@ class StartSession
             return route($roles->contains('ustadz') ? 'ustadz.home' : 'musyrif.home');
         }
 
+        if ($roles->all() === ['penjaga_gerbang']) {
+            return route('staff.gate.index');
+        }
+
         return route('staff.dashboard');
     }
 

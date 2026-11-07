@@ -1,5 +1,6 @@
+import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 
 export const LOG_FILE = 'storage/logs/e2e.log';
 
@@ -15,7 +16,9 @@ export default function globalSetup() {
 
     if (existsSync(LOG_FILE)) rmSync(LOG_FILE);
 
-    execFileSync(php, ['artisan', 'cache:clear'], { env: { ...env, CACHE_STORE: 'file' }, stdio: 'pipe' });
+    const cachePath = path.resolve('storage/framework/cache/e2e');
+    mkdirSync(cachePath, { recursive: true });
+    execFileSync(php, ['artisan', 'cache:clear'], { env: { ...env, CACHE_STORE: 'file', CACHE_FILE_PATH: cachePath }, stdio: 'pipe' });
     artisan('migrate:fresh', '--force');
     artisan('db:seed', '--class=Database\\Seeders\\E2eSeeder', '--force');
 }

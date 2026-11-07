@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
+import path from 'node:path';
 
 const php = process.env.PHP_BIN || 'php';
+export const E2E_CACHE = path.resolve('storage/framework/cache/e2e');
 const port = process.env.E2E_PORT || 8010;
 
 export default defineConfig({
@@ -25,6 +27,7 @@ export default defineConfig({
             DB_DATABASE: process.env.E2E_DB || 'sanad_e2e',
             LOG_CHANNEL: 'e2e',
             CACHE_STORE: 'file',
+            CACHE_FILE_PATH: E2E_CACHE,
             SESSION_DRIVER: 'file',
             MAIL_MAILER: 'array',
             SANAD_FAKE_MIDTRANS: '1',

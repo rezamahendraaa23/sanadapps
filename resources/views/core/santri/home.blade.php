@@ -31,5 +31,12 @@
         </x-ui.card>
     @endif
 
+    @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('leave'))
+        <a href="{{ route('santri.leaves') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4">
+            <span class="flex min-w-0 items-center gap-3 text-base font-semibold"><x-ui.icon name="door-open" />Izin saya</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     @include('core.partials.announcements', ['announcements' => $announcements])
 </x-layouts.portal>

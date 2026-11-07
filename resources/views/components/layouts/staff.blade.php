@@ -72,7 +72,9 @@
                     <div class="flex shrink-0 items-center gap-2">{{ $actions }}</div>
                 @endif
                 @auth
-                    <livewire:core.staff.globalsearch />
+                    @canany(['students.view-all', 'students.view-own-class', 'students.view-own-dormitory', 'finance.view'])
+                        <livewire:core.staff.globalsearch />
+                    @endcanany
                     <livewire:core.staff.notificationbell />
                     <x-layouts.partials-account-menu />
                 @endauth

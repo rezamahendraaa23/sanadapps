@@ -8,6 +8,7 @@ use App\Modules\Academic\Models\Schedule;
 use App\Modules\Academic\Support\AcademicException;
 use App\Modules\Academic\Support\AcademicSettings;
 use App\Modules\Core\Models\Student;
+use App\Modules\Leave\Models\LeaveRequest;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -76,12 +77,19 @@ class OpenAttendanceSession
         return DB::transaction(function () use ($data, $studentIds): AttendanceSession {
             $session = AttendanceSession::create($data + ['allowed_modes' => [$data['source']]]);
             $scanned = $data['source'] !== 'manual';
+            $onLeave = LeaveRequest::query()->whereIn('student_id', $studentIds)
+                ->where('start_at', '<=', now())->where('end_at', '>=', now())
+                ->where(fn ($query) => $query->where('status', 'approved')->orWhere(fn ($outside) => $outside->outside()))
+                ->pluck('type', 'student_id');
 
             foreach ($studentIds as $studentId) {
+                $leaveType = $onLeave[$studentId] ?? null;
+
                 AttendanceRecord::create([
                     'session_id' => $session->id,
                     'student_id' => $studentId,
-                    'status' => $scanned ? 'alpa' : 'hadir',
+                    // Santri dengan izin aktif tidak dihitung alpa (PRD Sistem 8.9).
+                    'status' => $leaveType !== null ? ($leaveType === 'sakit' ? 'sakit' : 'izin') : ($scanned ? 'alpa' : 'hadir'),
                     'method' => $data['source'],
                 ]);
             }

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Modules\Core\Actions\SaveIntegration;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
+use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
@@ -63,10 +64,14 @@ class E2eSeeder extends Seeder
         $year = AcademicYear::create(['name' => '2026/2027 Uji', 'start_date' => '2026-01-01', 'end_date' => '2027-12-31', 'is_active' => true]);
         Term::create(['academic_year_id' => $year->id, 'name' => 'Term Uji', 'start_date' => '2026-01-01', 'end_date' => '2027-12-31', 'is_active' => true]);
         $classroom = Classroom::create(['name' => 'Kelas Uji 6']);
+        $musyrif = User::create(['name' => 'Musyrif Uji', 'email' => 'musyrif@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-musyrif']);
+        $musyrif->assignRole('musyrif');
+        $dormitory = Dormitory::create(['name' => 'Asrama Uji', 'gender' => 'L', 'musyrif_user_id' => $musyrif->id]);
+        User::create(['name' => 'Penjaga Uji', 'email' => 'penjaga@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-penjaga'])->assignRole('penjaga_gerbang');
         $thirdUser = User::create(['name' => 'Santri Tiga', 'username' => '2026003', 'type' => 'student', 'password' => 'sandi-uji-tiga']);
         $thirdUser->assignRole('santri');
         // Tidak punya tagihan generate karena jenis tagihan E2E dibatasi di spec; terhubung ke wali tersendiri.
-        $third = Student::create(['nis' => '2026003', 'name' => 'Santri Tiga', 'gender' => 'L', 'classroom_id' => $classroom->id, 'user_id' => $thirdUser->id]);
+        $third = Student::create(['nis' => '2026003', 'name' => 'Santri Tiga', 'gender' => 'L', 'classroom_id' => $classroom->id, 'dormitory_id' => $dormitory->id, 'user_id' => $thirdUser->id]);
         $thirdGuardianUser = User::create(['name' => 'Wali Tiga', 'phone' => '6281234567893', 'type' => 'guardian']);
         $thirdGuardianUser->assignRole('wali');
         Guardian::create(['user_id' => $thirdGuardianUser->id, 'name' => 'Wali Tiga', 'phone_wa' => '6281234567893'])->students()->attach($third->id, ['relation' => 'ayah']);

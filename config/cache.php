@@ -49,8 +49,9 @@ return [
 
         'file' => [
             'driver' => 'file',
-            'path' => storage_path('framework/cache/data'),
-            'lock_path' => storage_path('framework/cache/locks'),
+            // Bisa dipisah agar uji browser tidak berbagi cache izin dengan server pengembangan.
+            'path' => env('CACHE_FILE_PATH', storage_path('framework/cache/data')),
+            'lock_path' => env('CACHE_FILE_PATH') ? env('CACHE_FILE_PATH').'/locks' : storage_path('framework/cache/locks'),
         ],
 
         'storage' => [

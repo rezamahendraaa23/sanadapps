@@ -1,4 +1,11 @@
 <div class="flex flex-col gap-4">
+    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('leave'))
+        <a href="{{ route('wali.leaves') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4">
+            <span class="flex min-w-0 items-center gap-3 text-base font-semibold"><x-ui.icon name="door-open" />Perizinan</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     <x-ui.card title="Notifikasi">
         @if ($unread > 0)
             <x-slot:actions>

@@ -102,6 +102,9 @@
 | `inventory` | Inventaris asrama | OFF | core | Barang, mutasi, kondisi |
 | `duty_roster` | Jadwal piket | OFF | core | Piket santri/ustadz |
 | `export_dapodik` | Ekspor Dapodik/EMIS | OFF | core | Ekspor file sesuai template |
+| `masjid_prayer` | Jadwal sholat masjid | OFF | core | Hitung jadwal metode Kemenag, iqamah, jangkar jadwal santri. Detail di `PRD-Masjid-Display.md` |
+| `masjid_display` | Layar TV & papan pengumuman | OFF | core, `masjid_prayer` | Papan pengumuman digital di TV (`PRD-Masjid-Display.md`) |
+| `masjid_public` | Halaman publik jamaah | OFF | `masjid_prayer` | Jadwal sholat dan pengumuman publik di web |
 
 **Aturan dependensi:** saat admin mengaktifkan modul, sistem otomatis memeriksa dependensi; jika belum terpenuhi, tampilkan daftar modul yang harus aktif dulu (tidak diam-diam diaktifkan). Saat modul dinonaktifkan, **data tidak dihapus**, hanya menu/endpoint disembunyikan (HTTP 403 dengan kode `MODULE_DISABLED`).
 
@@ -575,7 +578,7 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 **`guardian_student`**: guardian_id, student_id, relation (`ayah`,`ibu`,`wali`), is_primary, is_payer, can_receive_wa.
 **`teachers`**: user_id, nip, name, phone, specialization.
 **`student_enrollments`**: student_id, classroom_id, academic_year_id, started_at, ended_at, status.
-**`announcements`**: title, body, audience (`all`,`classroom`,`dormitory`), audience_id, publish_at, send_wa bool, created_by.
+**`announcements`**: title, body, audience (`all`,`classroom`,`dormitory`), audience_id, publish_at, send_wa bool, created_by. Bila modul `masjid_display` aktif, pengumuman dapat ditandai tayang di TV lewat `display_contents.announcement_id` (lihat `PRD-Masjid-Display.md`).
 
 ### 6.4 Keuangan & pembayaran
 
@@ -663,7 +666,7 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 
 **`wallet_topups`**: wallet_id, payment_id, amount, status.
 **`student_cards`**: student_id, card_uid null unique, qr_secret (encrypted), pin_hash null, pin_failed_count, locked_until null, status (`active`,`blocked`,`lost`), issued_at, blocked_at, blocked_reason.
-**`devices`**: name, location, type (`reader_usb`,`camera_qr`), scopes jsonb, api_key_hash, is_active, last_seen_at.
+**`devices`**: name, location, type (`reader_usb`,`camera_qr`,`tv_display`), scopes jsonb, api_key_hash, is_active, last_seen_at.
 **`card_scans`**: card_id, device_id, scope (`attendance`,`gate`,`canteen`,`library`,`meal`), result (`ok`,`denied`,`blocked`,`not_found`), reason, scanned_at, ref_type, ref_id.
 **`merchants`**: name, type (`mart`,`warung`,`kantin`), pic_user_id, owner_name null, location, opening_hours jsonb, payment_modes jsonb (`card`,`qr`,`face`), commission_percent decimal(4,2) default 0, pin_threshold null (menimpa ambang sistem), is_active.
 **`product_categories`**: merchant_id null (null = kategori umum), name, is_restricted bool (kategori yang dapat diblokir wali), sort_order.
@@ -1322,6 +1325,8 @@ Hak akses dasar per role (dapat disesuaikan lewat permission). **R** = lihat, **
 | `bendahara` | Keuangan R/W/A, pembayaran, kas, dompet adjust, laporan; santri R |
 | `admin_akademik` | Data induk R/W, jadwal, rapor, nilai R/A, PPDB R, ekspor Dapodik |
 | `ustadz` | Jadwal sendiri R, absensi kelas W, nilai W (mapel/kelas yang diajar), tahfidz W, bank soal & ujian W (miliknya), koreksi |
+| `masjid_manager` | Takmir: jadwal imam/khatib/kajian, persetujuan konten layar, darurat (modul masjid) |
+| `masjid_content` | Humas/TU: membuat konten layar, mengajukan persetujuan (modul masjid) |
 | `musyrif` | Absensi asrama/sholat W, izin A, pelanggaran W, mutabaah verifikasi, inventaris asrama W, piket |
 | `petugas_uks` | Kesehatan R/W (detail), santri R |
 | `kasir` | POS pada merchant miliknya, scan kartu; tidak ada akses data keuangan lain |

@@ -14,6 +14,13 @@
         </x-ui.hero-card>
     @endif
 
+    @if ($pendingLeaves > 0)
+        <a href="{{ route('musyrif.leaves') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-warning bg-warning-soft p-4 text-base font-semibold">
+            <span class="min-w-0">{{ $pendingLeaves }} izin menunggu persetujuan</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     @if ($openSessions > 0)
         <x-ui.banner tone="warning">{{ $openSessions }} sesi absensi hari ini belum disimpan.</x-ui.banner>
     @endif

@@ -8,4 +8,5 @@ Route::prefix('v1/device')->middleware([AuthenticateDevice::class, 'throttle:600
     Route::post('/scan', [DeviceScanController::class, 'scan']);
     Route::post('/wallet/charge', [DeviceScanController::class, 'charge']);
     Route::post('/attendance/scan', [DeviceScanController::class, 'attendance']);
+    Route::post('/gate/scan', [DeviceScanController::class, 'gate']);
 });

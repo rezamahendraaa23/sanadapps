@@ -1,6 +1,6 @@
 # SANAD
 
-Sistem informasi satu pesantren. Sumber kebenaran: `PRD-Sistem-Pesantren.md`, `PRD-UIUX-Pesantren.md`, `MASTER-PROMPT-Claude-Code.md`. Keputusan dan asumsi ada di `docs/ASSUMPTIONS.md`.
+Sistem informasi satu pesantren. Sumber kebenaran: `PRD-Sistem-Pesantren.md`, `PRD-UIUX-Pesantren.md`, `PRD-Masjid-Display.md`, `MASTER-PROMPT-Claude-Code .md` (nama berkasnya memuat spasi). Keputusan dan asumsi ada di `docs/ASSUMPTIONS.md`.
 
 ## Perintah di Windows
 
@@ -11,6 +11,7 @@ XAMPP masih PHP 8.2, jadi jangan pakai `php` bawaan. PHP 8.3 portabel ada di `%L
 - E2E: set `PHP_BIN` ke path php83, lalu `npx playwright test`
 - Server: `<php83> artisan serve --port=8010`
 - Aset: `npm run build`
+- Setelah menarik perubahan: `<php83> artisan migrate` dan `<php83> artisan db:seed --class=RoleSeeder`, lalu nyalakan ulang server.
 - Database: PostgreSQL 16 portabel, port 5433. Data di `%LOCALAPPDATA%\sanad-tools\pgdata`. Nyalakan dengan `pgsql\bin\pg_ctl -D pgdata -l pg.log start` dari folder itu. PostgreSQL 18 di port 5432 bukan milik proyek ini.
 
 ## Aturan tampilan

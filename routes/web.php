@@ -66,6 +66,14 @@ use App\Modules\Finance\Livewire\Settings\FeeTypes;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Support\ArrearsQuery;
+use App\Modules\Leave\Livewire\GateBoard;
+use App\Modules\Leave\Livewire\GateLogs;
+use App\Modules\Leave\Livewire\GateScanner;
+use App\Modules\Leave\Livewire\GateShiftScreen;
+use App\Modules\Leave\Livewire\GateToday;
+use App\Modules\Leave\Livewire\GuardianLeaves;
+use App\Modules\Leave\Livewire\LeaveDesk;
+use App\Modules\Leave\Models\GateLog;
 use App\Modules\Notification\Http\FonnteWebhookController;
 use App\Modules\Notification\Livewire\GuardianMore;
 use App\Modules\Notification\Livewire\Templates;
@@ -204,6 +212,37 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/rapor', ReportCards::class)->middleware('can:reports.publish')->name('report-cards.index');
     });
 
+    Route::get('/perizinan', LeaveDesk::class)->middleware(['module:leave', 'can:leave.manage'])->name('leaves.index');
+
+    Route::prefix('gerbang')->name('gate.')->middleware(['module:gate', 'can:gate.operate'])->group(function (): void {
+        Route::get('/', GateBoard::class)->name('index');
+        Route::get('/pindai', GateScanner::class)->name('scan');
+        Route::get('/izin-hari-ini', GateToday::class)->name('today');
+        Route::get('/riwayat', GateLogs::class)->name('logs');
+        Route::get('/riwayat/ekspor', function (Request $request) {
+            $rows = GateLogs::query($request->query('tanggal'), $request->query('hasil'))->limit(10000)->get()
+                ->map(fn (GateLog $log) => [
+                    $log->occurred_at->setTimezone(config('sanad.display_timezone'))->format('Y-m-d H:i:s'),
+                    $log->student?->nis,
+                    $log->student?->name,
+                    $log->direction === 'out' ? 'Keluar' : 'Masuk',
+                    GateLog::METHODS[$log->method],
+                    GateLog::RESULTS[$log->result],
+                    $log->deny_reason ?? $log->note,
+                    $log->pickup_name,
+                    $log->recorder?->name,
+                ])->all();
+
+            return Excel::download(new ArrayExport(['Waktu', 'NIS', 'Santri', 'Arah', 'Cara', 'Hasil', 'Catatan', 'Penjemput', 'Petugas'], $rows), 'riwayat-gerbang.xlsx');
+        })->name('logs.export');
+        Route::get('/shift', GateShiftScreen::class)->name('shift');
+        Route::get('/foto/{student}', function (Student $student) {
+            abort_unless($student->photo_path && Storage::disk('local')->exists($student->photo_path), 404);
+
+            return Storage::disk('local')->response($student->photo_path);
+        })->name('photo');
+    });
+
     Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');
 
     Route::middleware('module:card')->group(function (): void {
@@ -338,6 +377,7 @@ Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')-
 
 Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif')->name('musyrif.')->group(function (): void {
     Route::get('/', TeacherHome::class)->name('home');
+    Route::get('/izin', LeaveDesk::class)->middleware('module:leave')->name('leaves');
     Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
     Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
 });
@@ -346,6 +386,7 @@ Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix(
     Route::view('/', 'core.wali.home')->name('home');
     Route::get('/lainnya', GuardianMore::class)->name('more');
     Route::get('/perkembangan', StudentAcademics::class)->name('progress');
+    Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 
     Route::middleware('module:finance')->group(function (): void {
         Route::get('/tagihan', GuardianInvoices::class)->name('invoices');
@@ -365,6 +406,7 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::view('/', 'core.santri.home')->name('home');
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
     Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
+    Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 });
 
 Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $pdf) {

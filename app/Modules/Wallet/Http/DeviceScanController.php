@@ -5,6 +5,7 @@ namespace App\Modules\Wallet\Http;
 use App\Modules\Academic\Actions\RecordAttendance;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Leave\Actions\GateScan;
 use App\Modules\Pos\Actions\CheckoutOrder;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Wallet\Actions\RecordScan;
@@ -85,6 +86,30 @@ class DeviceScanController
         $session = AttendanceSession::query()->where('uuid', $data['session_id'])->firstOrFail();
 
         return response()->json($attendance->scan($session, (string) ($data['qr'] ?? $data['card_uid']), $device->id));
+    }
+
+    public function gate(Request $request, ModuleRegistry $modules, GateScan $gate): JsonResponse
+    {
+        $data = $request->validate([
+            'card_uid' => 'required_without:qr|nullable|string|max:255',
+            'qr' => 'required_without:card_uid|nullable|string|max:255',
+        ]);
+
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+
+        if (! $modules->enabled('gate') || ! in_array('gate', $device->scopes, true)) {
+            return response()->json(['ok' => false, 'message' => 'Perangkat ini tidak berhak untuk gerbang.'], 403);
+        }
+
+        $result = $gate->handle((string) ($data['qr'] ?? $data['card_uid']), null, $device->id);
+
+        return response()->json([
+            'ok' => in_array($result['outcome'], ['out', 'in'], true),
+            'outcome' => $result['outcome'],
+            'message' => $result['message'],
+            'name' => $result['student']?->name,
+        ]);
     }
 
     public function charge(Request $request, ModuleRegistry $modules, CheckoutOrder $checkout): JsonResponse

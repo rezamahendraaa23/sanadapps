@@ -2,6 +2,7 @@
 
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
+use App\Modules\Leave\Actions\ManageLeave;
 use App\Modules\Notification\Actions\SendAnnouncement;
 use App\Modules\Notification\Actions\SendPaymentReminders;
 use App\Modules\Payment\Actions\SyncPayment;
@@ -21,3 +22,4 @@ Schedule::call(fn () => app(SyncPayment::class)->pending())->name('SyncPendingPa
 Schedule::call(fn () => app(SendPaymentReminders::class)->handle())->name('SendPaymentReminders')->dailyAt('08:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(SendAnnouncement::class)->due())->name('SendScheduledAnnouncements')->everyFiveMinutes()->withoutOverlapping();
 Schedule::call(fn () => app(ReconcileWallets::class)->handle())->name('ReconcileWallets')->dailyAt('01:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
+Schedule::call(fn () => app(ManageLeave::class)->markLate())->name('MarkLateReturns')->everyTenMinutes()->withoutOverlapping();

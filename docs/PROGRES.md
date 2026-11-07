@@ -9,13 +9,27 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 4:** kartu santri, dompet, kasir POS
 - [x] **Tahap 5:** Mart & Warung
 - [x] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
-- [ ] **Tahap 7:** perizinan dan pos gerbang (berikutnya)
-- [ ] **Tahap 8:** tahfidz dan mutabaah
+- [x] **Tahap 7:** perizinan dan pos gerbang
+- [ ] **Tahap 8:** tahfidz dan mutabaah (berikutnya)
 - [ ] **Tahap 9:** ujian online dan PWA
 - [ ] **Tahap 10:** absensi selfie dan wajah
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
+- [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 7
+
+- [x] Pengajuan izin oleh wali atau musyrif, QR izin saat disetujui (LEV-01, LEV-03, W-11)
+- [x] Persetujuan musyrif untuk asramanya, opsi dua tingkat, antrean di HP (LEV-02, U-10, KS-01)
+- [x] Terlambat kembali: job 10 menit, kabar sekali ke wali dan musyrif (LEV-04)
+- [x] Papan sedang di luar, terlambat naik ke atas, pembaruan 5 detik (GTE-01, K-03)
+- [x] Pindai gerbang: keluar, masuk, ditolak dengan alasan, suara, tap dobel diabaikan (GTE-02, K-02)
+- [x] Pencatatan manual masuk tinjauan musyrif, penjemput izin pulang (GTE-03, GTE-06, K-04)
+- [x] Izin hari ini, riwayat tidak bisa diubah, ekspor (GTE-04, GTE-05, K-06)
+- [x] Serah terima shift dan override darurat (GTE-07, GTE-08, K-05)
+- [x] Izin aktif membuat absensi tercatat izin atau sakit, bukan alpa
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 6
 
