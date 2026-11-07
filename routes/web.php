@@ -480,8 +480,6 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
     Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
     Route::get('/ujian', StudentExams::class)->middleware('module:exam')->name('exams');
-    Route::get('/absen/{session}', [AttendanceCameraController::class, 'selfie'])->middleware('module:attendance')->name('selfie');
-    Route::post('/absen/{session}', [AttendanceCameraController::class, 'storeSelfie'])->middleware(['module:attendance', 'throttle:30,1'])->name('selfie.store');
     Route::get('/ujian/{exam}/persiapan', ExamPrepare::class)->middleware('module:exam')->name('exams.prepare');
     Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');

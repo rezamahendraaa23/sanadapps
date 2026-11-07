@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Storage;
 class PurgeAttendanceEvidence
 {
     /**
-     * Foto bukti terhapus setelah masa retensi; catatan kehadirannya tetap (ATT-06).
+     * Foto bukti terhapus setelah masa retensi; catatan kehadirannya tetap (PRD Sistem 8.9b).
      */
     public function handle(): int
     {
         $count = 0;
 
         AttendanceRecord::query()->whereNotNull('evidence_path')
-            ->where('scanned_at', '<', now()->subDays(AcademicSettings::selfieRetentionDays()))
+            ->where('scanned_at', '<', now()->subDays(AcademicSettings::evidenceRetentionDays()))
             ->each(function (AttendanceRecord $record) use (&$count): void {
                 Storage::disk('local')->delete($record->evidence_path);
                 $record->update(['evidence_path' => null]);

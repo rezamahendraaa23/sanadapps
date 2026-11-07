@@ -50,17 +50,15 @@ class ReviewAttendance
             $before = ['status' => $locked->status, 'review_status' => $locked->review_status];
             $locked->update($decision === 'approve'
                 ? [
-                    // Zona abu-abu belum dihitung hadir sebelum dikonfirmasi; waktunya tetap saat dipindai.
-                    'status' => $locked->review_status === 'pending' ? AttendanceClock::status($record->session, $locked->scanned_at) : $locked->status,
+                    // Belum dihitung hadir sebelum dikonfirmasi; waktunya tetap saat dipindai.
+                    'status' => AttendanceClock::status($record->session, $locked->scanned_at),
                     'review_status' => 'approved',
-                    'sampled' => false,
                     'reviewed_by' => $user->id,
                     'reviewed_at' => now(),
                 ]
                 : [
                     'status' => 'alpa',
                     'review_status' => 'rejected',
-                    'sampled' => false,
                     'reviewed_by' => $user->id,
                     'reviewed_at' => now(),
                     'note' => trim((string) $note),

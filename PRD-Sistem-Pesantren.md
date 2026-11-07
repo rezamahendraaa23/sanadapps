@@ -29,7 +29,7 @@
 | 8 | PPDB | Masuk scope (termasuk seleksi & daftar ulang) |
 | 9 | Semua rekomendasi tambahan | Masuk scope: kantin/koperasi cashless, piket, inventaris asrama, alumni, analitik risiko, ekspor Dapodik/EMIS |
 | 10 | Konfigurasi | Semua modul bisa **diaktifkan/dinonaktifkan**; jenis tagihan **custom** |
-| 11 | Tambahan | Absensi kartu/QR/selfie/wajah (opsional), pos jaga gerbang, Mart & Warung, papan izin keluar |
+| 11 | Tambahan | Absensi kartu/QR/wajah (opsional), pos jaga gerbang, Mart & Warung, papan izin keluar |
 | 12 | Pengguna | Satu pesantren, tanpa platform admin; role `admin` memegang pengaturan penuh |
 
 ### 0.2 Belum diputuskan (ditandai eksplisit, bukan placeholder)
@@ -42,7 +42,7 @@
 | D5 | Integrasi langsung ke Dapodik/EMIS | Belum jelas ada API terbuka untuk kebutuhan ini | Ekspor **file** (xlsx/csv) sesuai template |
 | D6 | Penyedia hosting & lokasi data | Belum dipilih | Rekomendasi: satu VPS di region Indonesia/Singapura |
 | D7 | Perangkat kartu (RFID/NFC) | Belum dibeli | Didesain pakai **reader USB mode keyboard (HID)** + kamera QR di browser (tanpa firmware khusus) |
-| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; mode **selfie** tersedia lebih dulu sebagai alternatif tanpa pencocokan otomatis. Dua jalur dan glosarium: lihat Catatan D8 |
+| D8 | Teknologi pengenalan wajah (di perangkat, layanan sendiri, atau API pihak ketiga) | Perlu PoC akurasi & latensi pada perangkat nyata, plus penilaian risiko data biometrik anak | Modul `face_attendance` default OFF; sebelum modul aktif, absen memakai manual, kartu, atau QR. Dua jalur dan glosarium: lihat Catatan D8 |
 
 *D3 dihapus pada v2.0 (mode Midtrans akun platform tidak relevan untuk satu pesantren).*
 
@@ -106,7 +106,7 @@
 | `card` | Kartu santri | OFF | core | UID kartu/QR, PIN, blokir, multi-akses |
 | `pos` | **Mart & Warung** (POS cashless) | OFF | wallet | Mart pesantren + banyak warung, katalog & barcode, stok, bayar scan kartu/QR/wajah, saldo & penyaluran merchant, laporan |
 | `academic` | Akademik | ON | core | Mapel, jadwal, rapor |
-| `attendance` | Absensi | ON | core | Kelas/asrama/sholat/kegiatan; mode verifikasi dipilih per pesantren: manual, kartu, QR, selfie |
+| `attendance` | Absensi | ON | core | Kelas/asrama/sholat/kegiatan; mode verifikasi dipilih per pesantren: manual, kartu, QR |
 | `face_attendance` | Absensi wajah (biometrik) | OFF | attendance | Persetujuan wali, enrolment wajah, liveness, pencocokan; selalu ada fallback |
 | `grading` | Nilai & rapor | ON | academic | Komponen nilai, bobot, rapor PDF |
 | `tahfidz` | Tahfidz & mutabaah | OFF | core | Setoran, murojaah, target, mutabaah harian |
@@ -415,11 +415,11 @@ Format: **ID | Fitur | Deskripsi | Kriteria selesai (DoD)**. Semua fitur otomati
 | ATT-02 | Absensi asrama/sholat/kegiatan | Sesi non-kelas oleh musyrif | Bisa berbasis kartu (tap) atau manual |
 | ATT-03 | Absensi via kartu | Tap di reader → record dengan `source=card` | Terlambat dihitung otomatis terhadap jam mulai |
 | ATT-04 | Rekap & laporan | Persentase kehadiran per santri/kelas/periode | Ekspor xlsx/PDF |
-| ATT-05 | Mode verifikasi per pesantren | Admin memilih mode yang diizinkan: `manual`, `card`, `qr`, `selfie`, `face`; bisa lebih dari satu, dan dapat ditimpa per sesi | Santri hanya bisa absen dengan mode yang diizinkan sesi tersebut; mode `face` hanya muncul jika modul aktif |
-| ATT-06 | Absensi selfie | Santri memotret diri lewat HP/tablet; foto disimpan sebagai bukti, dengan waktu server dan lokasi opsional (geofence) | Foto di luar radius atau tanpa lokasi ditandai `flagged`; musyrif meninjau antrean + sampel acak; foto bukti terhapus otomatis setelah masa retensi |
+| ATT-05 | Mode verifikasi per pesantren | Admin memilih mode yang diizinkan: `manual`, `card`, `qr`, `face`; bisa lebih dari satu, dan dapat ditimpa per sesi | Santri hanya bisa absen dengan mode yang diizinkan sesi tersebut; mode `face` hanya muncul jika modul aktif |
+| ATT-06 | *Dihapus (keputusan pemilik, 7 November 2026)* | Absen selfie tidak dipakai. Wajah didaftarkan admin lalu dikenali otomatis (ATT-07, ATT-08) | - |
 | ATT-07 | Absensi wajah (`face_attendance`) | Pencocokan wajah santri (identifikasi 1:N) di tablet gerbang/kelas dengan liveness check; perangkat mengikuti jalur yang dipilih di Catatan D8 | Skor ≥ ambang atas → hadir otomatis; zona abu-abu → menunggu konfirmasi musyrif; gagal → fallback kartu/manual (aturan §8.9b) |
 | ATT-08 | Persetujuan & enrolment biometrik | Wali memberi persetujuan digital/kertas; petugas mendaftarkan wajah di sesi terawasi | Tanpa persetujuan aktif, santri tidak bisa di-enroll; pencabutan menghapus data wajah ≤ 24 jam |
-| ATT-09 | Antrean tinjauan absensi | Daftar absensi `flagged`/`pending` dengan foto bukti dan skor | Musyrif setujui/tolak; keputusan tercatat di audit log |
+| ATT-09 | Antrean tinjauan absensi | Daftar absensi `pending` dengan foto bukti dan skor | Musyrif setujui/tolak; keputusan tercatat di audit log |
 | GRD-01 | Komponen & bobot | Harian, tugas, UTS, UAS, ujian online | Total bobot divalidasi = 100% |
 | GRD-02 | Input nilai | Grid per kelas-mapel; impor dari hasil ujian online | Nilai tervalidasi 0–maks |
 | GRD-03 | Rapor | Generate per term, predikat, catatan wali kelas, PDF | Terbit setelah dipublish; wali menerima WA |
@@ -712,12 +712,11 @@ Tabel permission memakai skema `spatie/laravel-permission` (`roles`, `permission
 |---|---|---|
 | session_id, student_id | fk | Unik (session_id, student_id) |
 | status | enum | `hadir`, `izin`, `sakit`, `alpa`, `terlambat` |
-| method | enum | `manual`, `card`, `qr`, `selfie`, `face` |
+| method | enum | `manual`, `card`, `qr`, `face` |
 | scanned_at | timestamptz null | Waktu server |
-| evidence_path | varchar null | Foto bukti (selfie/wajah); tunduk pada retensi |
+| evidence_path | varchar null | Foto wajah zona abu-abu; tunduk pada retensi |
 | match_score | decimal(4,3) null | Skor kemiripan (hanya `face`) |
-| geo_lat, geo_lng | decimal null | Lokasi (selfie), opsional |
-| review_status | enum | `none`, `flagged`, `pending`, `approved`, `rejected` |
+| review_status | enum | `none`, `pending`, `approved`, `rejected` |
 | reviewed_by, reviewed_at | fk, timestamptz null | |
 | note | text null | |
 
@@ -1029,9 +1028,8 @@ erDiagram
 | POST | `/attendance/sessions` | Buka sesi (default semua hadir) |
 | PUT | `/attendance/sessions/{id}/records` | Simpan batch status |
 | POST | `/attendance/sessions/{id}/close` | Tutup sesi |
-| POST | `/attendance/selfie` | Santri: multipart `session_id`, `photo`, `lat?`, `lng?` → record `method=selfie` |
 | POST | `/device/attendance/face` | **D** — `session_id`, `photo`, `liveness_token` → `{ match, score, status }` |
-| GET | `/attendance/review-queue` | Antrean `flagged`/`pending` |
+| GET | `/attendance/review-queue` | Antrean `pending` |
 | POST | `/attendance/records/{id}/review` | Setujui/tolak (`decision`, `note`) |
 | POST | `/biometric-consents` · `/biometric-consents/{id}/revoke` | Catat / cabut persetujuan wali |
 | POST | `/face-enrollments` | Enrol wajah (butuh persetujuan aktif) |
@@ -1227,10 +1225,10 @@ Pembayaran sebagian (jika diizinkan) dialokasikan ke invoice **tertua dulu**, da
 - Via kartu: scan sebelum `start_time + toleransi` (default 10 menit) → `hadir`; lewat toleransi → `terlambat`; tidak scan sampai sesi ditutup → `alpa`, kecuali ada izin aktif (`leave_requests` approved/out) → `izin`/`sakit`.
 - Santri `out` (izin keluar aktif) otomatis tidak dihitung alpa pada sesi di rentang izin.
 
-### 8.9b Mode verifikasi absensi (kartu / QR / selfie / wajah)
+### 8.9b Mode verifikasi absensi (kartu / QR / wajah)
 
 - Mode diatur di `modules.settings.verification_modes` dan dapat ditimpa per sesi. Satu sesi boleh mengizinkan beberapa mode sekaligus (mis. kartu **atau** wajah).
-- **`selfie`:** foto disimpan sebagai bukti dengan waktu server. Jika geofence aktif (radius default 100 m) dan lokasi di luar radius atau tidak tersedia → `review_status=flagged`. Tidak ada pencocokan otomatis; musyrif meninjau antrean `flagged` ditambah sampel acak 5% dari sisanya. Retensi foto bukti default 30 hari (dapat diubah).
+- **Foto bukti:** foto hanya disimpan untuk wajah zona abu-abu agar musyrif bisa memeriksa. Retensi default 30 hari (dapat diubah).
 - **`face`:** hanya berjalan jika modul `face_attendance` aktif **dan** santri punya `biometric_consents` aktif **dan** `face_enrollments.status=active`.
 - **Pencocokan:** skor ≥ ambang atas (default 0,80) → `hadir` otomatis; antara ambang bawah (default 0,60) dan atas → `review_status=pending` (konfirmasi musyrif); < ambang bawah → ditolak dan tawarkan kartu/manual. Contoh: skor 0,86 → hadir; 0,71 → menunggu konfirmasi; 0,52 → ditolak. Angka awal ini hanya titik mulai dan **wajib dikalibrasi lewat PoC** pada perangkat dan kondisi cahaya nyata.
 - **Liveness:** tantangan acak (kedip/tengok) sebelum pencocokan; gagal 3× → arahkan ke fallback. Kualitas gambar minimum dicek sebelum dicocokkan.
@@ -1467,7 +1465,7 @@ Aturan tambahan: wali tidak pernah melihat data santri yang bukan anaknya (cek r
 | R9 | Midtrans production butuh verifikasi bisnis dan waktu aktivasi | Mulai dengan sandbox + transfer manual; Midtrans diaktifkan setelah disetujui |
 | R10 | Data wajah anak adalah data biometrik sensitif | Modul OFF default; persetujuan wali wajib & dapat dicabut; simpan embedding saja; enkripsi; retensi; akses tercatat; tinjauan hukum sebelum diaktifkan |
 | R11 | Pengenalan wajah salah menolak/menerima (cahaya, kualitas kamera, kemiripan) | Zona abu-abu + konfirmasi musyrif, liveness, fallback kartu/manual, kalibrasi ambang lewat PoC |
-| R12 | Selfie mudah dititipkan ke teman | Geofence, tantangan acak (mis. kode di layar), tinjauan sampel acak, mode kartu/wajah untuk sesi penting |
+| R12 | *Dihapus bersama absen selfie (7 November 2026)* | - |
 | R13 | Jika kelak dijadikan SaaS, perlu menambah `tenant_id` dan isolasi data | Modul dipisah rapi (folder per modul, Action class, tanpa query mentah tersebar); menambah multi-tenant dijadwalkan sebagai proyek tersendiri |
 | R14 | Cakupan fitur besar untuk satu developer | Feature flag memungkinkan peluncuran bertahap; urutan implementasi diatur di master prompt |
 | Asumsi | ±200 santri; wali memiliki WhatsApp; satu pesantren dengan beberapa kelas | Divalidasi di UAT |
@@ -1493,7 +1491,7 @@ Aturan tambahan: wali tidak pernah melihat data santri yang bukan anaknya (cek r
 | 13 | Keluar tanpa izin di gerbang | Ditolak + alarm; musyrif menerima notifikasi; override hanya oleh musyrif/admin dengan alasan |
 | 14 | Belanja di warung dengan kartu | Saldo, stok, ledger merchant, dan struk konsisten; dobel tap tidak dobel potong; limit warung & blokir kategori bekerja |
 | 15 | Penyaluran merchant | Saldo merchant = Σ ledger; penyaluran tercatat di kas; saldo tidak bisa negatif |
-| 16 | Absensi selfie dan wajah | Selfie `flagged` muncul di antrean tinjauan; wajah di zona abu-abu menunggu konfirmasi; tanpa persetujuan wali, enrolment ditolak |
+| 16 | Absensi wajah | Wajah di zona abu-abu muncul di antrean tinjauan dan menunggu konfirmasi; tanpa persetujuan wali, enrolment ditolak |
 
 ---
 

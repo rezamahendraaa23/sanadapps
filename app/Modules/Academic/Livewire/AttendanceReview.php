@@ -11,7 +11,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /**
- * Antrean tinjauan selfie dan wajah (U-14). Skor dan foto hanya untuk peninjau, tidak pernah ke wali.
+ * Antrean tinjauan wajah zona abu-abu (U-14). Skor dan foto hanya untuk peninjau, tidak pernah ke wali.
  */
 #[Title('Tinjauan Absensi')]
 class AttendanceReview extends Component
@@ -87,7 +87,7 @@ class AttendanceReview extends Component
         $this->selected = array_values(array_diff($this->selected, [$this->rejecting]));
         $this->rejecting = null;
         $this->dispatch('close-modal', 'tolak-absensi');
-        $this->dispatch('toast', message: 'Absensi ditolak. Santri bisa mengulang atau pakai kartu.', tone: 'success');
+        $this->dispatch('toast', message: 'Absensi ditolak. Santri bisa memindai ulang atau pakai kartu.', tone: 'success');
     }
 
     public function render(ReviewAttendance $review): View

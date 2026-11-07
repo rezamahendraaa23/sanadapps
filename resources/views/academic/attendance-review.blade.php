@@ -34,19 +34,7 @@
                             <span class="min-w-0 text-lg font-semibold break-words">{{ $record->student->name }}</span>
                         </label>
                         <p class="text-sm text-text-muted break-words">{{ $record->session->title }}, {{ $record->scanned_at?->setTimezone($tz)->translatedFormat('j M, H.i') }}</p>
-                        <p class="text-base font-semibold">
-                            @if ($record->review_status === 'pending')
-                                Wajah: kecocokan <span class="font-tabular">{{ number_format((float) $record->match_score, 2, ',', '') }}</span>, perlu konfirmasi
-                            @elseif ($record->review_status === 'flagged')
-                                Selfie ditandai
-                            @else
-                                Selfie, sampel acak
-                            @endif
-                        </p>
-                        @if ($record->note)<p class="text-base break-words">{{ $record->note }}</p>@endif
-                        @if ($record->challenge_code)
-                            <p class="text-base">Kode yang harus tampil di foto: <strong class="font-tabular">{{ $record->challenge_code }}</strong></p>
-                        @endif
+                        <p class="text-base font-semibold">Kecocokan <span class="font-tabular">{{ number_format((float) $record->match_score, 2, ',', '') }}</span>, perlu konfirmasi</p>
                         <div class="mt-2 flex flex-wrap gap-2">
                             <x-ui.button data-approve wire:click="approve('{{ $record->uuid }}')" wire:loading.attr="disabled" wire:target="approve">Hadir<span class="sr-only"> {{ $record->student->name }}</span></x-ui.button>
                             <x-ui.button data-reject variant="secondary" wire:click="askReject('{{ $record->uuid }}')" wire:loading.attr="disabled" wire:target="askReject">Tolak<span class="sr-only"> {{ $record->student->name }}</span></x-ui.button>

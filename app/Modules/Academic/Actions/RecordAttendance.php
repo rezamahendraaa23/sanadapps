@@ -37,8 +37,8 @@ class RecordAttendance
 
                 if ($status !== $record->status) {
                     // Koreksi langsung oleh pengabsen menyelesaikan antrean tinjauan catatan itu.
-                    $reviewed = in_array($record->review_status, ['flagged', 'pending'], true) || $record->sampled;
-                    $record->update(['status' => $status] + ($reviewed ? ['review_status' => 'approved', 'sampled' => false, 'reviewed_by' => $userId, 'reviewed_at' => now()] : []));
+                    $reviewed = $record->review_status === 'pending';
+                    $record->update(['status' => $status] + ($reviewed ? ['review_status' => 'approved', 'reviewed_by' => $userId, 'reviewed_at' => now()] : []));
                 }
             }
 
@@ -85,14 +85,14 @@ class RecordAttendance
                 return ['ok' => false, 'message' => $card->student->name.' bukan peserta sesi ini.', 'name' => $card->student->name, 'status' => null];
             }
 
-            // Kartu tetap jalan bila selfie ditolak atau wajah masih menunggu: selalu ada cara lain.
+            // Kartu tetap jalan bila wajah ditolak atau masih menunggu: selalu ada cara lain.
             if ($record->scanned_at !== null && ! in_array($record->review_status, ['rejected', 'pending'], true)) {
                 return ['ok' => true, 'message' => 'Sudah tercatat.', 'name' => $card->student->name, 'status' => $record->status];
             }
 
             QrToken::consume($credential);
 
-            $record->update(['status' => AttendanceClock::status($session), 'method' => $resolved['method'], 'scanned_at' => now(), 'review_status' => 'none', 'sampled' => false]);
+            $record->update(['status' => AttendanceClock::status($session), 'method' => $resolved['method'], 'scanned_at' => now(), 'review_status' => 'none']);
             $this->scan->handle($card, $deviceId, 'attendance', 'ok', null, 'attendance_session', $session->id);
 
             return ['ok' => true, 'message' => AttendanceRecord::STATUSES[$record->status], 'name' => $card->student->name, 'status' => $record->status];

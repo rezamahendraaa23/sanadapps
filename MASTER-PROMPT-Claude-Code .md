@@ -76,7 +76,7 @@ Kerjakan **berurutan**. Setiap tahap harus: lulus test, lulus Delivery Gate, lal
 | 7 | Perizinan + pos gerbang: papan "sedang di luar", scan, input manual, override, serah terima shift | Sistem §5.9, §5.9b, §8.11b |
 | 8 | Tahfidz & mutabaah | Sistem §5.7 |
 | 9 | Ujian online: bank soal, pembuat ujian, halaman ujian PWA, monitor live, koreksi | Sistem §5.8 |
-| 10 | Absensi selfie lalu wajah (di balik `FaceMatcher`), persetujuan wali, antrean tinjauan | Sistem §5.6 (ATT), §8.9b |
+| 10 | Absensi wajah (di balik `FaceMatcher`), persetujuan wali, antrean tinjauan | Sistem §5.6 (ATT), §8.9b |
 | 11 | PPDB | Sistem §5.10 |
 | 12 | Pelanggaran, kesehatan (UKS), analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS | Sistem §5.9, §5.12 |
 | 12b | **Modul Masjid** (opsional, di balik feature flag): jadwal sholat Kemenag + uji pembanding, layar TV offline-first, CMS dan persetujuan, pairing perangkat, aplikasi pembungkus Android TV (WebView, proyek Android terpisah di folder `apps/android-tv-display`) | `PRD-Masjid-Display.md` (seluruhnya) |

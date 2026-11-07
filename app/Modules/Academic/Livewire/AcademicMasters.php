@@ -55,15 +55,7 @@ class AcademicMasters extends Component
     /** @var list<string> */
     public array $verification_modes = [];
 
-    public bool $geofence_enabled = false;
-
-    public string $geofence_lat = '';
-
-    public string $geofence_lng = '';
-
-    public string $geofence_radius = '100';
-
-    public string $selfie_retention = '30';
+    public string $evidence_retention = '30';
 
     public string $face_upper = '0,80';
 
@@ -73,14 +65,9 @@ class AcademicMasters extends Component
     {
         $this->late_tolerance = (string) AcademicSettings::lateTolerance();
         $this->verification_modes = AcademicSettings::verificationModes();
-        $fence = AcademicSettings::geofence();
         $faces = AcademicSettings::faceThresholds();
         $this->fill([
-            'geofence_enabled' => $fence['enabled'],
-            'geofence_lat' => $fence['lat'] === null ? '' : (string) $fence['lat'],
-            'geofence_lng' => $fence['lng'] === null ? '' : (string) $fence['lng'],
-            'geofence_radius' => (string) $fence['radius'],
-            'selfie_retention' => (string) AcademicSettings::selfieRetentionDays(),
+            'evidence_retention' => (string) AcademicSettings::evidenceRetentionDays(),
             'face_upper' => str_replace('.', ',', number_format($faces['upper'], 2, '.', '')),
             'face_lower' => str_replace('.', ',', number_format($faces['lower'], 2, '.', '')),
         ]);
@@ -185,12 +172,9 @@ class AcademicMasters extends Component
         $this->validate([
             'late_tolerance' => 'required|integer|min:0|max:120',
             'verification_modes' => 'required|array|min:1',
-            'verification_modes.*' => 'in:manual,card,qr,selfie,face',
-            'geofence_lat' => $this->geofence_enabled ? 'required|numeric|between:-90,90' : 'nullable',
-            'geofence_lng' => $this->geofence_enabled ? 'required|numeric|between:-180,180' : 'nullable',
-            'geofence_radius' => 'required|integer|min:10|max:5000',
-            'selfie_retention' => 'required|integer|min:1|max:365',
-        ], ['verification_modes.required' => 'Pilih minimal satu cara absen.'], ['late_tolerance' => 'toleransi', 'geofence_lat' => 'lintang', 'geofence_lng' => 'bujur', 'geofence_radius' => 'radius', 'selfie_retention' => 'masa simpan']);
+            'verification_modes.*' => 'in:manual,card,qr,face',
+            'evidence_retention' => 'required|integer|min:1|max:365',
+        ], ['verification_modes.required' => 'Pilih minimal satu cara absen.'], ['late_tolerance' => 'toleransi', 'evidence_retention' => 'masa simpan']);
 
         if (! is_numeric($upper) || ! is_numeric($lower) || (float) $upper > 1 || (float) $lower < 0 || (float) $upper <= (float) $lower) {
             $this->addError('face_upper', 'Ambang atas harus lebih besar dari ambang bawah, keduanya 0 sampai 1.');
@@ -203,11 +187,7 @@ class AcademicMasters extends Component
             ...($module->settings ?? []),
             'late_tolerance' => (int) $this->late_tolerance,
             'verification_modes' => array_values($this->verification_modes),
-            'geofence_enabled' => $this->geofence_enabled,
-            'geofence_lat' => filled($this->geofence_lat) ? (float) $this->geofence_lat : null,
-            'geofence_lng' => filled($this->geofence_lng) ? (float) $this->geofence_lng : null,
-            'geofence_radius' => (int) $this->geofence_radius,
-            'selfie_retention' => (int) $this->selfie_retention,
+            'evidence_retention' => (int) $this->evidence_retention,
             'face_upper' => (float) $upper,
             'face_lower' => (float) $lower,
         ]]);

@@ -234,7 +234,7 @@ Kolom "Perangkat": **M** = mobile-first, **D** = desktop-first, **T** = tablet l
 | S-07 | Tahfidz & mutabaah | Progres juz (ring/bar + angka), riwayat setoran (surat & ayat dengan teks Arab RTL), checklist mutabaah hari ini (toggle besar) | L/E/X | Centang amalan; status "menunggu verifikasi" berlabel |
 | S-08 | Nilai & absensi | Daftar nilai per mapel dengan predikat; kehadiran % per bulan; tabel alternatif untuk grafik | L/E | Pilih term |
 | S-09 | Kartu digital | Kartu santri (foto, nama, NIS, QR dinamis berjeda ±30 dtk dengan indikator hitung mundur), saldo, tombol "Tampilkan lebih terang" (atur kecerahan layar) | O: QR tetap tampil terakhir dengan peringatan "Perlu koneksi untuk QR baru" | Layar tetap menyala saat QR tampil (opsi) |
-| S-10 | Absensi selfie | Kamera depan layar penuh dengan bingkai wajah, tantangan acak di layar (mis. kode 3 digit), status lokasi (geofence) berikon+teks, tombol "Ambil & Kirim" | Izin kamera ditolak (panduan mengaktifkan), lokasi di luar area, X unggah, S "Absensi terkirim, menunggu/otomatis tercatat", O antre lokal | Ulangi foto sebelum kirim |
+| S-10 | *Dihapus bersama absen selfie (7 November 2026)* | - | - | - |
 | S-11 | Persetujuan data wajah | Penjelasan ringkas tujuan, lama simpan, hak mencabut; hanya wali yang dapat menyetujui (tampil di W-13 untuk wali); santri melihat status "Terdaftar/Belum" | — | — |
 
 #### 4.3.1 Detail halaman ujian (S-05)
@@ -270,7 +270,7 @@ Kolom "Perangkat": **M** = mobile-first, **D** = desktop-first, **T** = tablet l
 | U-11 | Catat pelanggaran | Pilih santri (cari), pilih aturan (poin tampil), catatan, foto opsional; tampilkan total poin saat ini dan ambang berikut | Konfirmasi bila lintas ambang | — |
 | U-12 | Verifikasi mutabaah | Daftar centang santri per amalan, setujui massal | S | — |
 | U-13 | Absensi asrama/sholat & piket | Seperti U-03 untuk sesi asrama; mode kartu: layar "Siap memindai" menampilkan kartu terakhir yang di-tap | O, S | Reader USB mengetik UID → baris langsung hijau |
-| U-14 | Antrean tinjauan absensi | Daftar absensi wajah/selfie berstatus "menunggu tinjauan": foto/hasil kecocokan di kiri, data santri di kanan, tombol **Hadir** / **Tolak** (alasan); pemilihan massal untuk yang jelas | L/E, S, X | Pintasan keyboard di desktop; sampel acak selfie untuk audit |
+| U-14 | Antrean tinjauan absensi | Daftar absensi wajah berstatus "menunggu tinjauan": foto/hasil kecocokan di kiri, data santri di kanan, tombol **Hadir** / **Tolak** (alasan); pemilihan massal untuk yang jelas | L/E, S, X | Pintasan keyboard di desktop |
 | U-15 | Pendaftaran wajah santri | Pilih santri → ambil beberapa foto dari sudut berbeda dengan panduan bingkai → cek kualitas → simpan; cek persetujuan wali sebelum aktif | Blokir bila persetujuan wali belum ada | Hapus data wajah (konfirmasi) |
 
 ### 4.5 Panel admin, bendahara, akademik (desktop-first)
@@ -346,7 +346,7 @@ Kolom "Perangkat": **M** = mobile-first, **D** = desktop-first, **T** = tablet l
 | SE-04 | Template notifikasi | Daftar event + toggle; editor pesan dengan chip variabel dan **pratinjau gelembung WA** | Validasi variabel | — |
 | SE-05 | Pengguna & role | Tabel + drawer | — | — |
 | SE-06 | Audit log | Tabel read-only, filter, detail sebelum/sesudah | E | — |
-| SE-07 | Mode absensi | Per sesi (kelas, asrama, sholat): pilih manual / kartu / QR / selfie / wajah; ambang wajah (otomatis, tinjau, tolak); geofence untuk selfie; status persetujuan wajah (jumlah wali setuju/belum) | Peringatan jika wajah aktif tanpa persetujuan | Uji coba di perangkat |
+| SE-07 | Mode absensi | Per sesi (kelas, asrama, sholat): pilih manual / kartu / QR / wajah; ambang wajah (otomatis, tinjau, tolak); status persetujuan wajah (jumlah wali setuju/belum) | Peringatan jika wajah aktif tanpa persetujuan | Uji coba di perangkat |
 | SE-08 | Setup awal & kesehatan sistem | Checklist setup, status antrean, job gagal, webhook terakhir, backup terakhir | X | Ulangi job gagal |
 
 ---
@@ -477,13 +477,13 @@ flowchart TD
     E --> I[F-13 Masuk laporan + pencairan merchant]
 ```
 
-### 5.6d Absensi selfie / wajah
+### 5.6d Absensi wajah
 
 ```mermaid
 flowchart TD
-    A[Sesi absensi dengan mode selfie/wajah] --> B{Persetujuan wali ada?}
+    A[Sesi absensi dengan mode wajah] --> B{Persetujuan wali ada?}
     B -->|Belum| X[Pakai kartu/manual; wali diminta setuju di W-14]
-    B -->|Ada| C[S-10 Ambil selfie / kamera pos]
+    B -->|Ada| C[Kamera pos]
     C --> D{Kecocokan}
     D -->|Tinggi| E[Hadir otomatis]
     D -->|Abu-abu| F[U-14 Antrean tinjauan] --> G{Keputusan musyrif}
@@ -559,7 +559,7 @@ Aturan tambahan: orientasi landscape tetap terbaca; bar tetap (header/bottom nav
 | **Kalender titik** | Grid bulanan; titik berwarna + huruf; legenda; fokus keyboard per hari |
 | **Kartu santri di papan gerbang** | Foto, nama, kelas, tujuan, jam keluar, hitung mundur kembali; varian terlambat |
 | **Hasil transaksi/scan besar** | Teks ≥ 28–32 px + ikon + warna; auto-reset 3 dtk; terbaca dari 1 meter |
-| **Kamera selfie/wajah** | Bingkai wajah, panduan cahaya, status lokasi, tantangan acak, pratinjau ulang |
+| **Kamera wajah** | Bingkai wajah, panduan cahaya, tantangan gerakan |
 | **Stempel status** | Label bergaris ganda untuk Lunas/Terverifikasi di dokumen |
 | **Chip variabel & pratinjau pesan WA** | Untuk editor template notifikasi |
 | **Penanda data sensitif** | Ikon kunci + label pada layar kesehatan/dokumen pribadi |
@@ -602,7 +602,7 @@ Desain dianggap siap diserahkan ke implementasi jika:
 - [ ] Arah visual §2.1: tepat satu kartu hero per layar, kartu tiket hanya untuk objek tiket/bukti, arsiran selalu berikon+teks, tidak ada grafik 3D, tidak ada ilustrasi stok.
 - [ ] Pos gerbang: papan "Sedang di luar" terbaca dari jarak 1 meter; terlambat terlihat tanpa mengandalkan warna.
 - [ ] Mart & Warung: kasir, katalog, stok, laporan, dan aturan belanja wali punya semua keadaan L/E/X/S.
-- [ ] Absensi selfie/wajah: alur persetujuan wali, pendaftaran, antrean tinjauan, dan fallback tersedia; teks penjelasan data biometrik mudah dipahami.
+- [ ] Absensi wajah: alur persetujuan wali, pendaftaran, antrean tinjauan, dan fallback tersedia; teks penjelasan data biometrik mudah dipahami.
 - [ ] Tidak ada sisa kata "tenant", "paket", atau "platform" di teks antarmuka.
 ---
 

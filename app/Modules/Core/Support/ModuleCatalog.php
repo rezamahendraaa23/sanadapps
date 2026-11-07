@@ -17,7 +17,7 @@ final class ModuleCatalog
         'card' => ['name' => 'Kartu santri', 'description' => 'UID kartu dan QR, PIN, blokir, multi-akses.', 'default' => false, 'depends' => ['core']],
         'pos' => ['name' => 'Mart & Warung', 'description' => 'Kasir cashless, katalog, stok, penyaluran ke merchant.', 'default' => false, 'depends' => ['wallet']],
         'academic' => ['name' => 'Akademik', 'description' => 'Mata pelajaran, jadwal, rapor.', 'default' => true, 'depends' => ['core']],
-        'attendance' => ['name' => 'Absensi', 'description' => 'Kelas, asrama, sholat, kegiatan; manual, kartu, QR, selfie.', 'default' => true, 'depends' => ['core']],
+        'attendance' => ['name' => 'Absensi', 'description' => 'Kelas, asrama, sholat, kegiatan; manual, kartu, QR.', 'default' => true, 'depends' => ['core']],
         'face_attendance' => ['name' => 'Absensi wajah', 'description' => 'Persetujuan wali, pendaftaran wajah, pencocokan, selalu ada cara lain.', 'default' => false, 'depends' => ['attendance']],
         'grading' => ['name' => 'Nilai & rapor', 'description' => 'Komponen nilai, bobot, rapor PDF.', 'default' => true, 'depends' => ['academic']],
         'tahfidz' => ['name' => 'Tahfidz & mutabaah', 'description' => 'Setoran, murojaah, target, mutabaah harian.', 'default' => false, 'depends' => ['core']],

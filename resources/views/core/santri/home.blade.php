@@ -24,20 +24,6 @@
         @endif
     @endif
 
-    @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('attendance'))
-        @php($selfieSessions = \App\Modules\Academic\Models\AttendanceSession::query()->whereNull('closed_at')->whereDate('session_date', now(config('sanad.display_timezone'))->toDateString())->whereJsonContains('allowed_modes', 'selfie')->whereHas('records', fn ($query) => $query->where('student_id', $student->id)->where(fn ($inner) => $inner->whereNull('scanned_at')->orWhere('review_status', 'rejected')))->orderBy('start_time')->get())
-        @if ($selfieSessions->isNotEmpty())
-            <x-ui.card title="Absen selfie sekarang">
-                @foreach ($selfieSessions as $selfieSession)
-                    <div class="flex items-center justify-between gap-3 border-b border-border py-2 last:border-b-0">
-                        <span class="min-w-0 text-base break-words">{{ $selfieSession->title }}</span>
-                        <x-ui.button class="shrink-0" icon="camera" :href="route('santri.selfie', $selfieSession)">Absen<span class="sr-only"> {{ $selfieSession->title }}</span></x-ui.button>
-                    </div>
-                @endforeach
-            </x-ui.card>
-        @endif
-    @endif
-
     @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('face_attendance'))
         <p class="flex items-center gap-2 rounded-card border border-border bg-surface p-4 text-sm">
             <x-ui.icon name="scan-face" size="sm" />

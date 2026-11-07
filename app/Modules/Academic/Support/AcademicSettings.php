@@ -32,7 +32,7 @@ final class AcademicSettings
      */
     public static function modeOptions(): array
     {
-        $labels = ['manual' => 'Manual', 'card' => 'Tap kartu', 'qr' => 'Pindai QR', 'selfie' => 'Selfie dari HP santri'];
+        $labels = ['manual' => 'Manual', 'card' => 'Tap kartu', 'qr' => 'Pindai QR'];
 
         if (app(ModuleRegistry::class)->enabled('face_attendance')) {
             $labels['face'] = 'Wajah di pos';
@@ -41,24 +41,9 @@ final class AcademicSettings
         return array_intersect_key($labels, array_flip(self::verificationModes()));
     }
 
-    /**
-     * @return array{enabled: bool, lat: float|null, lng: float|null, radius: int}
-     */
-    public static function geofence(): array
+    public static function evidenceRetentionDays(): int
     {
-        $rules = self::attendance();
-
-        return [
-            'enabled' => (bool) ($rules['geofence_enabled'] ?? false),
-            'lat' => isset($rules['geofence_lat']) ? (float) $rules['geofence_lat'] : null,
-            'lng' => isset($rules['geofence_lng']) ? (float) $rules['geofence_lng'] : null,
-            'radius' => (int) ($rules['geofence_radius'] ?? 100),
-        ];
-    }
-
-    public static function selfieRetentionDays(): int
-    {
-        return (int) (self::attendance()['selfie_retention'] ?? 30);
+        return (int) (self::attendance()['evidence_retention'] ?? 30);
     }
 
     /**

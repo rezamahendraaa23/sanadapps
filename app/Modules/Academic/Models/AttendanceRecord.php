@@ -20,17 +20,17 @@ class AttendanceRecord extends Model
 
     protected function casts(): array
     {
-        return ['scanned_at' => 'immutable_datetime', 'reviewed_at' => 'immutable_datetime', 'match_score' => 'decimal:3', 'sampled' => 'boolean'];
+        return ['scanned_at' => 'immutable_datetime', 'reviewed_at' => 'immutable_datetime', 'match_score' => 'decimal:3'];
     }
 
     /**
-     * Ditandai, zona abu-abu, atau sampel acak yang belum diputuskan.
+     * Wajah zona abu-abu yang belum dikonfirmasi.
      *
      * @param  Builder<AttendanceRecord>  $query
      */
     public function scopeAwaitingReview(Builder $query): Builder
     {
-        return $query->where(fn (Builder $inner) => $inner->whereIn('review_status', ['flagged', 'pending'])->orWhere(fn (Builder $sample) => $sample->where('sampled', true)->where('review_status', 'none')));
+        return $query->where('review_status', 'pending');
     }
 
     public function session(): BelongsTo

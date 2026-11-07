@@ -7,8 +7,7 @@ const shots = process.env.E2E_SCREENSHOTS;
 // Kamera tiruan Chrome: gambar bergerak, tanpa dialog izin.
 test.use({
     launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
-    permissions: ['camera', 'geolocation'],
-    geolocation: { latitude: -6.5, longitude: 106.8 },
+    permissions: ['camera'],
 });
 
 async function pageReady(page) {
@@ -22,16 +21,6 @@ async function loginStaff(page, email, password, home = /\/panel$/) {
     await page.getByLabel('Sandi', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();
     await expect(page).toHaveURL(home);
-    await pageReady(page);
-}
-
-async function loginStudent(page) {
-    await page.goto('/masuk?sebagai=santri');
-    await pageReady(page);
-    await page.getByLabel('NIS').fill('2026003');
-    await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-tiga');
-    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
-    await expect(page).toHaveURL(/\/santri$/);
     await pageReady(page);
 }
 
@@ -53,7 +42,7 @@ async function openSession(page, title, mode) {
 
 test.describe.configure({ mode: 'serial' });
 
-test('admin: aktifkan modul wajah dan atur selfie, geofence, ambang', async ({ page }) => {
+test('admin: aktifkan modul wajah dan atur ambang; selfie tidak ada lagi', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await loginStaff(page, 'admin@uji.test', 'sandi-uji-admin');
     await page.goto('/panel/pengaturan/modul');
@@ -67,106 +56,15 @@ test('admin: aktifkan modul wajah dan atur selfie, geofence, ambang', async ({ p
 
     await page.goto('/panel/mapel?tab=aturan');
     await pageReady(page);
-    await page.getByRole('checkbox', { name: 'Selfie dari HP santri' }).check();
-    await page.getByRole('checkbox', { name: 'Wajah' }).check();
-    await page.getByRole('checkbox', { name: 'Batasi lokasi selfie' }).check();
-    await page.getByLabel('Lintang pusat').fill('-6.2');
-    await page.getByLabel('Bujur pusat').fill('106.8');
+    await expect(page.getByText(/selfie/i)).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'Wajah di pos' }).check();
+    // Kamera tiruan selalu mirip: ambang dibuat lebar agar alur zona abu-abu teruji.
+    await page.getByLabel('Hadir otomatis mulai').fill('0,999');
+    await page.getByLabel('Ditolak di bawah').fill('0,01');
     await page.getByRole('button', { name: 'Simpan Aturan' }).click();
     await expect(page.getByText('Aturan absensi tersimpan.')).toBeVisible();
     await expect(page.getByText(/belum ada wali yang setuju/)).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/aturan-absen-1280.png`, fullPage: true });
-});
-
-test('selfie di HP: di luar area ditandai, musyrif menolak, santri mengulang, musyrif menerima', async ({ browser }) => {
-    const options = { viewport: { width: 360, height: 640 }, permissions: ['camera', 'geolocation'], geolocation: { latitude: -6.5, longitude: 106.8 } };
-    const musyrifContext = await browser.newContext(options);
-    const musyrif = await musyrifContext.newPage();
-    await loginStaff(musyrif, 'musyrif@uji.test', 'sandi-uji-musyrif', /\/musyrif$/);
-    await openSession(musyrif, 'Apel Selfie', 'selfie');
-    await expect(musyrif.getByText(/Santri absen sendiri dari HP/)).toBeVisible();
-
-    const studentContext = await browser.newContext(options);
-    const student = await studentContext.newPage();
-    await loginStudent(student);
-    await expect(student.getByRole('heading', { name: 'Absen selfie sekarang' })).toBeVisible();
-    await student.getByRole('link', { name: /Absen.*Apel Selfie/ }).click();
-    await expect(student).toHaveURL(/santri\/absen\//);
-    await expect(student.getByRole('button', { name: 'Ambil Foto' })).toBeEnabled();
-    await expect(student.getByText('Lokasi terbaca')).toBeVisible();
-    await expect(student.getByText(/Kode absen Anda/)).toBeVisible();
-    await noOverflow(student);
-    if (shots) await student.screenshot({ path: `${shots}/selfie-kamera-360.png` });
-
-    await student.getByRole('button', { name: 'Ambil Foto' }).click();
-    await expect(student.getByAltText('Pratinjau foto')).toBeVisible();
-    await student.getByRole('button', { name: 'Ulangi' }).click();
-    await student.getByRole('button', { name: 'Ambil Foto' }).click();
-    await student.getByRole('button', { name: 'Kirim' }).click();
-    await expect(student.getByRole('heading', { name: 'Absensi terkirim, menunggu tinjauan' })).toBeVisible();
-    if (shots) await student.screenshot({ path: `${shots}/selfie-terkirim-360.png` });
-
-    await musyrif.goto('/musyrif/absensi/tinjauan');
-    await pageReady(musyrif);
-    await expect(musyrif.getByText(/Di luar area/)).toBeVisible();
-    await expect(musyrif.getByAltText(/Foto absensi Santri Tiga/)).toBeVisible();
-    await musyrif.waitForFunction(() => { const image = document.querySelector('img[alt^="Foto absensi"]'); return image?.complete && image.naturalWidth > 0; });
-    await noOverflow(musyrif);
-    if (shots) await musyrif.screenshot({ path: `${shots}/tinjauan-360.png`, fullPage: true });
-    await musyrif.getByRole('button', { name: /^Tolak Santri Tiga/ }).click();
-    const reject = musyrif.getByRole('dialog', { name: 'Tolak absensi' });
-    await reject.getByRole('button', { name: 'Tolak Absensi' }).click();
-    await expect(reject.getByText('Isi alasan penolakan.')).toBeVisible();
-    await reject.getByLabel('Alasan').fill('Foto gelap');
-    await reject.getByRole('button', { name: 'Tolak Absensi' }).click();
-    await expect(reject).toBeHidden();
-    await expect(musyrif.getByText('Tidak ada absensi yang menunggu tinjauan.')).toBeVisible();
-
-    await student.goto('/santri');
-    await pageReady(student);
-    await student.getByRole('link', { name: /Absen.*Apel Selfie/ }).click();
-    await expect(student.getByText(/ditolak: Foto gelap/)).toBeVisible();
-    await expect(student.getByRole('button', { name: 'Ambil Foto' })).toBeEnabled();
-    await student.getByRole('button', { name: 'Ambil Foto' }).click();
-    await student.getByRole('button', { name: 'Kirim' }).click();
-    await expect(student.getByRole('heading', { name: 'Absensi terkirim, menunggu tinjauan' })).toBeVisible();
-
-    await musyrif.reload();
-    await pageReady(musyrif);
-    await musyrif.getByRole('button', { name: /^Hadir Santri Tiga/ }).click();
-    await expect(musyrif.getByText('Tidak ada absensi yang menunggu tinjauan.')).toBeVisible();
-
-    await musyrifContext.close();
-    await studentContext.close();
-});
-
-test('selfie putus koneksi: foto antre di HP lalu terkirim saat tersambung', async ({ browser }) => {
-    const options = { viewport: { width: 360, height: 640 }, permissions: ['camera', 'geolocation'], geolocation: { latitude: -6.2, longitude: 106.8 } };
-    const musyrifContext = await browser.newContext(options);
-    const musyrif = await musyrifContext.newPage();
-    await loginStaff(musyrif, 'musyrif@uji.test', 'sandi-uji-musyrif', /\/musyrif$/);
-    await openSession(musyrif, 'Apel Antre', 'selfie');
-
-    const studentContext = await browser.newContext(options);
-    const student = await studentContext.newPage();
-    await loginStudent(student);
-    await student.getByRole('link', { name: /Absen.*Apel Antre/ }).click();
-    await expect(student.getByRole('button', { name: 'Ambil Foto' })).toBeEnabled();
-    await student.getByRole('button', { name: 'Ambil Foto' }).click();
-    await studentContext.setOffline(true);
-    await student.getByRole('button', { name: 'Kirim' }).click();
-    await expect(student.getByRole('heading', { name: 'Foto tersimpan di HP' })).toBeVisible();
-    if (shots) await student.screenshot({ path: `${shots}/selfie-antre-360.png` });
-    await studentContext.setOffline(false);
-    await expect(student.getByRole('heading', { name: 'Absensi terkirim, menunggu tinjauan' })).toBeVisible();
-
-    await musyrif.goto('/musyrif/absensi/tinjauan');
-    await pageReady(musyrif);
-    await expect(musyrif.getByText(/Terkirim tertunda/)).toBeVisible();
-    await musyrif.getByRole('button', { name: /^Hadir Santri Tiga/ }).click();
-    await expect(musyrif.getByText('Tidak ada absensi yang menunggu tinjauan.')).toBeVisible();
-    await musyrifContext.close();
-    await studentContext.close();
 });
 
 test('wajah: tanpa persetujuan diblok, wali setuju, daftar, pindai di pos, wali mencabut dan data terhapus', async ({ browser }) => {
@@ -223,10 +121,35 @@ test('wajah: tanpa persetujuan diblok, wali setuju, daftar, pindai di pos, wali 
     await openSession(musyrif, 'Apel Wajah', 'face');
     await musyrif.getByRole('link', { name: 'Buka Kamera Wajah' }).click();
     await expect(musyrif).toHaveURL(/absensi-wajah/);
+    const kioskUrl = musyrif.url();
     await expect(musyrif.getByRole('button', { name: 'Mulai Pindai' })).toBeEnabled();
     await musyrif.getByRole('button', { name: 'Mulai Pindai' }).click();
-    await expect(musyrif.getByRole('status').filter({ hasText: 'Santri Tiga' })).toBeVisible({ timeout: 20_000 });
+    await expect(musyrif.getByRole('status').filter({ hasText: 'Menunggu konfirmasi musyrif' })).toBeVisible({ timeout: 20_000 });
+    await expect(musyrif.getByRole('status').filter({ hasText: 'Santri Tiga' })).toBeVisible();
     if (shots) await musyrif.screenshot({ path: `${shots}/wajah-pos-1280.png`, fullPage: true });
+
+    await musyrif.goto('/musyrif/absensi/tinjauan');
+    await pageReady(musyrif);
+    await expect(musyrif.getByAltText(/Foto absensi Santri Tiga/)).toBeVisible();
+    await musyrif.waitForFunction(() => { const image = document.querySelector('img[alt^="Foto absensi"]'); return image?.complete && image.naturalWidth > 0; });
+    if (shots) await musyrif.screenshot({ path: `${shots}/tinjauan-1280.png`, fullPage: true });
+    await musyrif.getByRole('button', { name: /^Tolak Santri Tiga/ }).click();
+    const reject = musyrif.getByRole('dialog', { name: 'Tolak absensi' });
+    await reject.getByRole('button', { name: 'Tolak Absensi' }).click();
+    await expect(reject.getByText('Isi alasan penolakan.')).toBeVisible();
+    await reject.getByLabel('Alasan').fill('Bukan orangnya');
+    await reject.getByRole('button', { name: 'Tolak Absensi' }).click();
+    await expect(reject).toBeHidden();
+    await expect(musyrif.getByText('Tidak ada absensi yang menunggu tinjauan.')).toBeVisible();
+
+    await musyrif.goto(kioskUrl);
+    await expect(musyrif.getByRole('button', { name: 'Mulai Pindai' })).toBeEnabled();
+    await musyrif.getByRole('button', { name: 'Mulai Pindai' }).click();
+    await expect(musyrif.getByRole('status').filter({ hasText: 'Menunggu konfirmasi musyrif' })).toBeVisible({ timeout: 20_000 });
+    await musyrif.goto('/musyrif/absensi/tinjauan');
+    await pageReady(musyrif);
+    await musyrif.getByRole('button', { name: /^Hadir Santri Tiga/ }).click();
+    await expect(musyrif.getByText('Tidak ada absensi yang menunggu tinjauan.')).toBeVisible();
 
     guardian.once('dialog', (dialog) => dialog.accept());
     await guardian.getByRole('button', { name: /^Cabut Persetujuan/ }).click();
