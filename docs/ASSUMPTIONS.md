@@ -87,4 +87,9 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A58 | Wali tidak mengatur ambang PIN sendiri, walau W-15 menyebutnya | PRD Sistem hanya punya ambang di sistem dan merchant; ambang per santri belum ada kolomnya. Perlu dikonfirmasi bila memang dibutuhkan |
 | A59 | Stok di berkas impor dianggap hasil hitung, selisihnya menjadi mutasi `adjust` | Stok tidak boleh berubah tanpa jejak, dan berkas yang sama aman diimpor ulang |
 | A60 | Kamera barcode memakai `BarcodeDetector` bawaan browser; bila tidak didukung tombolnya tidak tampil dan kasir memakai reader atau ketik | Tanpa pustaka tambahan. Tersedia di Chrome Android, tidak di Safari dan Firefox |
+| A61 | Absen kartu dan QR: santri mulai berstatus alpa sampai memindai, bukan hadir | PRD 8.9 menyebut sesi baru default hadir, tetapi juga menyebut tidak memindai berarti alpa. Default hadir hanya untuk absen manual |
+| A62 | Simpan absensi sekaligus menutup sesi; masih bisa dikoreksi | U-03 hanya punya tombol Simpan, tidak ada tombol Tutup terpisah |
+| A63 | PDF rapor dibuat saat diunduh dari angka yang sudah dibekukan di `report_card_items`, kolom `pdf_path` belum dipakai | Tidak perlu penyimpanan berkas; isi tetap sama karena itemnya tidak berubah setelah terbit |
+| A64 | Nilai dinormalkan ke skala 100 memakai nilai maksimum penilaian; bobot dibagi hanya dari komponen yang ada penilaiannya | Rumus PRD 8.10 tidak menyebut penilaian dengan maksimum selain 100 atau komponen yang kosong |
+| A65 | Izin aktif belum mengubah alpa menjadi izin saat absensi | Modul perizinan baru ada di Tahap 7, disambungkan di tahap itu |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

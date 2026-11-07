@@ -1,6 +1,18 @@
 <?php
 
 use App\Http\Middleware\EnsurePreviewAllowed;
+use App\Modules\Academic\Actions\BuildReportCardPdf;
+use App\Modules\Academic\Livewire\AcademicMasters;
+use App\Modules\Academic\Livewire\AttendanceRecap;
+use App\Modules\Academic\Livewire\AttendanceSheet;
+use App\Modules\Academic\Livewire\AttendanceToday;
+use App\Modules\Academic\Livewire\GradeBook;
+use App\Modules\Academic\Livewire\ReportCards;
+use App\Modules\Academic\Livewire\ScheduleBuilder;
+use App\Modules\Academic\Livewire\StudentAcademics;
+use App\Modules\Academic\Livewire\TeacherHome;
+use App\Modules\Academic\Models\ReportCard;
+use App\Modules\Academic\Support\AttendanceStats;
 use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Exports\ImportErrorsExport;
 use App\Modules\Core\Exports\ImportTemplateExport;
@@ -27,6 +39,7 @@ use App\Modules\Core\Livewire\Students\StudentImport;
 use App\Modules\Core\Livewire\Students\StudentIndex;
 use App\Modules\Core\Livewire\Students\StudentShow;
 use App\Modules\Core\Livewire\Users\UserIndex;
+use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
 use App\Modules\Core\Models\Student;
@@ -161,6 +174,36 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/verifikasi-transfer', TransferReview::class)->middleware(['module:payment_manual', 'can:finance.verify'])->name('transfers.index');
     });
 
+    Route::middleware(['module:academic', 'can:academic.manage'])->group(function (): void {
+        Route::get('/mapel', AcademicMasters::class)->name('subjects.index');
+        Route::get('/jadwal', ScheduleBuilder::class)->name('schedules.index');
+    });
+
+    Route::middleware('module:attendance')->group(function (): void {
+        Route::get('/absensi', AttendanceToday::class)->middleware('can:academic.manage')->name('attendance.index');
+        Route::get('/absensi/rekap', AttendanceRecap::class)->middleware('can:academic.manage')->name('attendance.recap');
+        Route::get('/absensi/rekap/ekspor', function (Request $request) {
+            $rows = AttendanceStats::perStudent($request->filled('kelas') ? $request->integer('kelas') : null, null, AttendanceRecap::date($request->query('dari')) ?? now()->startOfMonth()->toDateString(), AttendanceRecap::date($request->query('sampai')) ?? now()->toDateString())
+                ->map(fn (array $row) => [$row['student']->nis, $row['student']->name, $row['hadir'], $row['terlambat'], $row['izin'], $row['sakit'], $row['alpa'], $row['percent']])->all();
+
+            return Excel::download(new ArrayExport(['NIS', 'Santri', 'Hadir', 'Terlambat', 'Izin', 'Sakit', 'Alpa', 'Kehadiran (%)'], $rows), 'rekap-absensi.xlsx');
+        })->middleware('can:academic.manage')->name('attendance.export');
+        Route::get('/absensi/rekap/pdf', function (Request $request, PdfRenderer $pdf) {
+            $from = AttendanceRecap::date($request->query('dari')) ?? now()->startOfMonth()->toDateString();
+            $to = AttendanceRecap::date($request->query('sampai')) ?? now()->toDateString();
+            $classroom = $request->filled('kelas') ? Classroom::query()->find($request->integer('kelas')) : null;
+            $rows = AttendanceStats::perStudent($classroom?->id, null, $from, $to);
+
+            return response($pdf->render(view('academic.pdf.attendance', ['rows' => $rows, 'from' => $from, 'to' => $to, 'classroom' => $classroom?->name])->render()), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="rekap-absensi.pdf"']);
+        })->middleware('can:academic.manage')->name('attendance.pdf');
+        Route::get('/absensi/sesi/{session}', AttendanceSheet::class)->name('attendance.session');
+    });
+
+    Route::middleware('module:grading')->group(function (): void {
+        Route::get('/nilai', GradeBook::class)->middleware('can:grades.manage')->name('grades.index');
+        Route::get('/rapor', ReportCards::class)->middleware('can:reports.publish')->name('report-cards.index');
+    });
+
     Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');
 
     Route::middleware('module:card')->group(function (): void {
@@ -286,9 +329,23 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
     });
 });
 
+Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')->name('ustadz.')->group(function (): void {
+    Route::get('/', TeacherHome::class)->name('home');
+    Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
+    Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
+    Route::get('/nilai', GradeBook::class)->middleware(['module:grading', 'can:grades.input'])->name('grades');
+});
+
+Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif')->name('musyrif.')->group(function (): void {
+    Route::get('/', TeacherHome::class)->name('home');
+    Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
+    Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
+});
+
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
     Route::view('/', 'core.wali.home')->name('home');
     Route::get('/lainnya', GuardianMore::class)->name('more');
+    Route::get('/perkembangan', StudentAcademics::class)->name('progress');
 
     Route::middleware('module:finance')->group(function (): void {
         Route::get('/tagihan', GuardianInvoices::class)->name('invoices');
@@ -307,6 +364,7 @@ Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix(
 Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix('santri')->name('santri.')->group(function (): void {
     Route::view('/', 'core.santri.home')->name('home');
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
+    Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
 });
 
 Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $pdf) {
@@ -321,6 +379,16 @@ Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $p
         'Content-Disposition' => 'attachment; filename="kwitansi-'.$payment->payment_no.'.pdf"',
     ]);
 })->middleware(['auth', 'module:finance', 'can:view,payment'])->name('payments.receipt');
+
+Route::get('/rapor/{card}', function (ReportCard $card, Request $request, BuildReportCardPdf $pdf) {
+    $user = $request->user();
+    $visible = Student::query()->visibleTo($user)->whereKey($card->student_id)->exists();
+    $staff = $user->canAny(['reports.publish', 'grades.manage']);
+
+    abort_unless($staff || ($visible && $card->status === 'published'), 403);
+
+    return response($pdf->handle($card), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="rapor-'.$card->student->nis.'.pdf"']);
+})->middleware(['auth', 'module:grading'])->name('report-cards.pdf');
 
 Route::get('/verifikasi-kwitansi/{payment}', fn (Payment $payment) => view('finance.receipts.verify', ['payment' => $payment]))
     ->middleware('throttle:30,1')

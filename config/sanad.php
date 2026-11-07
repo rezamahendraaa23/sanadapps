@@ -46,9 +46,10 @@ return [
             ]],
             ['label' => 'Akademik', 'items' => [
                 ['key' => 'classrooms', 'permission' => 'masters.manage', 'label' => 'Kelas & Asrama', 'icon' => 'school', 'route' => 'staff.classrooms.index', 'module' => 'core'],
-                ['key' => 'schedules', 'label' => 'Jadwal', 'icon' => 'calendar-days', 'route' => 'staff.schedules.index', 'module' => 'academic'],
-                ['key' => 'attendance', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
-                ['key' => 'grades', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
+                ['key' => 'subjects', 'permission' => 'academic.manage', 'label' => 'Mapel & Penugasan', 'icon' => 'book-marked', 'route' => 'staff.subjects.index', 'module' => 'academic'],
+                ['key' => 'schedules', 'permission' => 'academic.manage', 'label' => 'Jadwal', 'icon' => 'calendar-days', 'route' => 'staff.schedules.index', 'module' => 'academic'],
+                ['key' => 'attendance', 'permission' => 'academic.manage', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
+                ['key' => 'grades', 'permission' => 'grades.manage', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
                 ['key' => 'tahfidz', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
                 ['key' => 'exams', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],
             ]],

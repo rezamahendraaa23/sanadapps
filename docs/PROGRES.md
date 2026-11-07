@@ -8,14 +8,28 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (diuji dengan gateway tiruan, kunci sungguhan belum ada)
 - [x] **Tahap 4:** kartu santri, dompet, kasir POS
 - [x] **Tahap 5:** Mart & Warung
-- [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF (berikutnya)
-- [ ] **Tahap 7:** perizinan dan pos gerbang
+- [x] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
+- [ ] **Tahap 7:** perizinan dan pos gerbang (berikutnya)
 - [ ] **Tahap 8:** tahfidz dan mutabaah
 - [ ] **Tahap 9:** ujian online dan PWA
 - [ ] **Tahap 10:** absensi selfie dan wajah
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 6
+
+- [x] Mapel, penugasan, komponen nilai, aturan absensi (ACD-01, ACD-02, GRD-01, ATT-05)
+- [x] Jadwal per hari dengan deteksi bentrok ustadz, kelas, ruang; salin dari term lain (ACD-03, AC-01)
+- [x] Absensi manual default hadir, draf tersimpan di HP saat putus koneksi (ATT-01, U-03)
+- [x] Sesi asrama, sholat, kegiatan oleh musyrif (ATT-02, U-13)
+- [x] Absensi kartu dan QR: terlambat otomatis, pindai ganda diabaikan, API perangkat (ATT-03)
+- [x] Rekap kehadiran dan ekspor Excel serta PDF (ATT-04, AC-02)
+- [x] Input nilai per mapel dan kelas, validasi 0 sampai maksimum (GRD-02, U-04)
+- [x] Rapor: draf, predikat, KKM, terbit mengunci nilai, PDF dengan teks Arab (GRD-03, GRD-04, AC-03)
+- [x] Portal ustadz, musyrif, wali (W-09, W-10), santri (S-02, S-08)
+- [x] Notifikasi alpa, terlambat, rapor terbit
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 5
 

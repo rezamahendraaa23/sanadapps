@@ -2,6 +2,8 @@
 
 namespace App\Modules\Wallet\Http;
 
+use App\Modules\Academic\Actions\RecordAttendance;
+use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Pos\Actions\CheckoutOrder;
 use App\Modules\Pos\Models\Merchant;
@@ -63,6 +65,26 @@ class DeviceScanController
         $student = $card->student()->with('classroom:id,name')->first();
 
         return response()->json(['ok' => true, 'result' => 'ok', 'student' => ['uuid' => $student->uuid, 'name' => $student->name, 'nis' => $student->nis, 'classroom' => $student->classroom?->name]]);
+    }
+
+    public function attendance(Request $request, ModuleRegistry $modules, RecordAttendance $attendance): JsonResponse
+    {
+        $data = $request->validate([
+            'session_id' => 'required|uuid',
+            'card_uid' => 'required_without:qr|nullable|string|max:255',
+            'qr' => 'required_without:card_uid|nullable|string|max:255',
+        ]);
+
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+
+        if (! $modules->enabled('attendance') || ! in_array('attendance', $device->scopes, true)) {
+            return response()->json(['ok' => false, 'message' => 'Perangkat ini tidak berhak untuk absensi.'], 403);
+        }
+
+        $session = AttendanceSession::query()->where('uuid', $data['session_id'])->firstOrFail();
+
+        return response()->json($attendance->scan($session, (string) ($data['qr'] ?? $data['card_uid']), $device->id));
     }
 
     public function charge(Request $request, ModuleRegistry $modules, CheckoutOrder $checkout): JsonResponse

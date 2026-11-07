@@ -54,6 +54,18 @@
             </x-ui.card>
         @endif
 
+        @php($todaySchedule = app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('academic') ? \App\Modules\Academic\Support\StudentSchedule::forStudent($child, \App\Modules\Academic\Support\StudentSchedule::todayIso()) : collect())
+        @if ($todaySchedule->isNotEmpty())
+            <x-ui.card title="Jadwal hari ini">
+                <ul class="flex flex-col">
+                    @foreach ($todaySchedule->take(5) as $schedule)
+                        <li class="flex gap-3 border-b border-border py-2 text-base last:border-b-0"><span class="font-tabular shrink-0 text-sm font-semibold">{{ $schedule->startLabel() }}</span><span class="min-w-0 break-words">{{ $schedule->label() }}</span></li>
+                    @endforeach
+                </ul>
+                <x-ui.button variant="tertiary" class="mt-2 w-full" :href="route('wali.progress', ['anak' => $child->uuid])" wire:navigate>Lihat Perkembangan</x-ui.button>
+            </x-ui.card>
+        @endif
+
         <x-ui.card>
             <p class="text-base font-semibold">{{ $child->name }}</p>
             <p class="text-sm text-text-muted">NIS {{ $child->nis }}{{ $child->classroom ? ' · '.$child->classroom->name : '' }}</p>

@@ -113,7 +113,7 @@ class Templates extends Component
         return [
             'nama_wali' => 'Bapak Contoh', 'nama_santri' => 'Santri Contoh', 'periode' => 'November 2026', 'total' => 'Rp 625.000', 'sisa' => 'Rp 625.000',
             'jatuh_tempo' => '10 November 2026', 'link' => url('/wali'), 'nominal' => 'Rp 625.000', 'metode' => 'transfer', 'alasan' => 'nominal belum sesuai',
-            'judul' => 'Judul pengumuman', 'isi' => 'Isi pengumuman.', 'saldo' => 'Rp 75.000', 'merchant' => 'Warung Contoh', 'produk' => 'Roti', 'status' => 'Disetujui, belum dibayar',
+            'judul' => 'Judul pengumuman', 'isi' => 'Isi pengumuman.', 'saldo' => 'Rp 75.000', 'merchant' => 'Warung Contoh', 'produk' => 'Roti', 'sesi' => 'Fiqih', 'tanggal' => '2 November 2026', 'term' => 'Ganjil', 'status' => 'Disetujui, belum dibayar',
         ];
     }
 

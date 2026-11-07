@@ -13,6 +13,8 @@ final class NotificationCatalog
         'card' => ['label' => 'Kartu diblokir atau hilang', 'critical' => true, 'module' => 'card'],
         'wallet' => ['label' => 'Top-up dan saldo menipis', 'critical' => false, 'module' => 'wallet'],
         'spend' => ['label' => 'Setiap belanja kartu', 'critical' => false, 'default' => false, 'module' => 'pos'],
+        'attendance' => ['label' => 'Alpa dan terlambat', 'critical' => false, 'module' => 'attendance'],
+        'academic' => ['label' => 'Rapor terbit', 'critical' => false, 'module' => 'grading'],
         'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
     ];
 
@@ -77,6 +79,18 @@ final class NotificationCatalog
             'category' => 'card',
             'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
             'body' => "Assalamu'alaikum {nama_wali}.\nKartu {nama_santri} sudah diblokir: {alasan}. Saldo tetap aman di dompet.\nDetail: {link}",
+        ],
+        'attendance_alert' => [
+            'label' => 'Santri alpa atau terlambat',
+            'category' => 'attendance',
+            'variables' => ['nama_wali', 'nama_santri', 'status', 'sesi', 'tanggal'],
+            'body' => "Assalamu'alaikum {nama_wali}.\n{nama_santri} tercatat {status} pada {sesi}, {tanggal}.",
+        ],
+        'report_published' => [
+            'label' => 'Rapor terbit',
+            'category' => 'academic',
+            'variables' => ['nama_wali', 'nama_santri', 'term', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nRapor {nama_santri} untuk {term} sudah terbit.\nLihat di sini: {link}",
         ],
         'stock_low' => [
             'label' => 'Stok menipis (ke pengelola)',

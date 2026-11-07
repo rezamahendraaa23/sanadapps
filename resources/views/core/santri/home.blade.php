@@ -13,6 +13,17 @@
         @endif
     </x-ui.card>
 
+    @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('academic'))
+        @php($time = now(config('sanad.display_timezone'))->format('H:i:s'))
+        @php($todaySchedule = \App\Modules\Academic\Support\StudentSchedule::forStudent($student, \App\Modules\Academic\Support\StudentSchedule::todayIso()))
+        @php($current = $todaySchedule->first(fn ($schedule) => (string) $schedule->end_time > $time))
+        @if ($current)
+            <x-ui.hero-card :label="(string) $current->start_time <= $time ? 'Sekarang' : 'Berikutnya'" :value="$current->startLabel()">
+                {{ $current->label() }}{{ $current->room ? ', '.$current->room : '' }}.
+            </x-ui.hero-card>
+        @endif
+    @endif
+
     @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('wallet'))
         <x-ui.card>
             <p class="text-sm text-text-muted">Saldo</p>

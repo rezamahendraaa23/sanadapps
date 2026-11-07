@@ -7,4 +7,5 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1/device')->middleware([AuthenticateDevice::class, 'throttle:600,1'])->group(function (): void {
     Route::post('/scan', [DeviceScanController::class, 'scan']);
     Route::post('/wallet/charge', [DeviceScanController::class, 'charge']);
+    Route::post('/attendance/scan', [DeviceScanController::class, 'attendance']);
 });

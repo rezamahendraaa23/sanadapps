@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Models;
 
+use App\Modules\Academic\Models\TeachingScope;
 use App\Modules\Core\Support\Audited;
 use App\Modules\Wallet\Models\StudentCard;
 use App\Support\Concerns\HasPublicUuid;
@@ -42,6 +43,7 @@ class Student extends Model
 
                 if ($user->can('students.view-own-class')) {
                     $scoped->orWhereHas('classroom.homeroomTeacher', fn (Builder $teacher) => $teacher->where('user_id', $user->id));
+                    $scoped->orWhereIn('students.classroom_id', TeachingScope::classroomIds($user));
                 }
 
                 if ($user->can('students.view-own-dormitory')) {

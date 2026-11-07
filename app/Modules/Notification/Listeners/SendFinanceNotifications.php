@@ -2,6 +2,9 @@
 
 namespace App\Modules\Notification\Listeners;
 
+use App\Modules\Academic\Events\AttendanceClosed;
+use App\Modules\Academic\Events\ReportCardPublished;
+use App\Modules\Academic\Models\AttendanceRecord;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\User;
 use App\Modules\Finance\Events\InvoiceIssued;
@@ -136,6 +139,35 @@ class SendFinanceNotifications
         }
     }
 
+    public function attendanceClosed(AttendanceClosed $event): void
+    {
+        $session = $event->session;
+        $date = $session->session_date->translatedFormat('j F Y');
+
+        foreach ($session->records()->with('student')->whereIn('status', ['alpa', 'terlambat'])->get() as $record) {
+            $this->notifications->toGuardians('attendance_alert', [$record->student], fn (Guardian $guardian) => [
+                'nama_wali' => $guardian->name,
+                'nama_santri' => $record->student->name,
+                'status' => AttendanceRecord::STATUSES[$record->status],
+                'sesi' => $session->title,
+                'tanggal' => $date,
+            ], $record->student->name.' '.AttendanceRecord::STATUSES[$record->status], route('wali.progress', ['anak' => $record->student->uuid, 'segment' => 'absensi']), 'attendance:'.$record->id.':'.$record->status);
+        }
+    }
+
+    public function reportCardPublished(ReportCardPublished $event): void
+    {
+        $card = $event->card->load('student', 'term');
+        $link = route('wali.progress', ['anak' => $card->student->uuid, 'segment' => 'nilai']);
+
+        $this->notifications->toGuardians('report_published', [$card->student], fn (Guardian $guardian) => [
+            'nama_wali' => $guardian->name,
+            'nama_santri' => $card->student->name,
+            'term' => $card->term->name,
+            'link' => $link,
+        ], 'Rapor '.$card->student->name.' terbit', $link, 'report:'.$card->id);
+    }
+
     public function stockLow(StockLow $event): void
     {
         $merchant = $event->product->merchant;
@@ -240,6 +272,8 @@ class SendFinanceNotifications
             ProofRejected::class => 'proofRejected',
             WalletSpent::class => 'walletSpent',
             CardBlocked::class => 'cardBlocked',
+            AttendanceClosed::class => 'attendanceClosed',
+            ReportCardPublished::class => 'reportCardPublished',
             StockLow::class => 'stockLow',
             PayoutUpdated::class => 'payoutUpdated',
         ] as $event => $method) {

@@ -3,9 +3,13 @@
 namespace Database\Seeders;
 
 use App\Modules\Core\Actions\SaveIntegration;
+use App\Modules\Core\Models\AcademicYear;
+use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
+use App\Modules\Core\Models\Teacher;
+use App\Modules\Core\Models\Term;
 use App\Modules\Core\Models\User;
 use App\Modules\Finance\Models\BankAccount;
 use App\Modules\Pos\Models\Merchant;
@@ -52,6 +56,20 @@ class E2eSeeder extends Seeder
         $secondGuardianUser->assignRole('wali');
         $second = Student::create(['nis' => '2026002', 'name' => 'Santri Dua', 'gender' => 'L', 'status' => 'inactive']);
         Guardian::create(['user_id' => $secondGuardianUser->id, 'name' => 'Wali Dua', 'phone_wa' => '6281234567892'])->students()->attach($second->id, ['relation' => 'ayah']);
+
+        $teacherUser = User::create(['name' => 'Ustadz Uji', 'email' => 'ustadz@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-ustadz']);
+        $teacherUser->assignRole('ustadz');
+        Teacher::create(['user_id' => $teacherUser->id, 'name' => 'Ustadz Uji']);
+        $year = AcademicYear::create(['name' => '2026/2027 Uji', 'start_date' => '2026-01-01', 'end_date' => '2027-12-31', 'is_active' => true]);
+        Term::create(['academic_year_id' => $year->id, 'name' => 'Term Uji', 'start_date' => '2026-01-01', 'end_date' => '2027-12-31', 'is_active' => true]);
+        $classroom = Classroom::create(['name' => 'Kelas Uji 6']);
+        $thirdUser = User::create(['name' => 'Santri Tiga', 'username' => '2026003', 'type' => 'student', 'password' => 'sandi-uji-tiga']);
+        $thirdUser->assignRole('santri');
+        // Tidak punya tagihan generate karena jenis tagihan E2E dibatasi di spec; terhubung ke wali tersendiri.
+        $third = Student::create(['nis' => '2026003', 'name' => 'Santri Tiga', 'gender' => 'L', 'classroom_id' => $classroom->id, 'user_id' => $thirdUser->id]);
+        $thirdGuardianUser = User::create(['name' => 'Wali Tiga', 'phone' => '6281234567893', 'type' => 'guardian']);
+        $thirdGuardianUser->assignRole('wali');
+        Guardian::create(['user_id' => $thirdGuardianUser->id, 'name' => 'Wali Tiga', 'phone_wa' => '6281234567893'])->students()->attach($third->id, ['relation' => 'ayah']);
 
         $payerUser = User::create(['name' => 'Ibu Uji', 'phone' => '6281234567891', 'type' => 'guardian']);
         $payerUser->assignRole('wali');

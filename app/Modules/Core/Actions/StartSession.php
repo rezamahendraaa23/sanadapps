@@ -23,12 +23,26 @@ class StartSession
         return is_string($intended) && str_starts_with($intended, $home) ? $intended : $home;
     }
 
+    /**
+     * Ustadz dan musyrif bekerja dari HP di portalnya, kecuali punya peran panel lain.
+     */
+    private static function staffHome(User $user): string
+    {
+        $roles = $user->getRoleNames();
+
+        if ($roles->diff(['ustadz', 'musyrif'])->isEmpty() && $roles->isNotEmpty()) {
+            return route($roles->contains('ustadz') ? 'ustadz.home' : 'musyrif.home');
+        }
+
+        return route('staff.dashboard');
+    }
+
     public static function homeFor(User $user): string
     {
         return match ($user->type) {
             'guardian' => route('wali.home'),
             'student' => route('santri.home'),
-            default => route('staff.dashboard'),
+            default => self::staffHome($user),
         };
     }
 }
