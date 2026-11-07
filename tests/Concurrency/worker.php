@@ -6,6 +6,7 @@
  */
 
 use App\Modules\Core\Actions\SaveIntegration;
+use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
 use App\Modules\Finance\Actions\ApplySettlement;
@@ -21,6 +22,13 @@ use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\InvoiceItem;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Payment\Actions\ProcessMidtransWebhook;
+use App\Modules\Pos\Actions\CheckoutOrder;
+use App\Modules\Pos\Models\Merchant;
+use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Wallet\Actions\IssueCard;
+use App\Modules\Wallet\Actions\ReconcileWallets;
+use App\Modules\Wallet\Actions\RecordCashTopup;
+use App\Modules\Wallet\Models\Wallet;
 use Carbon\CarbonImmutable;
 use Database\Seeders\FinanceSeeder;
 use Database\Seeders\ModuleSeeder;
@@ -55,7 +63,18 @@ switch ($mode) {
         $type = FeeType::create(['code' => 'SPPK', 'name' => 'SPP', 'category' => 'monthly', 'due_day' => 10]);
         FeeRate::create(['fee_type_id' => $type->id, 'scope' => 'default', 'amount' => 75000, 'valid_from' => '2020-01-01']);
 
-        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id]);
+        // Saldo cukup untuk tepat 3 kali belanja Rp 30.000.
+        $spender = Student::create(['nis' => 'K2', 'name' => 'Santri Dompet', 'gender' => 'L', 'status' => 'inactive']);
+        app(IssueCard::class)->handle($spender, 'KONKUREN1');
+        app(RecordCashTopup::class)->handle($spender, 90000, User::first()->id);
+        Module::query()->where('module_key', 'wallet')->update(['settings' => ['pin_threshold' => 1000000]]);
+        $merchant = Merchant::create(['name' => 'Warung Konkuren', 'payment_modes' => ['card', 'qr']]);
+
+        $sameKey = Student::create(['nis' => 'K3', 'name' => 'Santri Tap Ganda', 'gender' => 'L', 'status' => 'inactive']);
+        app(IssueCard::class)->handle($sameKey, 'KONKUREN2');
+        app(RecordCashTopup::class)->handle($sameKey, 90000, User::first()->id);
+
+        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id, 'merchant' => $merchant->id]);
         break;
 
     case 'settle':
@@ -81,6 +100,20 @@ switch ($mode) {
         }
         break;
 
+    case 'spend':
+        $merchant = Merchant::findOrFail((int) $argument);
+        $waitUntil();
+        $result = app(CheckoutOrder::class)->handle($merchant, [], 30000, 'KONKUREN1', null, 'spend-'.getmypid(), null);
+        echo $result->ok ? 'paid' : $result->code;
+        break;
+
+    case 'tap':
+        $merchant = Merchant::findOrFail((int) $argument);
+        $waitUntil();
+        $result = app(CheckoutOrder::class)->handle($merchant, [], 10000, 'KONKUREN2', null, 'tap-ganda', null);
+        echo $result->ok ? 'paid:'.$result->balance : $result->code;
+        break;
+
     case 'generate':
         $waitUntil();
         echo app(GenerateInvoices::class)->run(CarbonImmutable::parse('2030-02-01'))['invoices'];
@@ -91,11 +124,17 @@ switch ($mode) {
             'paid_total' => Invoice::query()->whereHas('payments', fn ($query) => $query->whereKey((int) $argument))->sum('paid_total'),
             'cash_count' => CashTransaction::query()->where('source_id', (int) $argument)->count(),
             'status' => Payment::find((int) $argument)?->status,
-            'cash_payments' => Payment::query()->where('method', 'cash')->count(),
+            'cash_payments' => Payment::query()->where('method', 'cash')->where('purpose', 'invoice')->count(),
             'cash_invoice_paid' => Invoice::query()->where('total', 50000)->value('paid_total'),
             'generated_items' => InvoiceItem::query()->where('period_key', '2030-02')->count(),
             'generated_invoices' => Invoice::query()->whereDate('period', '2030-02-01')->count(),
             'invoice_numbers_unique' => Invoice::query()->count() === Invoice::query()->distinct()->count('invoice_no'),
+            'spender_balance' => Wallet::query()->whereHas('student', fn ($query) => $query->where('nis', 'K2'))->value('balance'),
+            'spender_orders' => PosOrder::query()->whereHas('student', fn ($query) => $query->where('nis', 'K2'))->count(),
+            'tap_balance' => Wallet::query()->whereHas('student', fn ($query) => $query->where('nis', 'K3'))->value('balance'),
+            'tap_orders' => PosOrder::query()->whereHas('student', fn ($query) => $query->where('nis', 'K3'))->count(),
+            'merchant_balance' => Merchant::query()->where('name', 'Warung Konkuren')->first()?->balance(),
+            'ledger_differences' => count(app(ReconcileWallets::class)->handle()),
         ]);
         break;
 }

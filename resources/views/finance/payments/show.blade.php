@@ -12,6 +12,9 @@
             </div>
             <x-ui.payment-status :status="$payment->status" :method="$payment->method" />
         </div>
+        @if ($payment->isTopup())
+            <p class="mt-3 text-sm">Top-up dompet {{ $payment->studentNames() }}</p>
+        @endif
         <ul class="mt-3 text-sm">
             @foreach ($payment->invoices as $invoice)
                 <li class="flex justify-between gap-3 py-0.5">

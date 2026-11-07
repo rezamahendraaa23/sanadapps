@@ -7,6 +7,7 @@ use App\Modules\Finance\Models\CashCategory;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\Payment;
+use App\Modules\Wallet\Actions\CreditTopup;
 use Illuminate\Support\Facades\DB;
 
 class ApplySettlement
@@ -57,6 +58,10 @@ class ApplySettlement
                 'reject_reason' => null,
             ]);
 
+            if ($locked->isTopup()) {
+                app(CreditTopup::class)->handle($locked, $verifiedBy);
+            }
+
             $this->recordCash($locked, $verifiedBy);
             $payment->refresh();
 
@@ -71,7 +76,9 @@ class ApplySettlement
         $today = now(config('sanad.display_timezone'))->toDateString();
 
         $entries = [
-            [CashCategory::INVOICE_PAYMENT, $payment->amount, "Pembayaran {$payment->payment_no}"],
+            $payment->isTopup()
+                ? [CashCategory::WALLET_TOPUP, $payment->amount, "Top-up dompet {$payment->payment_no}"]
+                : [CashCategory::INVOICE_PAYMENT, $payment->amount, "Pembayaran {$payment->payment_no}"],
             // Kode unik bukan pelunasan tagihan; selisihnya masuk kas sendiri (PRD Sistem 8.6).
             [CashCategory::UNIQUE_CODE, (int) $payment->unique_code, "Kode unik {$payment->payment_no}"],
         ];

@@ -77,6 +77,9 @@
                         <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Terbayar bulan ini</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($finance['paidThisMonth']) }}</dd></div>
                     @endunless
                     <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Tunggakan</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($finance['arrears']) }}</dd></div>
+                    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('wallet') && auth()->user()->can('wallet.manage'))
+                        <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Saldo dompet santri</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format((int) \App\Modules\Wallet\Models\Wallet::query()->sum('balance')) }}</dd></div>
+                    @endif
                 </dl>
             </x-ui.card>
         @endif

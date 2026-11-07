@@ -15,6 +15,10 @@ class CashCategory extends Model
 
     public const REFUND = 'Pengembalian dana';
 
+    public const WALLET_TOPUP = 'Top-up dompet';
+
+    public const WALLET_WITHDRAW = 'Penarikan saldo dompet';
+
     protected $guarded = ['id', 'uuid'];
 
     public static function named(string $name, string $type): self

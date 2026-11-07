@@ -95,3 +95,23 @@ it('generate bersamaan tidak menduplikasi dan nomor invoice tetap unik', functio
     $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
     expect($report['generated_items'])->toBe(1)->and($report['generated_invoices'])->toBe(1)->and($report['invoice_numbers_unique'])->toBeTrue();
 });
+
+it('belanja bersamaan: saldo cukup untuk 3, enam proses, tepat 3 berhasil dan saldo tidak pernah minus', function () {
+    $results = race('spend', (string) $this->ids['merchant']);
+
+    expect(array_count_values($results)['paid'])->toBe(3)
+        ->and(array_count_values($results)['insufficient'])->toBe(3);
+
+    $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
+    expect((int) $report['spender_balance'])->toBe(0)->and($report['spender_orders'])->toBe(3)->and($report['ledger_differences'])->toBe(0);
+});
+
+it('tap ganda bersamaan dengan kunci yang sama hanya memotong sekali dan semua menerima hasil yang sama', function () {
+    $results = race('tap', (string) $this->ids['merchant']);
+
+    expect(array_unique($results))->toBe(['paid:80000']);
+
+    $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
+    expect((int) $report['tap_balance'])->toBe(80000)->and($report['tap_orders'])->toBe(1)
+        ->and((int) $report['merchant_balance'])->toBe(10000)->and($report['ledger_differences'])->toBe(0);
+});

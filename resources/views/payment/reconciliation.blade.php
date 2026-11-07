@@ -16,7 +16,7 @@
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0">
                         <a href="{{ route('staff.payments.show', $payment) }}" wire:navigate class="font-tabular font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a>
-                        <p class="text-sm text-text-muted">{{ $payment->invoices->pluck('student.name')->filter()->unique()->join(', ') }}{{ $payment->channel ? ' · '.$payment->channel : '' }}</p>
+                        <p class="text-sm text-text-muted">{{ $payment->studentNames() }}{{ $payment->channel ? ' · '.$payment->channel : '' }}</p>
                         <p class="font-tabular text-base font-semibold">{{ Rupiah::format($payment->gross_amount) }}</p>
                     </div>
                     <x-ui.payment-status :status="$payment->status" method="midtrans" />

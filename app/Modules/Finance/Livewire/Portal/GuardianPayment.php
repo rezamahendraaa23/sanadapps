@@ -79,7 +79,7 @@ class GuardianPayment extends Component
 
     public function render(MidtransConfig $midtrans): View
     {
-        $this->payment->refresh()->load(['invoices.student:id,name', 'bankAccount']);
+        $this->payment->refresh()->load(['invoices.student:id,name', 'topup.wallet.student:id,name', 'bankAccount']);
 
         return view('finance.portal.payment', [
             'snapUrl' => $midtrans->snapScriptUrl(),

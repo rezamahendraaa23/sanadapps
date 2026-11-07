@@ -6,12 +6,15 @@ use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
 use App\Modules\Core\Support\Audited;
+use App\Modules\Wallet\Models\WalletTopup;
 use App\Support\Concerns\HasPublicUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 
 class Payment extends Model
 {
@@ -50,6 +53,35 @@ class Payment extends Model
         return $this->belongsToMany(Invoice::class, 'payment_allocations')->withPivot('amount');
     }
 
+    public function topup(): HasOne
+    {
+        return $this->hasOne(WalletTopup::class);
+    }
+
+    public function isTopup(): bool
+    {
+        return $this->purpose === 'wallet_topup';
+    }
+
+    /**
+     * Santri yang terkait: lewat tagihan, atau lewat dompet untuk top-up.
+     *
+     * @return Collection<int, Student>
+     */
+    public function relatedStudents(): Collection
+    {
+        if ($this->isTopup()) {
+            return collect([$this->topup?->wallet?->student])->filter()->values();
+        }
+
+        return $this->invoices->pluck('student')->filter()->unique('id')->values();
+    }
+
+    public function studentNames(): string
+    {
+        return $this->relatedStudents()->pluck('name')->join(', ');
+    }
+
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
@@ -82,7 +114,10 @@ class Payment extends Model
             return $query;
         }
 
-        return $query->whereHas('invoices', fn (Builder $invoices) => $invoices
-            ->whereIn('student_id', Student::query()->visibleTo($user)->select('students.id')));
+        $students = Student::query()->visibleTo($user)->select('students.id');
+
+        return $query->where(fn (Builder $scoped) => $scoped
+            ->whereHas('invoices', fn (Builder $invoices) => $invoices->whereIn('student_id', $students))
+            ->orWhereHas('topup.wallet', fn (Builder $wallets) => $wallets->whereIn('student_id', $students)));
     }
 }

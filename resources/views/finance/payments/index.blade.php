@@ -28,7 +28,7 @@
                     @foreach ($payments as $payment)
                         <tr wire:key="payment-{{ $payment->uuid }}" class="hover:bg-primary-soft">
                             <x-ui.td label="Kwitansi"><a href="{{ route('staff.payments.show', $payment) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a></x-ui.td>
-                            <x-ui.td label="Santri">{{ $payment->invoices->pluck('student.name')->filter()->unique()->join(', ') }}</x-ui.td>
+                            <x-ui.td label="Santri">{{ $payment->studentNames() }}</x-ui.td>
                             <x-ui.td label="Cara">{{ $methods[$payment->method] }}</x-ui.td>
                             <x-ui.td label="Nominal" numeric>{{ Rupiah::format($payment->amount) }}</x-ui.td>
                             <x-ui.td label="Status"><x-ui.payment-status :status="$payment->status" :method="$payment->method" /></x-ui.td>

@@ -100,7 +100,7 @@ test('wali melihat notifikasi di menu Lainnya; pengaturan kritis terkunci', asyn
     await expect(page.getByRole('link', { name: /Notifikasi, \d+ belum dibaca/ })).toBeVisible();
     await page.getByRole('link', { name: 'Lainnya' }).click();
     await expect(page.getByText('Pembayaran diterima').first()).toBeVisible();
-    await expect(page.getByText('Selalu dikirim agar tagihan tidak terlewat.')).toBeVisible();
+    await expect(page.getByText('Selalu dikirim agar tagihan tidak terlewat.').first()).toBeVisible();
     const box = page.getByRole('checkbox', { name: 'Pengumuman pesantren' });
     await expect(box).toBeChecked();
     await pageReady(page);

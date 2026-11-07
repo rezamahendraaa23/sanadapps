@@ -59,6 +59,16 @@ class CreateOnlinePayment
             return $payment;
         });
 
+        $this->sendToGateway($payment, $finishUrl);
+
+        return $payment;
+    }
+
+    /**
+     * Snap dipanggil di luar transaksi; dipakai bersama pembayaran tagihan dan top-up.
+     */
+    public function sendToGateway(Payment $payment, string $finishUrl): void
+    {
         try {
             $snap = $this->gateway->createTransaction($this->payload($payment, $finishUrl));
         } catch (GatewayException $exception) {
@@ -69,8 +79,6 @@ class CreateOnlinePayment
         }
 
         $payment->update(['gateway_payload' => ['snap_token' => $snap['token'], 'redirect_url' => $snap['redirect_url']]]);
-
-        return $payment;
     }
 
     /**
@@ -80,12 +88,14 @@ class CreateOnlinePayment
     {
         $payment->load('invoices.student:id,name', 'guardian:id,name,phone_wa,email');
 
-        $items = $payment->invoices->map(fn (Invoice $invoice) => [
-            'id' => $invoice->invoice_no,
-            'name' => Str::limit('Tagihan '.$invoice->invoice_no, 45, ''),
-            'price' => (int) $invoice->pivot->amount,
-            'quantity' => 1,
-        ])->all();
+        $items = $payment->isTopup()
+            ? [['id' => $payment->payment_no, 'name' => 'Top-up dompet', 'price' => $payment->amount, 'quantity' => 1]]
+            : $payment->invoices->map(fn (Invoice $invoice) => [
+                'id' => $invoice->invoice_no,
+                'name' => Str::limit('Tagihan '.$invoice->invoice_no, 45, ''),
+                'price' => (int) $invoice->pivot->amount,
+                'quantity' => 1,
+            ])->all();
 
         if ($payment->admin_fee > 0) {
             $items[] = ['id' => 'BIAYA-ADMIN', 'name' => 'Biaya admin', 'price' => $payment->admin_fee, 'quantity' => 1];

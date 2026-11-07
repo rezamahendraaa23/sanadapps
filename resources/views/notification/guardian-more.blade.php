@@ -31,7 +31,7 @@
                         <p class="text-sm text-text-muted">Selalu dikirim agar tagihan tidak terlewat.</p>
                     @else
                         <label class="flex min-h-11 items-center gap-3 text-base">
-                            <input type="checkbox" class="size-5 accent-primary" @checked($prefs[$key] ?? true) wire:click="togglePref('{{ $key }}')">
+                            <input type="checkbox" class="size-5 accent-primary" @checked($prefs[$key] ?? ($category['default'] ?? true)) wire:click="togglePref('{{ $key }}')">
                             {{ $category['label'] }}
                         </label>
                     @endif

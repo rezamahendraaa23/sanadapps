@@ -26,13 +26,22 @@
     </x-ui.card>
 
     <div role="tablist" aria-label="Bagian data santri" class="flex flex-wrap gap-1">
-        @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) as $key => $label)
+        @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) + ($showWallet ? ['dompet' => 'Dompet & Kartu'] : []) as $key => $label)
             <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
 
     @if ($tab === 'keuangan' && $showFinance)
         <livewire:finance.students.studentfinance :student="$student" />
+    @elseif ($tab === 'dompet' && $showWallet)
+        <x-ui.card>
+            <dl class="grid gap-3 md:grid-cols-3">
+                <div><dt class="text-sm text-text-muted">Saldo</dt><dd class="font-display font-tabular text-2xl font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($wallet->balance) }}</dd></div>
+                <div><dt class="text-sm text-text-muted">Dompet</dt><dd><x-ui.status-badge :status="$wallet->status" /></dd></div>
+                <div><dt class="text-sm text-text-muted">Kartu</dt><dd>@if ($studentCard)<x-ui.status-badge :status="$studentCard->status === 'active' ? 'active' : 'blocked'" />@else Belum ada @endif</dd></div>
+            </dl>
+            <x-ui.button variant="secondary" class="mt-4" :href="route('staff.wallets.index', ['santri' => $student->uuid])" wire:navigate>Buka Dompet</x-ui.button>
+        </x-ui.card>
     @else
     <x-ui.card>
         @if ($tab === 'wali')

@@ -6,8 +6,8 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 1:** auth, role dan policy, profil pesantren, modul, integrasi, audit log, wizard setup, import santri/wali
 - [x] **Tahap 2:** keuangan, tagihan, pembayaran tunai dan transfer manual, kwitansi PDF, tunggakan
 - [x] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (diuji dengan gateway tiruan, kunci sungguhan belum ada)
-- [ ] **Tahap 4:** kartu santri, dompet, kasir POS (berikutnya)
-- [ ] **Tahap 5:** Mart & Warung
+- [x] **Tahap 4:** kartu santri, dompet, kasir POS
+- [ ] **Tahap 5:** Mart & Warung (berikutnya)
 - [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
 - [ ] **Tahap 7:** perizinan dan pos gerbang
 - [ ] **Tahap 8:** tahfidz dan mutabaah
@@ -16,6 +16,23 @@ Diperbarui setiap ada langkah selesai.
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 4
+
+- [x] Dompet per santri: saldo tidak bisa negatif, buku besar tidak bisa diubah (WAL-01, WAL-03)
+- [x] Top-up lewat Midtrans, transfer, dan tunai; saldo bertambah hanya setelah lunas (WAL-02, W-08)
+- [x] Limit harian, limit per transaksi, blokir sementara oleh wali (WAL-04, W-07)
+- [x] Penyesuaian wajib alasan dan tarik sisa saldo, tercatat di kas (WAL-05, F-09)
+- [x] Rekonsiliasi harian dompet dan merchant, selisih memberi tahu admin
+- [x] Kartu: terbitkan, blokir, ganti, cetak PDF, satu santri satu kartu aktif (CRD-01, CRD-04, A-07)
+- [x] PIN hash, wajib di atas ambang, salah 3 kali terkunci 15 menit (CRD-03)
+- [x] QR dinamis 30 detik sekali pakai; QR lama dan palsu ditolak (CRD-05, S-09)
+- [x] Perangkat dengan kunci API, scope, cabut; log pindai dan ekspor (CRD-02, CRD-06, CRD-07)
+- [x] Kasir: keranjang, barcode, kartu atau QR, keypad PIN, hasil besar, void (POS-02, POS-07, POS-12, K-01)
+- [x] Struk digital di riwayat wali (POS-09)
+- [x] Uji konkurensi: enam proses berebut saldo, tepat yang cukup berhasil; tap ganda hanya memotong sekali
+- [x] Notifikasi top-up, saldo menipis, belanja (opsional), kartu diblokir
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 3
 
@@ -77,7 +94,7 @@ Diperbarui setiap ada langkah selesai.
 Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 
 - [ ] Layar tagihan di portal santri, bayar sebagian dari portal wali
-- [ ] Import saldo dompet awal (Tahap 4)
+- [ ] Import saldo dompet awal (belum ada layar impor; sekarang lewat penyesuaian satu per satu)
 - [ ] Tab lain di detail santri (mengikuti tahap modulnya)
 - [ ] Status backup di Kesehatan Sistem (Tahap 13)
 - [ ] Produksi: OPcache tanpa cek berkas, `artisan optimize` dan `icons:cache` saat deploy, ukur waktu layar (Tahap 13)
@@ -88,4 +105,5 @@ Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 - Docker dan CI baru lolos cek sintaks, belum pernah dijalankan
 - Tampilan dan teks Arab belum dicoba di HP Android sungguhan
 - Horizon terpasang dan terkonfigurasi, tetapi belum pernah dijalankan, karena butuh Redis dan `pcntl` (WSL2 atau Docker)
+- Reader kartu USB dan kamera QR di kasir belum dicoba dengan alat sungguhan; pemindaian di uji browser diketik atau disimulasikan
 - Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

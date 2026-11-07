@@ -42,7 +42,7 @@ class PaymentShow extends Component
 
     public function render(): View
     {
-        $this->payment->load(['invoices.student:id,name,nis', 'bankAccount', 'verifier:id,name']);
+        $this->payment->load(['invoices.student:id,name,nis', 'topup.wallet.student:id,name,nis', 'bankAccount', 'verifier:id,name']);
 
         return view('finance.payments.show')->title($this->payment->payment_no);
     }

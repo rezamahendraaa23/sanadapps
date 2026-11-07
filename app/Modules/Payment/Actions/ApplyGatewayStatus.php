@@ -102,7 +102,11 @@ class ApplyGatewayStatus
         }
 
         // Kas dicatat manual oleh bendahara sesuai PRD Sistem 8.5; di sini hanya tagihan yang dibuka kembali.
-        $this->refund->handle($payment, 'Refund dari Midtrans.', null, recordCash: false);
-        $payment->update(['needs_review' => true, 'review_note' => 'Refund di Midtrans. Catat pengeluarannya di Laporan Kas.']);
+        try {
+            $this->refund->handle($payment, 'Refund dari Midtrans.', null, recordCash: false);
+            $payment->update(['needs_review' => true, 'review_note' => 'Refund di Midtrans. Catat pengeluarannya di Laporan Kas.']);
+        } catch (FinanceException $exception) {
+            $payment->update(['needs_review' => true, 'review_note' => 'Refund di Midtrans tetapi belum bisa dicatat: '.$exception->getMessage()]);
+        }
     }
 }

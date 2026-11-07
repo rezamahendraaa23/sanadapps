@@ -19,10 +19,10 @@ test('pindah menu tanpa muat ulang: judul, sorotan, fokus, dan modal tetap benar
     await page.evaluate(() => { window.belumDimuatUlang = true; });
 
     const menu = page.getByRole('navigation', { name: 'Menu utama' }).first();
-    await menu.getByRole('link', { name: 'Santri' }).click();
+    await menu.getByRole('link', { name: 'Santri', exact: true }).click();
     await expect(page).toHaveURL(/panel\/santri$/);
     await expect(page).toHaveTitle(/^Santri/);
-    await expect(menu.getByRole('link', { name: 'Santri' })).toHaveAttribute('aria-current', 'page');
+    await expect(menu.getByRole('link', { name: 'Santri', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.locator('#konten')).toBeFocused();
 
     await menu.getByRole('link', { name: 'Notifikasi' }).click();
@@ -45,7 +45,7 @@ test('kursor di atas menu tidak memuat salinan halaman yang bisa basi', async ({
     const requests = [];
     page.on('request', (request) => requests.push(request.url()));
 
-    await page.getByRole('navigation', { name: 'Menu utama' }).first().getByRole('link', { name: 'Santri' }).hover();
+    await page.getByRole('navigation', { name: 'Menu utama' }).first().getByRole('link', { name: 'Santri', exact: true }).hover();
     await page.waitForTimeout(500);
 
     expect(requests.filter((url) => url.includes('/panel/santri'))).toEqual([]);

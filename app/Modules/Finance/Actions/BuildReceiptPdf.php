@@ -22,7 +22,7 @@ class BuildReceiptPdf
             throw new FinanceException('Kwitansi tersedia setelah pembayaran lunas.');
         }
 
-        $payment->load(['invoices.items', 'invoices.student']);
+        $payment->load(['invoices.items', 'invoices.student', 'topup.wallet.student']);
         $profile = SchoolProfile::current();
         $logo = $profile->logo_path && Storage::disk('public')->exists($profile->logo_path) ? $profile->logo_path : null;
 
@@ -30,7 +30,7 @@ class BuildReceiptPdf
             'payment' => $payment,
             'profile' => $profile,
             'identity' => $this->identity,
-            'students' => $payment->invoices->pluck('student.name')->filter()->unique()->join(', '),
+            'students' => $payment->studentNames(),
             'logoData' => $logo ? 'data:'.Storage::disk('public')->mimeType($logo).';base64,'.base64_encode(Storage::disk('public')->get($logo)) : null,
             'qr' => (new Writer(new ImageRenderer(new RendererStyle(96, 0), new SvgImageBackEnd)))->writeString(route('receipts.verify', $payment)),
         ])->render(), 'A5');

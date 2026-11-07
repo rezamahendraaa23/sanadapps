@@ -5,6 +5,7 @@ namespace App\Modules\Core\Livewire\Students;
 use App\Modules\Core\Models\CustomFieldDefinition;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Wallet\Models\Wallet;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -58,6 +59,9 @@ class StudentShow extends Component
             'fields' => CustomFieldDefinition::query()->where('entity', 'student')->where('is_active', true)->orderBy('sort_order')->get(),
             'canManage' => auth()->user()->can('update', $this->student),
             'showFinance' => auth()->user()->can('finance.view') && app(ModuleRegistry::class)->enabled('finance'),
+            'showWallet' => $showWallet = auth()->user()->can('wallet.view') && app(ModuleRegistry::class)->enabled('wallet'),
+            'wallet' => $showWallet && $this->tab === 'dompet' ? Wallet::forStudent($this->student) : null,
+            'studentCard' => $showWallet && $this->tab === 'dompet' ? $this->student->cards()->latest('id')->first() : null,
             'initialPassword' => $this->issuedPassword ?? session('initial_password'),
         ])->title($this->student->name);
     }

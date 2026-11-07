@@ -11,6 +11,8 @@
         $steps[1] = ['Menunggu pembayaran', $payment->status !== 'failed' && $payment->status !== 'expired'];
     }
     $invoiceUuids = $payment->invoices->pluck('uuid')->join(',');
+    $topupChild = $payment->topup?->wallet?->student;
+    $retryUrl = $topupChild ? route('wali.wallet.topup', ['anak' => $topupChild->uuid]) : route('wali.checkout', ['tagihan' => $invoiceUuids]);
     $shareText = 'Kwitansi '.$payment->payment_no.' sebesar '.Rupiah::format($payment->amount).'. Periksa: '.route('receipts.verify', $payment);
 @endphp
 
@@ -31,8 +33,8 @@
     </ol>
 
     @if ($online && in_array($payment->status, ['failed', 'expired'], true))
-        <x-ui.banner tone="danger">{{ $payment->reject_reason ?? 'Pembayaran tidak berhasil.' }} Tagihan belum terbayar, silakan bayar ulang.</x-ui.banner>
-        <x-ui.button class="w-full" :href="route('wali.checkout', ['tagihan' => $invoiceUuids])" wire:navigate>Bayar Ulang</x-ui.button>
+        <x-ui.banner tone="danger">{{ $payment->reject_reason ?? 'Pembayaran tidak berhasil.' }} {{ $topupChild ? 'Saldo belum bertambah.' : 'Tagihan belum terbayar.' }} Silakan bayar ulang.</x-ui.banner>
+        <x-ui.button class="w-full" :href="$retryUrl" wire:navigate>Bayar Ulang</x-ui.button>
     @elseif ($online && $payment->status === 'pending')
         <div wire:poll.5s class="hatch flex items-start gap-2 rounded-card border border-border bg-surface p-4">
             <x-ui.icon name="clock" class="mt-0.5" />
@@ -51,7 +53,7 @@
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="min-w-0">
                 <h2 class="font-tabular font-semibold whitespace-nowrap">{{ $payment->payment_no }}</h2>
-                <p class="text-sm text-text-muted">{{ $payment->invoices->pluck('student.name')->filter()->unique()->join(', ') }}</p>
+                <p class="text-sm text-text-muted">{{ $payment->studentNames() }}</p>
             </div>
             <x-ui.payment-status :status="$payment->status" :method="$payment->method" class="shrink-0" />
         </div>
@@ -120,5 +122,9 @@
         </x-slot:proof>
     </x-ui.ticket-card>
 
-    <x-ui.button variant="tertiary" :href="route('wali.invoices')" wire:navigate>Kembali ke Tagihan</x-ui.button>
+    @if ($topupChild)
+        <x-ui.button variant="tertiary" :href="route('wali.wallet', ['anak' => $topupChild->uuid])" wire:navigate>Kembali ke Dompet</x-ui.button>
+    @else
+        <x-ui.button variant="tertiary" :href="route('wali.invoices')" wire:navigate>Kembali ke Tagihan</x-ui.button>
+    @endif
 </div>

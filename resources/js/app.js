@@ -1,4 +1,48 @@
 document.addEventListener('alpine:init', () => {
+    // Kamera untuk QR dinamis. BarcodeDetector ada di Chrome Android; di browser lain tombolnya tidak tampil dan kasir memakai reader.
+    window.Alpine.data('qrScanner', () => ({
+        supported: 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia,
+        running: false,
+        problem: '',
+        stream: null,
+        async toggle() {
+            if (this.running) return this.stop();
+            this.problem = '';
+            try {
+                this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                this.$refs.video.srcObject = this.stream;
+                await this.$refs.video.play();
+                this.running = true;
+                this.detect(new window.BarcodeDetector({ formats: ['qr_code'] }));
+            } catch {
+                this.problem = 'Kamera tidak bisa dibuka. Izinkan akses kamera, atau pakai reader.';
+                this.stop();
+            }
+        },
+        async detect(detector) {
+            if (!this.running) return;
+            try {
+                const [code] = await detector.detect(this.$refs.video);
+                if (code?.rawValue) {
+                    this.stop();
+                    this.$dispatch('qr-found', code.rawValue);
+                    return;
+                }
+            } catch {
+                // Bingkai belum siap; dicoba lagi pada putaran berikutnya.
+            }
+            setTimeout(() => this.detect(detector), 250);
+        },
+        stop() {
+            this.running = false;
+            this.stream?.getTracks().forEach((track) => track.stop());
+            this.stream = null;
+        },
+        destroy() {
+            this.stop();
+        },
+    }));
+
     window.Alpine.store('toasts', {
         items: [],
         nextId: 1,

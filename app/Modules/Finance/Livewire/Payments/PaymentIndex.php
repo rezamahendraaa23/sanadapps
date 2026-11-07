@@ -34,7 +34,7 @@ class PaymentIndex extends Component
         return view('finance.payments.index', [
             'payments' => Payment::query()
                 ->visibleTo(auth()->user())
-                ->with('invoices.student:id,name')
+                ->with('invoices.student:id,name', 'topup.wallet.student:id,name')
                 ->when($this->status !== '', fn ($query) => $query->where('status', $this->status))
                 ->when($this->method !== '', fn ($query) => $query->where('method', $this->method))
                 ->latest('id')

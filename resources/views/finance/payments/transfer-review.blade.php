@@ -36,7 +36,7 @@
                                 @if ($selected?->is($payment)) aria-current="true" @endif
                                 @class(['flex min-h-11 w-full flex-col rounded-control p-2 text-left hover:bg-primary-soft', 'bg-primary-soft' => $selected?->is($payment)])
                             >
-                                <span class="font-semibold">{{ $payment->invoices->pluck('student.name')->unique()->join(', ') }}</span>
+                                <span class="font-semibold">{{ $payment->studentNames() }}</span>
                                 <span class="font-tabular text-sm">{{ Rupiah::format($payment->transferAmount()) }}</span>
                                 <span class="text-xs text-text-muted">{{ $payment->updated_at->setTimezone($tz)->translatedFormat('j M, H.i') }}</span>
                             </button>

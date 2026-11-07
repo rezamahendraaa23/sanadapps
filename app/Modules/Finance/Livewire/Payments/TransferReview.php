@@ -73,7 +73,7 @@ class TransferReview extends Component
         $queue = Payment::query()
             ->where('method', 'manual_transfer')
             ->where('status', 'review')
-            ->with(['invoices.student:id,name,nis', 'bankAccount'])
+            ->with(['invoices.student:id,name,nis', 'topup.wallet.student:id,name,nis', 'bankAccount'])
             ->oldest('updated_at')
             ->get();
 

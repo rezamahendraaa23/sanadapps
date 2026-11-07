@@ -13,5 +13,12 @@
         @endif
     </x-ui.card>
 
+    @if ($student && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('wallet'))
+        <x-ui.card>
+            <p class="text-sm text-text-muted">Saldo</p>
+            <p class="font-display font-tabular text-2xl font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format(\App\Modules\Wallet\Models\Wallet::forStudent($student)->balance) }}</p>
+        </x-ui.card>
+    @endif
+
     @include('core.partials.announcements', ['announcements' => $announcements])
 </x-layouts.portal>

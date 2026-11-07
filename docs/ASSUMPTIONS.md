@@ -77,4 +77,10 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A48 | Pemicu WA aktif di Tahap 3 baru yang modulnya sudah ada; pemicu dompet, izin, gerbang, dan lainnya ditambah di tahapnya | Modulnya belum dibangun |
 | A49 | Horizon terpasang tetapi belum pernah dijalankan; pengujian antrean memakai `Queue::fake` dan job dipanggil langsung | Butuh Redis dan `pcntl`, keduanya tidak ada di Windows tanpa WSL2 atau Docker |
 | A50 | Pindah halaman memakai `wire:navigate`; tautan unduhan, alamat luar, dan layar masuk tetap muat penuh. Tautan halaman baru wajib memakai atribut ini | Reza meminta perpindahan terasa langsung. Jangan memakai `wire:navigate.hover`: salinan halaman disimpan sampai 30 detik, sehingga tagihan yang baru dibuat sempat tampak belum ada |
+| A51 | Tambahan kolom `wallet_transactions.direction` (`credit`, `debit`) | PRD menyatakan arah dari jenis, tetapi `refund` dan `adjustment` bisa dua arah: pembatalan belanja menambah saldo, penarikan saldo (WAL-05) mengurangi |
+| A52 | Tambahan tabel `merchant_user` untuk kasir per merchant | PRD hanya punya `pic_user_id`, padahal POS-01 meminta tiap merchant punya kasir sendiri |
+| A53 | QR tercetak di kartu tetap dan tidak bisa untuk belanja; hanya QR dinamis di HP yang bisa | QR cetak mudah difoto, sedangkan CRD-05 menolak QR lama |
+| A54 | Scope kartu `library` dan `meal` selalu ditolak | PRD 2.1 belum punya modul untuk keduanya, dan CRD-02 meminta scope tanpa modul aktif ditolak |
+| A55 | Tahap 4 memuat merchant, produk, kasir, struk, void, komisi. Stok, impor, aturan wali per merchant, penyaluran, dan laporan menyusul di Tahap 5 | Pembagian tahap di master prompt |
+| A56 | Top-up dan penarikan saldo dicatat di kas sebagai kategori sendiri | Uang fisik atau transfer masuk ke pesantren saat top-up, jadi harus terlihat di kas |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

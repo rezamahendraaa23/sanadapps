@@ -7,9 +7,12 @@ namespace App\Modules\Notification\Support;
  */
 final class NotificationCatalog
 {
-    /** @var array<string, array{label: string, critical: bool}> */
+    /** @var array<string, array{label: string, critical: bool, default?: bool, module?: string}> */
     public const CATEGORIES = [
         'billing' => ['label' => 'Tagihan dan pembayaran', 'critical' => true],
+        'card' => ['label' => 'Kartu diblokir atau hilang', 'critical' => true, 'module' => 'card'],
+        'wallet' => ['label' => 'Top-up dan saldo menipis', 'critical' => false, 'module' => 'wallet'],
+        'spend' => ['label' => 'Setiap belanja kartu', 'critical' => false, 'default' => false, 'module' => 'pos'],
         'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
     ];
 
@@ -50,6 +53,30 @@ final class NotificationCatalog
             'category' => 'billing',
             'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
             'body' => "Assalamu'alaikum {nama_wali}.\nBukti transfer untuk {nama_santri} belum bisa kami terima: {alasan}\nUnggah ulang di sini: {link}",
+        ],
+        'topup_success' => [
+            'label' => 'Top-up berhasil',
+            'category' => 'wallet',
+            'variables' => ['nama_wali', 'nama_santri', 'nominal', 'saldo', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nTop-up {nominal} untuk {nama_santri} berhasil. Saldo sekarang {saldo}.\nRiwayat: {link}",
+        ],
+        'wallet_low' => [
+            'label' => 'Saldo di bawah ambang',
+            'category' => 'wallet',
+            'variables' => ['nama_wali', 'nama_santri', 'saldo', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nSaldo {nama_santri} tinggal {saldo}.\nTop-up di sini: {link}",
+        ],
+        'wallet_spend' => [
+            'label' => 'Belanja kartu',
+            'category' => 'spend',
+            'variables' => ['nama_wali', 'nama_santri', 'nominal', 'merchant', 'saldo', 'link'],
+            'body' => "{nama_santri} belanja {nominal} di {merchant}. Sisa saldo {saldo}.\nRiwayat: {link}",
+        ],
+        'card_blocked' => [
+            'label' => 'Kartu diblokir atau hilang',
+            'category' => 'card',
+            'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nKartu {nama_santri} sudah diblokir: {alasan}. Saldo tetap aman di dompet.\nDetail: {link}",
         ],
         'announcement' => [
             'label' => 'Pengumuman',

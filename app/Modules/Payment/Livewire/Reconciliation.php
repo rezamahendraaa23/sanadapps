@@ -72,7 +72,7 @@ class Reconciliation extends Component
         return view('payment.reconciliation', [
             'payments' => Payment::query()
                 ->where('method', 'midtrans')
-                ->with('invoices.student:id,name')
+                ->with('invoices.student:id,name', 'topup.wallet.student:id,name')
                 ->when($this->filter === 'perlu', fn ($query) => $query->where(fn ($inner) => $inner->where('needs_review', true)->orWhere('status', 'pending')))
                 ->latest('id')
                 ->paginate(25),

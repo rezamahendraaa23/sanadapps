@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Models;
 
 use App\Modules\Core\Support\Audited;
+use App\Modules\Wallet\Models\StudentCard;
 use App\Support\Concerns\HasPublicUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -71,6 +72,11 @@ class Student extends Model
             ->using(GuardianStudent::class)
             ->withPivot(['relation', 'is_primary', 'is_payer', 'can_receive_wa'])
             ->withTimestamps();
+    }
+
+    public function cards(): HasMany
+    {
+        return $this->hasMany(StudentCard::class);
     }
 
     public function enrollments(): HasMany

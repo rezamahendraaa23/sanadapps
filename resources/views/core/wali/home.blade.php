@@ -8,6 +8,8 @@
     $open = $financeOn && $child ? Invoice::query()->visibleTo(auth()->user())->where('student_id', $child->id)->open()->orderBy('due_date')->get() : collect();
     $total = $open->sum(fn ($invoice) => $invoice->outstanding());
     $announcements = \App\Modules\Core\Models\Announcement::query()->publishedFor($children)->limit(5)->get();
+    $walletOn = app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('wallet');
+    $balance = $walletOn && $child ? \App\Modules\Wallet\Models\Wallet::forStudent($child)->balance : null;
 @endphp
 
 <x-layouts.portal title="Beranda" role="wali">
@@ -38,6 +40,18 @@
                     <p class="flex items-center gap-2 text-base"><x-ui.icon name="circle-check" class="text-success" />Semua tagihan {{ $child->name }} sudah lunas.</p>
                 </x-ui.card>
             @endif
+        @endif
+
+        @if ($balance !== null)
+            <x-ui.card>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-sm text-text-muted">Saldo {{ $child->name }}</p>
+                        <p class="font-display font-tabular text-2xl font-semibold">{{ Rupiah::format($balance) }}</p>
+                    </div>
+                    <x-ui.button variant="secondary" class="shrink-0" :href="route('wali.wallet.topup', ['anak' => $child->uuid])" wire:navigate>Top-up</x-ui.button>
+                </div>
+            </x-ui.card>
         @endif
 
         <x-ui.card>

@@ -56,6 +56,9 @@
                 </tr>
             </thead>
             <tbody>
+                @if ($payment->isTopup())
+                    <tr><td class="py-1">Top-up dompet</td><td class="font-tabular py-1 text-right">{{ Rupiah::format($payment->amount) }}</td></tr>
+                @endif
                 @foreach ($payment->invoices as $invoice)
                     @foreach ($invoice->items as $item)
                         <tr class="border-b border-border">

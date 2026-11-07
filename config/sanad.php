@@ -38,7 +38,7 @@ return [
             ['label' => 'Kesantrian', 'items' => [
                 ['key' => 'students', 'permission' => ['students.view-all', 'students.view-own-class', 'students.view-own-dormitory'], 'label' => 'Santri', 'icon' => 'users', 'route' => 'staff.students.index', 'module' => 'core'],
                 ['key' => 'guardians', 'permission' => 'students.view-all', 'label' => 'Wali', 'icon' => 'contact', 'route' => 'staff.guardians.index', 'module' => 'core'],
-                ['key' => 'cards', 'label' => 'Kartu Santri', 'icon' => 'id-card', 'route' => 'staff.cards.index', 'module' => 'card'],
+                ['key' => 'cards', 'permission' => 'cards.view', 'label' => 'Kartu Santri', 'icon' => 'id-card', 'route' => 'staff.cards.index', 'module' => 'card'],
                 ['key' => 'leaves', 'label' => 'Perizinan', 'icon' => 'door-open', 'route' => 'staff.leaves.index', 'module' => 'leave'],
                 ['key' => 'gate', 'label' => 'Pos Gerbang', 'icon' => 'shield-check', 'route' => 'staff.gate.index', 'module' => 'gate'],
                 ['key' => 'discipline', 'label' => 'Pelanggaran', 'icon' => 'clipboard-list', 'route' => 'staff.discipline.index', 'module' => 'discipline'],
@@ -57,8 +57,9 @@ return [
                 ['key' => 'payments', 'permission' => 'finance.view', 'label' => 'Pembayaran', 'icon' => 'banknote', 'route' => 'staff.payments.index', 'module' => 'finance'],
                 ['key' => 'transfer-review', 'permission' => 'finance.verify', 'label' => 'Verifikasi Transfer', 'icon' => 'badge-check', 'route' => 'staff.transfers.index', 'module' => 'payment_manual'],
                 ['key' => 'arrears', 'permission' => 'finance.view', 'label' => 'Tunggakan', 'icon' => 'clock-alert', 'route' => 'staff.arrears.index', 'module' => 'finance'],
-                ['key' => 'wallets', 'label' => 'Dompet', 'icon' => 'wallet', 'route' => 'staff.wallets.index', 'module' => 'wallet'],
-                ['key' => 'pos', 'label' => 'Mart & Warung', 'icon' => 'store', 'route' => 'staff.pos.index', 'module' => 'pos'],
+                ['key' => 'wallets', 'permission' => 'wallet.view', 'label' => 'Dompet', 'icon' => 'wallet', 'route' => 'staff.wallets.index', 'module' => 'wallet'],
+                ['key' => 'pos', 'permission' => 'pos.operate', 'label' => 'Kasir', 'icon' => 'store', 'route' => 'staff.pos.index', 'module' => 'pos'],
+                ['key' => 'merchants', 'permission' => 'merchants.manage', 'label' => 'Mart & Warung', 'icon' => 'shopping-basket', 'route' => 'staff.merchants.index', 'module' => 'pos'],
                 ['key' => 'cash', 'permission' => 'finance.view', 'label' => 'Laporan Kas', 'icon' => 'landmark', 'route' => 'staff.cash.index', 'module' => 'finance'],
             ]],
             ['label' => 'PPDB', 'items' => [

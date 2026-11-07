@@ -41,6 +41,11 @@ class QueueNotification
             ->unique('id');
 
         foreach ($guardians as $guardian) {
+            // Kategori yang bawaannya mati, seperti kabar tiap belanja, sama sekali tidak dikirim sampai diaktifkan.
+            if ($category !== null && ! (NotificationCatalog::CATEGORIES[$category]['default'] ?? true) && ! $this->guardianAccepts($guardian, $category)) {
+                continue;
+            }
+
             $vars = $variables($guardian);
             $message = $this->renderBody($eventKey, $vars);
 
@@ -69,7 +74,7 @@ class QueueNotification
             return;
         }
 
-        InAppNotification::create(['user_id' => $user->id, 'title' => $title, 'body' => $message, 'link' => $link]);
+        $this->storeInApp($user->id, $title, $message, $link, null);
 
         if (filled($user->phone)) {
             $this->queue($eventKey, $user->phone, $message);
@@ -105,7 +110,8 @@ class QueueNotification
             return true;
         }
 
-        return GuardianNotificationPref::query()->where('guardian_id', $guardian->id)->where('category', $category)->value('is_enabled') ?? true;
+        return GuardianNotificationPref::query()->where('guardian_id', $guardian->id)->where('category', $category)->value('is_enabled')
+            ?? (NotificationCatalog::CATEGORIES[$category]['default'] ?? true);
     }
 
     /**

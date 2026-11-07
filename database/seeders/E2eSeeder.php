@@ -8,6 +8,8 @@ use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
 use App\Modules\Finance\Models\BankAccount;
+use App\Modules\Pos\Models\Merchant;
+use App\Modules\Pos\Models\MerchantProduct;
 use Illuminate\Database\Seeder;
 
 /**
@@ -26,6 +28,12 @@ class E2eSeeder extends Seeder
         User::create(['name' => 'Bendahara Uji', 'email' => 'bendahara@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-bendahara'])->assignRole('bendahara');
         app(SaveIntegration::class)->handle('midtrans', 'sandbox', ['server_key' => 'kunci-server-e2e', 'client_key' => 'kunci-klien-e2e'], [], true);
         Module::query()->where('module_key', 'payment_midtrans')->update(['is_enabled' => true]);
+        $cashier = User::create(['name' => 'Kasir Uji', 'email' => 'kasir@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-kasir']);
+        $cashier->assignRole('kasir');
+        $merchant = Merchant::create(['name' => 'Warung Uji', 'type' => 'warung', 'payment_modes' => ['card', 'qr']]);
+        $merchant->cashiers()->attach($cashier->id);
+        MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Roti Uji', 'price' => 5000, 'barcode' => '8990001']);
+        MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Paket Besar', 'price' => 25000]);
         BankAccount::create(['bank_name' => 'Bank Uji', 'account_no' => '7001234567', 'account_holder' => 'Pesantren Uji']);
 
         $guardianUser = User::create(['name' => 'Wali Uji', 'phone' => '6281234567890', 'type' => 'guardian']);

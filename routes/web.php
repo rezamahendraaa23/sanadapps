@@ -58,11 +58,25 @@ use App\Modules\Notification\Livewire\GuardianMore;
 use App\Modules\Notification\Livewire\Templates;
 use App\Modules\Payment\Http\MidtransWebhookController;
 use App\Modules\Payment\Livewire\Reconciliation;
+use App\Modules\Pos\Livewire\Cashier;
+use App\Modules\Pos\Livewire\MerchantAdmin;
+use App\Modules\Wallet\Actions\BuildCardsPdf;
+use App\Modules\Wallet\Livewire\CardAdmin;
+use App\Modules\Wallet\Livewire\DeviceAdmin;
+use App\Modules\Wallet\Livewire\GuardianTopup;
+use App\Modules\Wallet\Livewire\GuardianWallet;
+use App\Modules\Wallet\Livewire\ScanLog;
+use App\Modules\Wallet\Livewire\StudentCardPage;
+use App\Modules\Wallet\Livewire\WalletAdmin;
+use App\Modules\Wallet\Models\CardScan;
+use App\Modules\Wallet\Models\Device;
+use App\Modules\Wallet\Models\StudentCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 Route::view('/', 'home')->name('home');
@@ -137,6 +151,42 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/verifikasi-transfer', TransferReview::class)->middleware(['module:payment_manual', 'can:finance.verify'])->name('transfers.index');
     });
 
+    Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');
+
+    Route::middleware('module:card')->group(function (): void {
+        Route::get('/kartu', CardAdmin::class)->middleware('can:cards.view')->name('cards.index');
+        Route::middleware('can:cards.manage')->group(function (): void {
+            Route::get('/kartu/log', ScanLog::class)->name('cards.scans');
+            Route::get('/kartu/log/ekspor', function (Request $request) {
+                $rows = ScanLog::query(['result' => $request->query('hasil'), 'scope' => $request->query('scope'), 'date' => $request->query('tanggal')])
+                    ->limit(10000)->get()
+                    ->map(fn (CardScan $scan) => [
+                        $scan->scanned_at->setTimezone(config('sanad.display_timezone'))->format('Y-m-d H:i:s'),
+                        $scan->card?->student?->nis,
+                        $scan->card?->student?->name,
+                        Device::SCOPES[$scan->scope],
+                        $scan->device?->name ?? 'Kasir',
+                        ScanLog::RESULTS[$scan->result],
+                        $scan->reason,
+                    ])->all();
+
+                return Excel::download(new ArrayExport(['Waktu', 'NIS', 'Santri', 'Akses', 'Perangkat', 'Hasil', 'Alasan'], $rows), 'log-pindai.xlsx');
+            })->name('cards.scans.export');
+            Route::get('/kartu/cetak', function (Request $request, BuildCardsPdf $pdf) {
+                $cards = StudentCard::query()->where('status', 'active')->whereIn('uuid', array_filter(explode(',', (string) $request->query('kartu')), fn (string $uuid) => Str::isUuid($uuid)))->limit(200)->get();
+                abort_if($cards->isEmpty(), 404);
+
+                return response($pdf->handle($cards), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="kartu-santri.pdf"']);
+            })->name('cards.print');
+        });
+        Route::get('/kartu/perangkat', DeviceAdmin::class)->middleware('can:devices.manage')->name('cards.devices');
+    });
+
+    Route::middleware('module:pos')->group(function (): void {
+        Route::get('/kasir', Cashier::class)->middleware('can:pos.operate')->name('pos.index');
+        Route::get('/merchant', MerchantAdmin::class)->middleware('can:merchants.manage')->name('merchants.index');
+    });
+
     Route::get('/santri', StudentIndex::class)->middleware('can:viewAny,'.Student::class)->name('students.index');
     Route::get('/santri/ekspor', fn (Request $request) => Excel::download(new StudentsExport($request->user()), 'santri.xlsx'))
         ->middleware('can:create,'.Student::class)->name('students.export');
@@ -184,10 +234,16 @@ Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix(
         Route::get('/bayar', GuardianCheckout::class)->name('checkout');
         Route::get('/pembayaran/{payment}', GuardianPayment::class)->middleware('can:view,payment')->name('payments.show');
     });
+
+    Route::middleware('module:wallet')->group(function (): void {
+        Route::get('/dompet', GuardianWallet::class)->name('wallet');
+        Route::get('/dompet/top-up', GuardianTopup::class)->name('wallet.topup');
+    });
 });
 
 Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix('santri')->name('santri.')->group(function (): void {
     Route::view('/', 'core.santri.home')->name('home');
+    Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
 });
 
 Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $pdf) {

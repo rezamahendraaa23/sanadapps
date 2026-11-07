@@ -6,6 +6,7 @@ use App\Modules\Finance\Models\CashCategory;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\Payment;
+use App\Modules\Wallet\Actions\CreditTopup;
 use Illuminate\Support\Facades\DB;
 
 class RefundPayment
@@ -32,6 +33,10 @@ class RefundPayment
                 $invoice->paid_total -= $allocations->firstWhere('invoice_id', $invoice->id)->amount;
                 $invoice->syncStatus();
                 $invoice->save();
+            }
+
+            if ($locked->isTopup()) {
+                app(CreditTopup::class)->reverse($locked, trim($reason), $userId);
             }
 
             $locked->update(['status' => 'refunded', 'refund_reason' => trim($reason)]);

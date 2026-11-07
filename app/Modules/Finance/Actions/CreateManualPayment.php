@@ -45,7 +45,7 @@ class CreateManualPayment
     /**
      * Kode unik 3 digit bila diaktifkan; dihindari yang sedang dipakai agar mutasi mudah dicocokkan.
      */
-    private function uniqueCode(): ?int
+    public function uniqueCode(): ?int
     {
         $settings = Module::query()->where('module_key', 'payment_manual')->value('settings') ?? [];
 

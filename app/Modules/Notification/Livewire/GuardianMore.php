@@ -2,6 +2,7 @@
 
 namespace App\Modules\Notification\Livewire;
 
+use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Notification\Models\GuardianNotificationPref;
 use App\Modules\Notification\Support\NotificationCatalog;
 use Illuminate\Contracts\View\View;
@@ -21,7 +22,7 @@ class GuardianMore extends Component
         abort_if($guardian === null, 404);
 
         $pref = GuardianNotificationPref::query()->firstOrNew(['guardian_id' => $guardian->id, 'category' => $category]);
-        $pref->is_enabled = ! ($pref->exists ? $pref->is_enabled : true);
+        $pref->is_enabled = ! ($pref->exists ? $pref->is_enabled : (NotificationCatalog::CATEGORIES[$category]['default'] ?? true));
         $pref->save();
     }
 
@@ -38,7 +39,7 @@ class GuardianMore extends Component
         return view('notification.guardian-more', [
             'guardian' => $guardian,
             'children' => $guardian?->students()->orderBy('name')->get() ?? collect(),
-            'categories' => NotificationCatalog::CATEGORIES,
+            'categories' => array_filter(NotificationCatalog::CATEGORIES, fn (array $category) => ! isset($category['module']) || app(ModuleRegistry::class)->enabled($category['module'])),
             'prefs' => $guardian ? GuardianNotificationPref::query()->where('guardian_id', $guardian->id)->pluck('is_enabled', 'category') : collect(),
             'notifications' => $user->inAppNotifications()->latest('id')->limit(30)->get(),
             'unread' => $user->inAppNotifications()->whereNull('read_at')->count(),
