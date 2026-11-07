@@ -13,6 +13,7 @@
                         <x-ui.button variant="secondary" icon="printer" :href="route('staff.cards.print', ['kartu' => implode(',', $selected)])">Cetak {{ count($selected) }} Kartu</x-ui.button>
                         <x-ui.button variant="tertiary" icon="printer" :href="route('staff.cards.print', ['kartu' => implode(',', $selected), 'format' => 'printer'])">Untuk Printer Kartu</x-ui.button>
                     @endif
+                    <x-ui.button variant="secondary" icon="settings" x-data x-on:click="$dispatch('open-modal', 'isi-kartu')">Isi Kartu</x-ui.button>
                     <x-ui.button icon="plus" x-data x-on:click="$dispatch('open-modal', 'terbitkan-kartu')">Terbitkan Kartu</x-ui.button>
                 </div>
             @endcan
@@ -125,4 +126,22 @@
             </x-slot:footer>
         </x-ui.modal>
     @endcan
+
+    <x-ui.modal name="isi-kartu" title="Isi kartu santri">
+        <div class="flex flex-col gap-3">
+            <p class="text-base">Foto, nama, NIS, dan QR selalu tampil. Pilih tambahannya:</p>
+            <div class="flex flex-col">
+                @foreach (\App\Modules\Wallet\Support\CardFields::OPTIONS as $key => $option)
+                    <label class="flex min-h-11 items-center gap-3 text-base">
+                        <input type="checkbox" value="{{ $key }}" wire:model="cardFields" class="size-5 shrink-0 accent-primary">
+                        <span>{{ $option['label'] }}@if ($option['changes'])<span class="block text-sm text-text-muted">Bisa berubah, kartu perlu dicetak ulang bila berubah</span>@endif</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button wire:click="saveCardFields" wire:loading.attr="disabled" wire:target="saveCardFields">Simpan</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
 </div>

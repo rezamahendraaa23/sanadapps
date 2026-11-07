@@ -7,6 +7,7 @@ use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Wallet\Actions\IssueCard;
 use App\Modules\Wallet\Actions\ManageCard;
 use App\Modules\Wallet\Models\StudentCard;
+use App\Modules\Wallet\Support\CardFields;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -45,6 +46,23 @@ class CardAdmin extends Component
     public string $blockReason = '';
 
     public string $replaceUid = '';
+
+    /** @var list<string> */
+    public array $cardFields = [];
+
+    public function mount(): void
+    {
+        $this->cardFields = CardFields::selected();
+    }
+
+    public function saveCardFields(): void
+    {
+        abort_unless(auth()->user()->can('cards.manage'), 403);
+        CardFields::save($this->cardFields);
+        $this->cardFields = CardFields::selected();
+        $this->dispatch('close-modal', 'isi-kartu');
+        $this->dispatch('toast', message: 'Isi kartu tersimpan. Berlaku untuk cetakan berikutnya.', tone: 'success');
+    }
 
     public function updatingSearch(): void
     {

@@ -5,6 +5,7 @@ namespace App\Modules\Wallet\Actions;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Wallet\Models\StudentCard;
+use App\Modules\Wallet\Support\CardFields;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\SchoolIdentity;
 use Illuminate\Support\Collection;
@@ -25,6 +26,7 @@ class BuildCardsPdf
         return $this->renderer->render(view('wallet.pdf.cards', [
             'cards' => $cards->load('student.classroom', 'student.dormitory'),
             'profile' => $profile,
+            'fields' => CardFields::selected(),
             'format' => $format === 'printer' ? 'printer' : 'sheet',
             'yearName' => AcademicYear::query()->where('is_active', true)->value('name'),
             'identity' => $this->identity,

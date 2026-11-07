@@ -78,7 +78,7 @@
                             <img src="{{ $logoData }}" alt="" class="logo">
                         @endif
                         <p class="school">{{ $identity->displayName() }}</p>
-                        <p class="kind">KARTU SANTRI @if ($yearName)<span>{{ $yearName }}</span>@endif</p>
+                        <p class="kind">KARTU SANTRI @if ($yearName && in_array('academic_year', $fields, true))<span>{{ $yearName }}</span>@endif</p>
                     </div>
                 </div>
                 <div class="ribbon"></div>
@@ -92,8 +92,18 @@
                         <p @class(['name', 'long' => mb_strlen($student->name) > 26 && mb_strlen($student->name) <= 45, 'longer' => mb_strlen($student->name) > 45])>{{ $student->name }}</p>
                         <p class="nis">{{ $student->nis }}</p>
                         <div class="facts">
-                            @if ($student->classroom)<div>@unless (str_contains(mb_strtolower($student->classroom->name), 'kelas'))<b>Kelas</b> @endunless{{ $student->classroom->name }}</div>@endif
-                            @if ($student->dormitory)<div>@unless (str_contains(mb_strtolower($student->dormitory->name), 'asrama'))<b>Asrama</b> @endunless{{ $student->dormitory->name }}</div>@endif
+                            @if (in_array('birth', $fields, true) && ($student->birth_place || $student->birth_date))
+                                <div>{{ collect([$student->birth_place, $student->birth_date?->translatedFormat('j F Y')])->filter()->implode(', ') }}</div>
+                            @endif
+                            @if (in_array('entry_year', $fields, true) && $student->entry_date)
+                                <div><b>Masuk</b> {{ $student->entry_date->format('Y') }}</div>
+                            @endif
+                            @if (in_array('classroom', $fields, true) && $student->classroom)
+                                <div>@unless (str_contains(mb_strtolower($student->classroom->name), 'kelas'))<b>Kelas</b> @endunless{{ $student->classroom->name }}</div>
+                            @endif
+                            @if (in_array('dormitory', $fields, true) && $student->dormitory)
+                                <div>@unless (str_contains(mb_strtolower($student->dormitory->name), 'asrama'))<b>Asrama</b> @endunless{{ $student->dormitory->name }}</div>
+                            @endif
                         </div>
                     </div>
                     <div class="code">
