@@ -192,6 +192,19 @@ describe('gerbang', function () {
         expect(GateLog::count())->toBe(1)->and($leave->fresh()->status)->toBe('out');
     });
 
+    it('papan: yang terlambat naik ke atas dan diberi tanda (UAT 12)', function () {
+        leaveNow($this, hours: 1);
+        gate($this);
+        $this->travel(80)->minutes();
+        $budi = app(ManageLeave::class)->request($this->other, 'keluar', 'Beli kitab', CarbonImmutable::now(), CarbonImmutable::now()->addHours(2), $this->admin->id);
+        app(ManageLeave::class)->approve($budi, $this->admin);
+        Cache::forget('gate-repeat:'.$this->other->id);
+        expect(app(GateScan::class)->handle('BB22', $this->penjaga->id, null, null)['outcome'])->toBe('out');
+
+        $this->actingAs($this->penjaga);
+        Livewire::test(GateBoard::class)->assertSee('2 santri')->assertSeeInOrder(['Ahmad', 'Budi'])->assertViewHas('lateCount', 1);
+    });
+
     it('kembali lewat batas dan toleransi: terlambat, wali dan musyrif dikabari, hilang dari papan', function () {
         $leave = leaveNow($this, hours: 1);
         gate($this);
