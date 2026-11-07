@@ -31,7 +31,6 @@
                     <x-ui.button variant="tertiary" wire:click="command('{{ $screen->uuid }}', 'dim')">Redupkan<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                     <x-ui.button variant="tertiary" wire:click="command('{{ $screen->uuid }}', 'undim')">Terangkan<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                     @can('masjid.settings')
-                        <x-ui.button variant="tertiary" wire:click="toggleArabicDigits('{{ $screen->uuid }}')" aria-pressed="{{ $screen->arabic_digits ? 'true' : 'false' }}">{{ $screen->arabic_digits ? 'Pakai Angka Biasa' : 'Pakai Angka Arab' }}<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                         <x-ui.button variant="danger" wire:click="revoke('{{ $screen->uuid }}')" wire:confirm="Cabut layar {{ $screen->name }}? Layar harus dipasangkan ulang.">Cabut<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                     @endcan
                 </div>

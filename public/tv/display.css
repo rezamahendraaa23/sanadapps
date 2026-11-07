@@ -12,6 +12,7 @@
     --accent: #8A6212;
     --line: #DED7C5;
     --track: #E3DDCC;
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%230B5D45' stroke-opacity='0.09' stroke-width='1.2'%3E%3Cpath d='M40 12L68 40 40 68 12 40z'/%3E%3Cpath d='M20 20h40v40H20z'/%3E%3Cpath d='M0 0l20 20M80 0L60 20M0 80l20-20M80 80L60 60M40 0v12M40 68v12M0 40h12M68 40h12'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .night {
@@ -22,6 +23,7 @@
     --accent: #F2CF7E;
     --line: #1C4337;
     --track: #1C4337;
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23F2CF7E' stroke-opacity='0.06' stroke-width='1.2'%3E%3Cpath d='M40 12L68 40 40 68 12 40z'/%3E%3Cpath d='M20 20h40v40H20z'/%3E%3Cpath d='M0 0l20 20M80 0L60 20M0 80l20-20M80 80L60 60M40 0v12M40 68v12M0 40h12M68 40h12'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
@@ -30,7 +32,8 @@ html { font-size: 0.5208vw; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
 body { font-family: 'Nunito', sans-serif; cursor: none; }
 
-#layar { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: var(--bg); color: var(--ink); }
+/* Pola khatam samar di seluruh latar. */
+#layar { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: var(--pattern) center / 12rem 12rem, var(--bg); color: var(--ink); }
 .safe { position: absolute; left: 5%; right: 5%; top: 5%; bottom: 5%; display: flex; flex-direction: column; }
 .nudge { transition: transform 2s linear; }
 
@@ -47,18 +50,25 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 
 /* Tengah: jam raksasa kiri, konten kanan. */
 .main { flex: 1; min-height: 0; display: flex; align-items: stretch; margin: 2.4rem 0; }
-.hero { flex: 0 0 46%; position: relative; display: flex; flex-direction: column; justify-content: center; margin-right: 3.2rem; padding: 0 4.8rem; border-radius: 4rem; background: var(--color-primary); color: #fff; overflow: hidden; }
-.hero:after { content: ''; position: absolute; right: -14rem; bottom: -14rem; width: 36rem; height: 36rem; border-radius: 50%; border: 4rem solid rgba(255,255,255,0.08); }
+.hero { flex: 0 0 46%; position: relative; display: flex; flex-direction: column; justify-content: center; margin-right: 3.2rem; padding: 8rem 4.8rem 0; border-radius: 40rem 40rem 4rem 4rem / 20rem 20rem 4rem 4rem; background: var(--color-primary); color: #fff; overflow: hidden; }
+.hero:before { content: ''; position: absolute; left: 1.6rem; right: 1.6rem; top: 1.6rem; bottom: 1.6rem; border: 0.3rem solid rgba(242,207,126,0.45); border-radius: 38rem 38rem 2.6rem 2.6rem / 18.6rem 18.6rem 2.6rem 2.6rem; pointer-events: none; }
+.khatam { position: absolute; right: -9rem; bottom: -9rem; width: 34rem; height: 34rem; fill: none; stroke: rgba(242,207,126,0.3); stroke-width: 1.6; stroke-linejoin: round; }
+.clock, .next, .note { position: relative; z-index: 1; }
 .night .hero { background: #0F3A2D; }
 .clock { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 22rem; line-height: 0.92; letter-spacing: -0.4rem; font-variant-numeric: tabular-nums; }
 .clock small { font-size: 7rem; letter-spacing: 0; color: rgba(255,255,255,0.7); font-weight: 500; }
 .next { position: relative; z-index: 1; display: inline-flex; align-self: flex-start; align-items: baseline; margin-top: 3.2rem; padding: 1.4rem 3rem; border-radius: 99rem; background: var(--accent); color: #13201B; transform: rotate(-2deg); }
+.next { align-items: center; }
+.next .ico { width: 5rem; height: 5rem; margin-right: 1.4rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .next b { font-size: 4rem; font-weight: 800; margin-right: 2rem; }
 .next span { font-family: 'Fredoka', sans-serif; font-size: 5.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .note { position: relative; z-index: 1; margin-top: 2rem; font-size: 3.2rem; font-weight: 700; color: rgba(255,255,255,0.8); }
 
 .slot { flex: 1; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 4rem 4.8rem; border-radius: 3.2rem; background: var(--panel); border: 0.3rem solid var(--line); opacity: 1; transition: opacity 400ms ease; }
-.slot .kind { align-self: flex-start; margin: 0 0 2rem; padding: 0.6rem 2rem; border-radius: 99rem; background: var(--accent); color: #13201B; font-size: 2.8rem; font-weight: 800; }
+.slot:after { content: ''; position: absolute; right: -8rem; top: -8rem; width: 32rem; height: 32rem; background: var(--pattern) 0 0 / 8rem 8rem; border-radius: 50%; pointer-events: none; }
+.slot > * { position: relative; z-index: 1; }
+.slot .kind { display: flex; align-items: center; align-self: flex-start; margin: 0 0 2rem; padding: 0.6rem 2rem; border-radius: 99rem; background: var(--accent); color: #13201B; font-size: 2.8rem; font-weight: 800; }
+.slot .kind i { width: 2.4rem; height: 2.4rem; margin-right: 1rem; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2313201B' d='M50 0l14.6 14.6H85.4V35.4L100 50 85.4 64.6V85.4H64.6L50 100 35.4 85.4H14.6V64.6L0 50 14.6 35.4V14.6H35.4z'/%3E%3C/svg%3E") center / contain no-repeat; }
 .slot h2 { margin: 0 0 1.6rem; font-family: 'Fredoka', sans-serif; font-size: 7.2rem; font-weight: 600; line-height: 1.08; }
 .slot p { margin: 0; font-size: 4.4rem; line-height: 1.32; white-space: pre-line; }
 .slot .arab { margin-bottom: 1.2rem; font-family: 'Amiri', serif; font-size: 6.4rem; line-height: 2; direction: rtl; text-align: right; }
@@ -74,17 +84,19 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 .slot .empty { font-family: 'Fredoka', sans-serif; font-size: 6rem; color: var(--muted); }
 
 /* Garis waktu: posisi hari ini di antara dua waktu sholat terlihat sekilas. */
-.line { flex: none; position: relative; display: flex; padding-top: 3.2rem; }
+.line { flex: none; position: relative; display: flex; padding-top: 2.4rem; }
 .track { position: absolute; left: 0; right: 0; top: 0; height: 1rem; border-radius: 99rem; background: var(--track); }
 .fill { position: absolute; left: 0; top: 0; height: 1rem; border-radius: 99rem; background: var(--color-primary); }
 .night .fill { background: var(--accent); }
-.slotime { flex: 1; min-width: 0; padding: 0 1rem; }
+.slotime { flex: 1; min-width: 0; margin: 0 0.6rem; padding: 1.4rem 1rem 1.2rem; text-align: center; border-radius: 11rem 11rem 2rem 2rem / 5.5rem 5.5rem 2rem 2rem; }
+.slotime .ico { display: block; width: 4.4rem; height: 4.4rem; margin: 0 auto 0.6rem; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .slotime b { display: block; font-size: 3rem; font-weight: 800; color: var(--muted); }
 .slotime span { display: block; font-family: 'Fredoka', sans-serif; font-size: 6.4rem; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .slotime.past span { color: var(--muted); }
-.slotime.is-next b { color: var(--accent); }
-.slotime.is-next { margin-top: -3.2rem; padding-top: 2.2rem; border-top: 1rem solid var(--accent); }
-.slotime.is-next span { color: var(--accent); }
+.slotime.is-next { background: var(--accent); color: #13201B; }
+.slotime.is-next b, .slotime.is-next span { color: #13201B; }
+.slotime.is-next .ico { stroke: #13201B; }
+.slotime.past .ico { stroke: var(--muted); }
 
 .foot { flex: none; display: flex; align-items: center; margin-top: 2rem; font-size: 3.2rem; font-weight: 700; }
 .ticker { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -97,15 +109,12 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 .ring svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring .bg { fill: none; stroke: var(--track); stroke-width: 5; }
 .ring .fg { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.ring .ring-star { left: 50%; top: -5rem; right: auto; bottom: auto; width: 10rem; height: 10rem; margin-left: -5rem; fill: var(--bg); stroke: var(--accent); stroke-width: 5; }
 .ring .num { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; font-family: 'Fredoka', sans-serif; font-size: 18rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .count .words { margin-left: 8rem; max-width: 70rem; }
 .count .words p { margin: 0; font-size: 4.4rem; font-weight: 800; color: var(--accent); }
 .count .words h1 { margin: 1rem 0 2rem; font-family: 'Fredoka', sans-serif; font-size: 13rem; font-weight: 600; line-height: 1; }
 .count .words span { display: block; font-size: 4.4rem; font-weight: 700; color: var(--muted); }
-
-/* Angka Arab: pakai Amiri agar bentuknya utuh dan seimbang. */
-.ar-digits .clock, .ar-digits .next span, .ar-digits .slotime span, .ar-digits .ring .num { font-family: 'Amiri', serif; letter-spacing: 0; font-weight: 700; }
-.ar-digits .clock { line-height: 1.1; }
 
 /* Sholat berlangsung: hitam total, tanpa tulisan, agar khusyuk. */
 .praying { background: #000; }

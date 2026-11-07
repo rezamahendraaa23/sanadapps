@@ -275,20 +275,6 @@ describe('layar', function () {
         expect($screen->fresh()->isOnline())->toBeFalse();
     });
 
-    it('angka Arab dipilih per layar, bawaannya mati, dan mengubah versi manifest', function () {
-        [$screen] = pairScreen();
-        $before = app(DisplayManifest::class)->build($screen);
-        expect($before['screen']['arabic_digits'])->toBeFalse();
-
-        $this->actingAs($this->admin);
-        Livewire::test(DisplayScreens::class)->call('toggleArabicDigits', $screen->uuid)->assertSee('Pakai Angka Biasa');
-        $after = app(DisplayManifest::class)->build($screen->fresh());
-        expect($after['screen']['arabic_digits'])->toBeTrue()->and($after['version'])->not->toBe($before['version']);
-
-        $this->actingAs($this->humas);
-        Livewire::test(DisplayScreens::class)->call('toggleArabicDigits', $screen->uuid)->assertForbidden();
-    });
-
     it('panel pairing: kode salah ditolak, kode benar memasang layar', function () {
         $pairing = app(ManageScreens::class)->startPairing();
         $this->actingAs($this->admin);

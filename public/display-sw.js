@@ -1,6 +1,6 @@
 // Layar TV tetap bisa dibuka lagi saat internet putus: halaman, aset, dan media disimpan.
-var CACHE = 'sanad-display-v4';
-var SHELL = ['/display', '/tv/display.css?v=4', '/tv/display.js?v=4', '/tv/fonts/fredoka.woff2', '/tv/fonts/nunito.woff2', '/tv/fonts/amiri.woff2'];
+var CACHE = 'sanad-display-v5';
+var SHELL = ['/display', '/tv/display.css?v=5', '/tv/display.js?v=5', '/tv/fonts/fredoka.woff2', '/tv/fonts/nunito.woff2', '/tv/fonts/amiri.woff2'];
 
 self.addEventListener('install', function (event) {
     self.skipWaiting();
