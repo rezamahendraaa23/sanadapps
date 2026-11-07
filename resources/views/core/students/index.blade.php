@@ -27,7 +27,7 @@
                         <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.export')">Ekspor</x-ui.button>
                         <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')" wire:navigate>Impor</x-ui.button>
                     </div>
-                    <x-ui.button icon="plus" :href="route('staff.students.create')" wire:navigate>Tambah Santri</x-ui.button>
+                    <x-ui.button icon="plus" x-data x-on:click="$dispatch('open-modal', 'tambah-santri')">Tambah Santri</x-ui.button>
                 </div>
             @endif
         </div>
@@ -98,4 +98,10 @@
             <div class="mt-4">{{ $students->links() }}</div>
         @endif
     </x-ui.card>
+
+    @if ($canManage)
+        <x-ui.modal name="tambah-santri" title="Tambah santri" class="md:max-w-3xl">
+            @livewire(\App\Modules\Core\Livewire\Students\StudentForm::class, ['inModal' => true], key('tambah-santri'))
+        </x-ui.modal>
+    @endif
 </div>

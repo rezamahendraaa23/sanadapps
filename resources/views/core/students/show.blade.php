@@ -18,6 +18,11 @@
             </div>
             @if ($canManage)
                 <div class="flex flex-wrap gap-2">
+                    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('face_attendance'))
+                        @can('face.enroll')
+                            <x-ui.button variant="secondary" icon="scan-face" :href="route('staff.face', ['santri' => $student->uuid])" wire:navigate>Daftarkan Wajah</x-ui.button>
+                        @endcan
+                    @endif
                     <x-ui.button variant="secondary" wire:click="issuePassword" wire:confirm="Buat sandi baru untuk {{ $student->name }}? Sandi lama langsung tidak berlaku.">Buat Sandi</x-ui.button>
                     <x-ui.button variant="secondary" icon="pencil" :href="route('staff.students.edit', $student)" wire:navigate>Ubah Data</x-ui.button>
                 </div>

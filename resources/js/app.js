@@ -97,6 +97,28 @@ document.addEventListener('click', (event) => {
 });
 
 // Pindah halaman tanpa muat ulang: fokus dan pembaca layar ikut pindah ke konten baru.
+// Menu samping tetap di posisi gulirnya saat pindah halaman, juga setelah muat ulang.
+const KEEP_SCROLL = 'sanad-scroll-menu';
+
+function visibleMenu() {
+    return [...document.querySelectorAll('[data-keep-scroll]')].find((element) => element.offsetParent !== null);
+}
+
+function rememberMenuScroll() {
+    const menu = visibleMenu();
+    if (menu) sessionStorage.setItem(KEEP_SCROLL, String(menu.scrollTop));
+}
+
+function restoreMenuScroll() {
+    const menu = visibleMenu();
+    const saved = Number(sessionStorage.getItem(KEEP_SCROLL) ?? 0);
+    if (menu && saved) menu.scrollTop = saved;
+}
+
+document.addEventListener('livewire:navigating', rememberMenuScroll);
+document.addEventListener('livewire:navigated', restoreMenuScroll);
+window.addEventListener('pagehide', rememberMenuScroll);
+
 let navigating = false;
 document.addEventListener('livewire:navigating', () => {
     navigating = true;

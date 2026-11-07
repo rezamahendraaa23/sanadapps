@@ -55,16 +55,21 @@ test('alur setup: profil, tahun ajaran, kelas, asrama, tambah santri, cari, deta
     await expect(page.getByRole('cell', { name: 'Asrama Putra', exact: true })).toBeVisible();
 
     await page.getByRole('link', { name: 'Santri', exact: true }).click();
-    await page.getByRole('link', { name: 'Tambah Santri' }).click();
-    await page.getByRole('button', { name: 'Simpan Santri' }).click();
-    await expect(page.getByLabel('Nama lengkap')).toBeFocused();
+    await page.getByRole('button', { name: 'Tambah Santri' }).click();
+    const addStudent = page.getByRole('dialog', { name: 'Tambah santri' });
+    await expect(addStudent).toBeVisible();
+    await addStudent.getByRole('button', { name: 'Batal' }).click();
+    await expect(addStudent).toBeHidden();
+    await page.getByRole('button', { name: 'Tambah Santri' }).click();
+    await addStudent.getByRole('button', { name: 'Simpan Santri' }).click();
+    await expect(addStudent.getByLabel('Nama lengkap')).toBeFocused();
 
-    await page.getByLabel('Nama lengkap').fill('Fulan Baru');
-    await page.getByLabel('Jenis kelamin').selectOption('L');
-    await page.getByLabel('Kelas', { exact: true }).selectOption({ label: 'Kelas 7A' });
-    await page.getByLabel('Nomor WhatsApp wali').fill('081299990001');
-    await page.getByLabel('Nama wali').fill('Ayah Fulan');
-    await page.getByRole('button', { name: 'Simpan Santri' }).click();
+    await addStudent.getByLabel('Nama lengkap').fill('Fulan Baru');
+    await addStudent.getByLabel('Jenis kelamin').selectOption('L');
+    await addStudent.getByLabel('Kelas', { exact: true }).selectOption({ label: 'Kelas 7A' });
+    await addStudent.getByLabel('Nomor WhatsApp wali').fill('081299990001');
+    await addStudent.getByLabel('Nama wali').fill('Ayah Fulan');
+    await addStudent.getByRole('button', { name: 'Simpan Santri' }).click();
 
     await expect(page.getByRole('heading', { name: 'Fulan Baru' })).toBeVisible();
     await expect(page.getByText('Sandi awal santri:')).toBeVisible();
@@ -182,10 +187,10 @@ test('keamanan akun, lonceng, kesehatan sistem, dan tampilan HP', async ({ page 
     }
 
     await page.goto('/panel/santri');
-    await expect(page.getByLabel('Kelas', { exact: true })).toBeHidden();
+    await expect(page.locator('#field-classroom')).toBeHidden();
     await expect(page.getByRole('link', { name: 'Kenaikan Kelas' })).toBeHidden();
     await page.getByRole('button', { name: 'Filter' }).click();
-    await expect(page.getByLabel('Kelas', { exact: true })).toBeVisible();
+    await expect(page.locator('#field-classroom')).toBeVisible();
     await page.getByRole('button', { name: 'Aksi Lain' }).click();
     await expect(page.getByRole('link', { name: 'Kenaikan Kelas' })).toBeVisible();
     await noOverflow(page);

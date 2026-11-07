@@ -381,6 +381,15 @@ describe('wajah', function () {
 });
 
 describe('persetujuan wali', function () {
+    it('profil santri punya pintasan ke pendaftaran wajah, hanya bila modul aktif', function () {
+        $this->actingAs($this->admin);
+        $this->get(route('staff.students.show', $this->student))->assertSee('Daftarkan Wajah');
+
+        Module::where('module_key', 'face_attendance')->update(['is_enabled' => false]);
+        app(ModuleRegistry::class)->forget();
+        $this->get(route('staff.students.show', $this->student))->assertDontSee('Daftarkan Wajah');
+    });
+
     it('wali menyetujui dan mencabut; wali lain tidak bisa menyentuh anak orang', function () {
         $this->actingAs($this->guardianUser);
         $page = Livewire::test(GuardianFaceConsent::class)->assertSee('bukan foto wajahnya')->assertSee('Ahmad')->assertSee('Belum disetujui')

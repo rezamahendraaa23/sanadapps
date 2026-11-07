@@ -1,4 +1,4 @@
-<form wire:submit="save" class="mx-auto flex w-full max-w-[720px] flex-col gap-4">
+<form wire:submit="save" @class(['flex w-full flex-col gap-4', 'mx-auto max-w-[720px]' => ! $inModal])>
     <x-ui.card title="Identitas">
         <div class="flex flex-col gap-4">
             <x-ui.input label="Nama lengkap" name="name" required wire:model="name" />
@@ -57,7 +57,11 @@
     @endif
 
     <div class="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-        <x-ui.button variant="secondary" :href="$studentId ? route('staff.students.show', \App\Modules\Core\Models\Student::find($studentId)) : route('staff.students.index')" wire:navigate>Batal</x-ui.button>
+        @if ($inModal)
+            <x-ui.button variant="secondary" x-on:click="$dispatch('close-modal', 'tambah-santri')">Batal</x-ui.button>
+        @else
+            <x-ui.button variant="secondary" :href="$studentId ? route('staff.students.show', \App\Modules\Core\Models\Student::find($studentId)) : route('staff.students.index')" wire:navigate>Batal</x-ui.button>
+        @endif
         <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save,photo">
             <span wire:loading.remove wire:target="save">Simpan Santri</span>
             <span wire:loading wire:target="save">Menyimpan…</span>

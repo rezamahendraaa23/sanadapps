@@ -14,6 +14,10 @@ XAMPP masih PHP 8.2, jadi jangan pakai `php` bawaan. PHP 8.3 portabel ada di `%L
 - Setelah menarik perubahan: `<php83> artisan migrate` dan `<php83> artisan db:seed --class=RoleSeeder`, lalu nyalakan ulang server.
 - Database: PostgreSQL 16 portabel, port 5433. Data di `%LOCALAPPDATA%\sanad-tools\pgdata`. Nyalakan dengan `pgsql\bin\pg_ctl -D pgdata -l pg.log start` dari folder itu. PostgreSQL 18 di port 5432 bukan milik proyek ini.
 
+## Kecepatan di Windows
+
+PHP 8.3 portabel memakai `opcache.file_cache` di `%LOCALAPPDATA%\sanad-tools\opcache` dan `opcache.revalidate_freq=2`, serta `DB_PERSISTENT=true` di `.env`. Kunjungan pertama setelah view berubah tetap lambat karena berkas baru dipindai Windows Defender (terukur sekitar 350 ms per berkas). Jangan menjalankan `view:clear` tanpa perlu.
+
 ## Aturan tampilan
 
 - Warna hanya lewat token di `resources/css/tokens.css`. Test menolak hex mentah di view.

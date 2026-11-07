@@ -84,3 +84,23 @@ test('unduhan tetap jalan, dan menu HP tidak mengunci gulir setelah pindah halam
     await expect(page.getByRole('dialog', { name: 'Menu' })).toBeHidden();
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow + getComputedStyle(document.body).overflow)).not.toContain('hidden');
 });
+
+test('menu samping tetap di posisinya setelah pindah halaman', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 500 });
+    await page.goto('/masuk?sebagai=staf');
+    await page.waitForFunction(() => window.Alpine);
+    await page.getByLabel('Email').fill('admin@uji.test');
+    await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-admin');
+    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+    await expect(page).toHaveURL(/\/panel$/);
+
+    const menu = page.locator('aside [data-keep-scroll]').first();
+    await menu.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+    const before = await menu.evaluate((element) => element.scrollTop);
+    expect(before).toBeGreaterThan(0);
+
+    const links = menu.getByRole('link');
+    await links.last().click();
+    await page.waitForFunction(() => document.querySelector('[data-keep-scroll]')?.scrollTop > 0);
+    await expect.poll(() => menu.evaluate((element) => element.scrollTop)).toBe(before);
+});

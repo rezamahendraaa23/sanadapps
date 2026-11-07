@@ -1,6 +1,6 @@
 @props(['groups', 'active' => null, 'collapsible' => false])
 
-<nav aria-label="Menu utama" class="flex-1 overflow-y-auto px-3 py-4" @if ($collapsible) wire:scroll @endif>
+<nav aria-label="Menu utama" class="flex-1 overflow-y-auto px-3 py-4" data-keep-scroll="menu">
     @foreach ($groups as $group)
         <div class="mb-4">
             <h2 class="mb-1 px-3 text-xs font-semibold text-text-muted" @if ($collapsible) x-show="!collapsed" @endif>{{ $group['label'] }}</h2>

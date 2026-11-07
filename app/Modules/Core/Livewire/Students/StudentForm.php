@@ -26,6 +26,10 @@ class StudentForm extends Component
     #[Locked]
     public ?int $studentId = null;
 
+    /** Dipakai di dalam popup daftar santri; Batal menutup popup, bukan pindah halaman. */
+    #[Locked]
+    public bool $inModal = false;
+
     public string $nis = '';
 
     public string $nisn = '';
