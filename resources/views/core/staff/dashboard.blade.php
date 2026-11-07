@@ -41,12 +41,25 @@
         @endif
 
         <x-ui.card title="Perlu tindakan">
-            <x-ui.empty-state message="Tidak ada yang menunggu. Verifikasi transfer, izin, dan koreksi ujian akan muncul di sini setelah modulnya berjalan." class="py-2" />
+            @if ($pendingTransfers > 0)
+                <a href="{{ route('staff.transfers.index') }}" class="hatch flex min-h-11 items-center justify-between gap-3 rounded-control border border-warning p-3 font-semibold">
+                    <span class="flex items-center gap-2"><x-ui.icon name="hourglass" />Bukti transfer menunggu verifikasi</span>
+                    <span class="font-tabular">{{ $pendingTransfers }}</span>
+                </a>
+            @else
+                <x-ui.empty-state message="Tidak ada yang menunggu saat ini." class="py-2" />
+            @endif
         </x-ui.card>
     </div>
 
     <div class="flex min-w-0 flex-col gap-4">
-        @if ($activeStudents !== null)
+        @if ($heroIsFinance)
+            <x-ui.hero-card label="Terbayar bulan ini" :value="\App\Modules\Finance\Support\Rupiah::format($finance['paidThisMonth'])">
+                <x-slot:action>
+                    <x-ui.button variant="on-primary" :href="route('staff.cash.index')">Lihat Kas</x-ui.button>
+                </x-slot:action>
+            </x-ui.hero-card>
+        @elseif ($activeStudents !== null)
             <x-ui.hero-card label="Santri aktif" :value="number_format($activeStudents, 0, ',', '.')">
                 @if ($activeStudents === 0)
                     Belum ada santri.
@@ -55,6 +68,17 @@
                     <x-ui.button variant="on-primary" :href="route('staff.students.index')">Lihat Santri</x-ui.button>
                 </x-slot:action>
             </x-ui.hero-card>
+        @endif
+        @if ($finance)
+            <x-ui.card title="Keuangan">
+                <dl class="flex flex-col gap-2">
+                    <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Tagihan bulan ini</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($finance['billed']) }}</dd></div>
+                    @unless ($heroIsFinance)
+                        <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Terbayar bulan ini</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($finance['paidThisMonth']) }}</dd></div>
+                    @endunless
+                    <div class="flex justify-between gap-3"><dt class="text-sm text-text-muted">Tunggakan</dt><dd class="font-tabular font-semibold">{{ \App\Modules\Finance\Support\Rupiah::format($finance['arrears']) }}</dd></div>
+                </dl>
+            </x-ui.card>
         @endif
         @if ($classrooms !== null || $guardians !== null)
             <x-ui.card>

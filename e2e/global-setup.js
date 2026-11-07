@@ -15,6 +15,7 @@ export default function globalSetup() {
 
     if (existsSync(LOG_FILE)) rmSync(LOG_FILE);
 
+    execFileSync(php, ['artisan', 'cache:clear'], { env: { ...env, CACHE_STORE: 'file' }, stdio: 'pipe' });
     artisan('migrate:fresh', '--force');
     artisan('db:seed', '--class=Database\\Seeders\\E2eSeeder', '--force');
 }

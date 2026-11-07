@@ -33,7 +33,7 @@
             </div>
 
             <div class="flex flex-col gap-2">
-                <x-ui.input label="Warna utama" name="brand_color" required maxlength="7" autocomplete="off" help="Format #RRGGBB. Dipakai di tombol, menu aktif, dan kartu utama." wire:model.live.debounce.300ms="brand_color" />
+                <x-ui.input label="Warna utama" name="brand_color" required maxlength="7" autocomplete="off" help="Format #RRGGBB. Dipakai di tombol, menu aktif, dan kartu utama." wire:model.live.blur="brand_color" />
                 @if ($colorIsValid)
                     <div class="flex flex-wrap items-center gap-3" aria-live="polite">
                         <span class="inline-flex min-h-11 items-center rounded-control px-4 text-base font-semibold text-on-primary" style="background-color: {{ $brand_color }}">Contoh tombol</span>

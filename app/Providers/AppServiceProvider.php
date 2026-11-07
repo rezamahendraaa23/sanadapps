@@ -10,6 +10,10 @@ use App\Modules\Core\Policies\GuardianPolicy;
 use App\Modules\Core\Policies\StudentPolicy;
 use App\Modules\Core\Support\LogOtpSender;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Finance\Models\Invoice;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Policies\InvoicePolicy;
+use App\Modules\Finance\Policies\PaymentPolicy;
 use App\Support\Pdf\BrowsershotPdfRenderer;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\SchoolIdentity;
@@ -40,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Guardian::class, GuardianPolicy::class);
+        Gate::policy(Invoice::class, InvoicePolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
 
         $this->registerModuleComponents();
     }

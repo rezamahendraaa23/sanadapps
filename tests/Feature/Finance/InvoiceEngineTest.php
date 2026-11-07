@@ -15,6 +15,7 @@ use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\InvoiceItem;
 use App\Modules\Finance\Models\StudentDiscount;
 use App\Modules\Finance\Models\StudentFeeAssignment;
+use App\Modules\Finance\Support\ArrearsQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,20 @@ it('menambahkan denda tetap sekali setelah lewat 7 hari tanpa diskon, sesuai con
     $this->travelTo('2026-11-25 01:00:00');
     app(ApplyLateFees::class)->handle();
     expect(Invoice::first()->total)->toBe(635000);
+});
+
+it('memakai tanggal pesantren, bukan UTC, untuk batas denda dan lama tunggakan', function () {
+    $invoice = app(CreateManualInvoice::class)->handle($this->ahmad, [['description' => 'X', 'amount' => 1000, 'fee_type_id' => $this->makan->id]], '2026-11-10');
+
+    // 17 November 23.30 WIB masih hari ketujuh; 18 November 00.30 WIB sudah lewat.
+    $this->travelTo('2026-11-17 16:30:00');
+    app(ApplyLateFees::class)->handle();
+    expect($invoice->fresh()->late_fee_total)->toBe(0);
+
+    $this->travelTo('2026-11-17 17:30:00');
+    app(ApplyLateFees::class)->handle();
+    expect($invoice->fresh()->late_fee_total)->toBe(10000)
+        ->and(ArrearsQuery::rows()->first()['days'])->toBe(8);
 });
 
 it('menghitung denda persen dari nominal item', function () {

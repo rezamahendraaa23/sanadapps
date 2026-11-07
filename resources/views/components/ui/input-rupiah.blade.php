@@ -3,13 +3,19 @@
 @php
     $inputId = 'field-'.$name;
     $message = $error ?? $errors->first($name);
+    $wireAttributes = $attributes->whereStartsWith('wire:model')->getAttributes();
+    $wireKey = array_key_first($wireAttributes);
+    $wireModel = $wireKey ? $wireAttributes[$wireKey] : null;
+    $source = $wireModel
+        ? '$wire.entangle('.\Illuminate\Support\Js::from($wireModel).')'.(str_contains($wireKey, '.live') ? '.live' : '')
+        : \Illuminate\Support\Js::from((string) old($name, $value));
 @endphp
 
 <div
     class="flex flex-col gap-1"
     x-data="{
-        raw: @js((string) old($name, $value)),
-        get formatted() { return this.raw ? Number(this.raw).toLocaleString('id-ID') : '' },
+        raw: {{ $source }},
+        get formatted() { const digits = String(this.raw ?? '').replace(/\D/g, ''); return digits ? Number(digits).toLocaleString('id-ID') : '' },
         update(text) { this.raw = text.replace(/\D/g, '').replace(/^0+/, '') },
     }"
 >
@@ -34,7 +40,9 @@
             @required($required)
             @if ($message) aria-invalid="true" aria-describedby="{{ $inputId }}-error" @endif
         >
-        <input type="hidden" name="{{ $name }}" :value="raw" {{ $attributes->whereStartsWith('wire:') }}>
+        @unless ($wireModel)
+            <input type="hidden" name="{{ $name }}" :value="raw">
+        @endunless
     </div>
     @if ($help)
         <p class="text-sm text-text-muted">{{ $help }}</p>

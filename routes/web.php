@@ -30,6 +30,29 @@ use App\Modules\Core\Livewire\Users\UserIndex;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
 use App\Modules\Core\Models\Student;
+use App\Modules\Finance\Actions\BuildReceiptPdf;
+use App\Modules\Finance\Actions\FinanceException;
+use App\Modules\Finance\Exports\ArrayExport;
+use App\Modules\Finance\Exports\InvoicesExport;
+use App\Modules\Finance\Livewire\Invoices\GenerateScreen;
+use App\Modules\Finance\Livewire\Invoices\InvoiceCreate;
+use App\Modules\Finance\Livewire\Invoices\InvoiceIndex;
+use App\Modules\Finance\Livewire\Invoices\InvoiceShow;
+use App\Modules\Finance\Livewire\Payments\CashPayment;
+use App\Modules\Finance\Livewire\Payments\PaymentIndex;
+use App\Modules\Finance\Livewire\Payments\PaymentShow;
+use App\Modules\Finance\Livewire\Payments\TransferReview;
+use App\Modules\Finance\Livewire\Portal\GuardianCheckout;
+use App\Modules\Finance\Livewire\Portal\GuardianInvoices;
+use App\Modules\Finance\Livewire\Portal\GuardianInvoiceShow;
+use App\Modules\Finance\Livewire\Portal\GuardianPayment;
+use App\Modules\Finance\Livewire\Reports\ArrearsImport;
+use App\Modules\Finance\Livewire\Reports\ArrearsReport;
+use App\Modules\Finance\Livewire\Reports\CashReport;
+use App\Modules\Finance\Livewire\Settings\FeeTypes;
+use App\Modules\Finance\Models\CashTransaction;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Support\ArrearsQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -59,6 +82,51 @@ Route::post('/keluar', function (Request $request, RecordAudit $audit) {
 Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('panel')->name('staff.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/akun', AccountSecurity::class)->name('account');
+
+    Route::middleware('module:finance')->group(function (): void {
+        Route::middleware('can:finance.view')->group(function (): void {
+            Route::get('/tagihan', InvoiceIndex::class)->name('invoices.index');
+            Route::get('/tagihan/ekspor', fn (Request $request) => Excel::download(new InvoicesExport($request->only(['status', 'kelas', 'periode'])), 'tagihan.xlsx'))->name('invoices.export');
+            Route::get('/pembayaran', PaymentIndex::class)->name('payments.index');
+            Route::get('/tunggakan', ArrearsReport::class)->name('arrears.index');
+            Route::get('/tunggakan/ekspor', function (Request $request) {
+                $rows = ArrearsQuery::rows($request->filled('kelas') ? $request->integer('kelas') : null)
+                    ->map(fn (array $row) => [$row['student']->nis, $row['student']->name, $row['classroom'], $row['invoices'], $row['outstanding'], $row['days']])
+                    ->all();
+
+                return Excel::download(new ArrayExport(['NIS', 'Santri', 'Kelas', 'Jumlah tagihan', 'Tunggakan', 'Lama (hari)'], $rows), 'tunggakan.xlsx');
+            })->name('arrears.export');
+            Route::get('/kas', CashReport::class)->name('cash.index');
+            Route::get('/kas/ekspor', function (Request $request) {
+                $rows = CashTransaction::query()->with('category:id,name')
+                    ->when($request->filled('dari'), fn ($query) => $query->whereDate('transaction_date', '>=', $request->date('dari')))
+                    ->when($request->filled('sampai'), fn ($query) => $query->whereDate('transaction_date', '<=', $request->date('sampai')))
+                    ->latest('transaction_date')->get()
+                    ->map(fn (CashTransaction $cash) => [$cash->transaction_date->toDateString(), $cash->type === 'in' ? 'Masuk' : 'Keluar', $cash->category->name, $cash->description, $cash->amount])
+                    ->all();
+
+                return Excel::download(new ArrayExport(['Tanggal', 'Jenis', 'Kategori', 'Keterangan', 'Nominal'], $rows), 'kas.xlsx');
+            })->name('cash.export');
+        });
+
+        Route::middleware('can:finance.manage')->group(function (): void {
+            Route::get('/tagihan/generate', GenerateScreen::class)->name('invoices.generate');
+            Route::get('/tagihan/manual', InvoiceCreate::class)->name('invoices.create');
+            Route::get('/pembayaran/tunai', CashPayment::class)->name('payments.cash');
+            Route::get('/tunggakan/impor', ArrearsImport::class)->name('arrears.import');
+            Route::get('/tunggakan/impor/template', fn () => Excel::download(new ArrayExport(ArrearsImport::HEADINGS, []), 'template-tunggakan-awal.xlsx'))->name('arrears.import.template');
+            Route::get('/pengaturan/jenis-tagihan', FeeTypes::class)->name('settings.fee-types');
+        });
+
+        Route::get('/tagihan/{invoice}', InvoiceShow::class)->middleware('can:view,invoice')->name('invoices.show');
+        Route::get('/pembayaran/{payment}', PaymentShow::class)->middleware('can:view,payment')->name('payments.show');
+        Route::get('/pembayaran/{payment}/bukti', function (Payment $payment) {
+            abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
+
+            return Storage::disk('local')->response($payment->proof_path);
+        })->middleware('can:finance.view')->name('payments.proof');
+        Route::get('/verifikasi-transfer', TransferReview::class)->middleware(['module:payment_manual', 'can:finance.verify'])->name('transfers.index');
+    });
 
     Route::get('/santri', StudentIndex::class)->middleware('can:viewAny,'.Student::class)->name('students.index');
     Route::get('/santri/ekspor', fn (Request $request) => Excel::download(new StudentsExport($request->user()), 'santri.xlsx'))
@@ -98,11 +166,35 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
     Route::view('/', 'core.wali.home')->name('home');
+
+    Route::middleware('module:finance')->group(function (): void {
+        Route::get('/tagihan', GuardianInvoices::class)->name('invoices');
+        Route::get('/tagihan/{invoice}', GuardianInvoiceShow::class)->middleware('can:view,invoice')->name('invoices.show');
+        Route::get('/bayar', GuardianCheckout::class)->name('checkout');
+        Route::get('/pembayaran/{payment}', GuardianPayment::class)->middleware('can:view,payment')->name('payments.show');
+    });
 });
 
 Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix('santri')->name('santri.')->group(function (): void {
     Route::view('/', 'core.santri.home')->name('home');
 });
+
+Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $pdf) {
+    try {
+        $content = $pdf->handle($payment);
+    } catch (FinanceException $exception) {
+        abort(404, $exception->getMessage());
+    }
+
+    return response($content, 200, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'attachment; filename="kwitansi-'.$payment->payment_no.'.pdf"',
+    ]);
+})->middleware(['auth', 'module:finance', 'can:view,payment'])->name('payments.receipt');
+
+Route::get('/verifikasi-kwitansi/{payment}', fn (Payment $payment) => view('finance.receipts.verify', ['payment' => $payment]))
+    ->middleware('throttle:30,1')
+    ->name('receipts.verify');
 
 Route::middleware(EnsurePreviewAllowed::class)->prefix('_pratinjau')->name('preview.')->group(function (): void {
     Route::view('/', 'preview.gallery')->name('gallery');

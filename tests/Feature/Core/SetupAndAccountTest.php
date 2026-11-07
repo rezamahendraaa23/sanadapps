@@ -13,6 +13,8 @@ use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Teacher;
 use App\Modules\Core\Models\User;
 use App\Modules\Core\Support\SetupChecklist;
+use App\Modules\Finance\Models\FeeRate;
+use App\Modules\Finance\Models\FeeType;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +43,7 @@ it('menghitung checklist dari data nyata', function () {
 });
 
 it('menandai langkah opsional dan menyembunyikan checklist hanya bila semua selesai', function () {
-    Livewire::test(Dashboard::class)->assertSee('Setup awal pesantren')->assertSee('0 dari 6')->call('mark', 'modules')->assertSee('1 dari 6')->call('dismissChecklist')->assertStatus(422);
+    Livewire::test(Dashboard::class)->assertSee('Setup awal pesantren')->assertSee('0 dari 7')->call('mark', 'modules')->assertSee('1 dari 7')->call('dismissChecklist')->assertStatus(422);
 
     Livewire::test(Dashboard::class)->call('mark', 'students')->assertNotFound();
 
@@ -50,6 +52,7 @@ it('menandai langkah opsional dan menyembunyikan checklist hanya bila semua sele
     Classroom::create(['name' => 'A']);
     Dormitory::create(['name' => 'B', 'gender' => 'L']);
     Student::create(['nis' => '1', 'name' => 'S', 'gender' => 'L']);
+    FeeRate::create(['fee_type_id' => FeeType::create(['code' => 'SPP', 'name' => 'SPP', 'category' => 'monthly'])->id, 'scope' => 'default', 'amount' => 1, 'valid_from' => '2026-01-01']);
 
     Livewire::test(Dashboard::class)->call('mark', 'integrations')->assertSee('Sembunyikan Daftar Ini')->call('dismissChecklist')->assertDontSee('Setup awal pesantren');
 });

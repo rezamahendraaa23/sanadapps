@@ -16,16 +16,12 @@ use App\Modules\Finance\Actions\VoidInvoice;
 use App\Modules\Finance\Models\BankAccount;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\FeeType;
-use App\Modules\Finance\Models\InvoiceItem;
 use App\Support\Pdf\PdfRenderer;
 use Database\Seeders\ModuleSeeder;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    Route::get('/uji-kwitansi/{payment}', fn () => '')->name('receipts.verify');
-    app('router')->getRoutes()->refreshNameLookups();
     (new ModuleSeeder)->run();
     Storage::fake('local');
     $this->travelTo('2026-11-02 09:00:00');

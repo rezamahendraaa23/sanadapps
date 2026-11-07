@@ -75,7 +75,7 @@ test('alur setup: profil, tahun ajaran, kelas, asrama, tambah santri, cari, deta
     await noOverflow(page);
 
     await page.keyboard.press('/');
-    await expect(page.getByLabel(/Cari santri atau NIS/)).toBeFocused();
+    await expect(page.getByLabel(/Cari santri, NIS/)).toBeFocused();
     await page.keyboard.type('fulan');
     await expect(page.getByRole('link', { name: /Fulan Baru/ }).first()).toBeVisible();
 });

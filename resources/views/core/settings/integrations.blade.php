@@ -1,6 +1,10 @@
 <div class="mx-auto grid w-full max-w-[720px] gap-4">
     <x-ui.banner tone="info">Kunci yang tersimpan tidak pernah ditampilkan penuh. Kosongkan isian bila tidak ingin mengubahnya. Tes koneksi dan pengiriman aktif setelah integrasi dibangun di Tahap 3.</x-ui.banner>
 
+    @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('payment_manual'))
+        <livewire:finance.settings.bankaccounts />
+    @endif
+
     <x-ui.card title="Midtrans">
         <form wire:submit="saveMidtrans" class="flex flex-col gap-4">
             <x-ui.select label="Mode" name="midtrans_mode" required :options="['sandbox' => 'Sandbox (uji coba)', 'production' => 'Production']" wire:model="midtrans_mode" />

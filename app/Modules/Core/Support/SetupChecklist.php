@@ -9,6 +9,7 @@ use App\Modules\Core\Models\Integration;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
+use App\Modules\Finance\Models\FeeRate;
 
 /**
  * Status setup dihitung dari data nyata (PRD UI/UX 5.6), kecuali langkah yang boleh dilewati:
@@ -31,6 +32,7 @@ class SetupChecklist
             ['key' => 'year', 'label' => 'Buat tahun ajaran aktif', 'hint' => 'Tahun ajaran dan term berjalan.', 'route' => 'staff.classrooms.index', 'done' => AcademicYear::query()->where('is_active', true)->exists(), 'can_mark' => false],
             ['key' => 'classes', 'label' => 'Buat kelas dan asrama', 'hint' => 'Dibutuhkan sebelum impor santri.', 'route' => 'staff.classrooms.index', 'done' => Classroom::query()->exists() && Dormitory::query()->exists(), 'can_mark' => false],
             ['key' => 'students', 'label' => 'Impor santri dan wali', 'hint' => 'Unduh template, isi, lalu unggah.', 'route' => 'staff.students.import', 'done' => Student::query()->exists(), 'can_mark' => false],
+            ['key' => 'fees', 'label' => 'Atur jenis tagihan dan tarif', 'hint' => 'SPP, uang makan, dan lainnya.', 'route' => 'staff.settings.fee-types', 'done' => FeeRate::query()->exists(), 'can_mark' => false],
         ];
     }
 

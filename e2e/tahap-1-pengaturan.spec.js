@@ -24,6 +24,7 @@ test('profil: nama dan warna berubah di seluruh aplikasi, warna gagal ditolak', 
     await expect(page).toHaveURL(/pengaturan\/profil$/);
 
     await page.getByLabel('Warna utama').fill('#FFD500');
+    await page.getByLabel('Warna utama').blur();
     await expect(page.getByText('belum lolos 4,5:1')).toBeVisible();
     await page.getByLabel('Nama pesantren').fill('Pesantren E2E');
     await page.getByRole('button', { name: 'Simpan Profil' }).click();
@@ -31,6 +32,7 @@ test('profil: nama dan warna berubah di seluruh aplikasi, warna gagal ditolak', 
     await expect(page.getByLabel('Warna utama')).toBeFocused();
 
     await page.getByLabel('Warna utama').fill('#1D3F72');
+    await page.getByLabel('Warna utama').blur();
     await expect(page.getByText(/, lolos/)).toBeVisible();
     await page.getByRole('button', { name: 'Simpan Profil' }).click();
     await expect(page.getByText('Profil pesantren tersimpan.')).toBeVisible();
@@ -40,9 +42,12 @@ test('profil: nama dan warna berubah di seluruh aplikasi, warna gagal ditolak', 
     const primary = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim());
     expect(primary).toBe('#1D3F72');
 
+    // Mengetik lalu langsung menekan Simpan harus menyimpan nilai yang baru saja diketik.
     await page.getByLabel('Warna utama').fill('#0B5D45');
     await page.getByRole('button', { name: 'Simpan Profil' }).click();
     await expect(page.getByText('Profil pesantren tersimpan.')).toBeVisible();
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim().toUpperCase())).toBe('#0B5D45');
 });
 
 test('modul: dependensi ditolak dengan alasan, matikan lewat dialog, menu ikut hilang', async ({ page }) => {
@@ -72,7 +77,7 @@ test('modul: dependensi ditolak dengan alasan, matikan lewat dialog, menu ikut h
 
     await page.getByLabel('Cari modul').fill('tahfidz');
     await expect(page.getByRole('heading', { name: 'Tahfidz & mutabaah' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Keuangan' })).toBeHidden();
+    await expect(page.locator('#konten').getByRole('heading', { name: 'Keuangan' })).toBeHidden();
 });
 
 test('integrasi: kunci tersamar setelah disimpan', async ({ page }) => {

@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Livewire\Staff;
 
 use App\Modules\Core\Models\Student;
+use App\Modules\Finance\Models\Invoice;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -27,6 +28,10 @@ class GlobalSearch extends Component
                 ->get(['id', 'uuid', 'name', 'nis', 'classroom_id'])
             : collect();
 
-        return view('core.staff.global-search', ['results' => $results, 'searched' => mb_strlen($term) >= 2]);
+        $invoices = mb_strlen($term) >= 2 && $user->can('finance.view')
+            ? Invoice::query()->with('student:id,name')->where('invoice_no', 'ilike', '%'.addcslashes($term, '%_').'%')->latest('id')->limit(5)->get()
+            : collect();
+
+        return view('core.staff.global-search', ['results' => $results, 'invoices' => $invoices, 'searched' => mb_strlen($term) >= 2]);
     }
 }

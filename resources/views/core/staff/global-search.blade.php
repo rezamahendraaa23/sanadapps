@@ -5,12 +5,12 @@
     x-on:keydown.escape.window="open = false"
     x-on:keydown.window="if ($event.key === '/' && ! ['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); $refs.search.focus(); }"
 >
-    <label for="pencarian-cepat" class="sr-only">Cari santri atau NIS. Tekan garis miring untuk fokus.</label>
+    <label for="pencarian-cepat" class="sr-only">Cari santri, NIS, atau nomor tagihan. Tekan garis miring untuk fokus.</label>
     <input
         id="pencarian-cepat"
         x-ref="search"
         type="search"
-        placeholder="Cari santri atau NIS ( / )"
+        placeholder="Cari santri, NIS, atau tagihan ( / )"
         autocomplete="off"
         wire:model.live.debounce.250ms="query"
         x-on:focus="open = true"
@@ -27,8 +27,16 @@
                     </a>
                 </li>
             @endforeach
+            @foreach ($invoices as $invoice)
+                <li wire:key="tagihan-{{ $invoice->uuid }}">
+                    <a href="{{ route('staff.invoices.show', $invoice) }}" class="flex min-h-11 flex-col justify-center rounded-control px-2 hover:bg-primary-soft">
+                        <span class="font-tabular text-sm font-semibold">{{ $invoice->invoice_no }}</span>
+                        <span class="text-xs text-text-muted">{{ $invoice->student?->name }}</span>
+                    </a>
+                </li>
+            @endforeach
         </ul>
-        @if ($searched && $results->isEmpty())
+        @if ($searched && $results->isEmpty() && $invoices->isEmpty())
             <p class="p-2 text-sm text-text-muted">Tidak ada santri yang cocok.</p>
         @endif
     </div>

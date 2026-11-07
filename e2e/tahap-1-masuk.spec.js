@@ -40,7 +40,7 @@ test('wali: nomor, OTP salah, OTP benar, beranda menampilkan anak, keluar', asyn
     await page.getByLabel('Kode OTP').fill(right);
     await page.getByRole('button', { name: 'Masuk' }).click();
     await expect(page).toHaveURL(/\/wali$/);
-    await expect(page.getByText('Santri Uji')).toBeVisible();
+    await expect(page.getByText('Santri Uji', { exact: true })).toBeVisible();
     await noOverflow(page);
     if (shots) await page.screenshot({ path: `${shots}/wali-beranda-360.png`, fullPage: true });
 

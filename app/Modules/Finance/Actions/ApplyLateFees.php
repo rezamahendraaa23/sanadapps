@@ -5,6 +5,7 @@ namespace App\Modules\Finance\Actions;
 use App\Modules\Finance\Models\FeeType;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\InvoiceItem;
+use App\Support\SchoolDate;
 use Illuminate\Support\Facades\DB;
 
 class ApplyLateFees
@@ -17,7 +18,7 @@ class ApplyLateFees
      */
     public function handle(): array
     {
-        $today = now(config('sanad.display_timezone'))->startOfDay();
+        $today = SchoolDate::today();
         $result = ['overdue' => 0, 'late_fees' => 0];
 
         $invoiceIds = Invoice::query()->open()->whereDate('due_date', '<', $today)->pluck('id');

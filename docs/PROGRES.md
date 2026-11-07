@@ -4,8 +4,8 @@ Diperbarui setiap ada langkah selesai.
 
 - [x] **Tahap 0:** fondasi proyek, design tokens, komponen, layout
 - [x] **Tahap 1:** auth, role dan policy, profil pesantren, modul, integrasi, audit log, wizard setup, import santri/wali
-- [ ] **Tahap 2:** keuangan, tagihan, pembayaran tunai dan transfer manual, kwitansi PDF, tunggakan (berikutnya)
-- [ ] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte
+- [x] **Tahap 2:** keuangan, tagihan, pembayaran tunai dan transfer manual, kwitansi PDF, tunggakan
+- [ ] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (berikutnya)
 - [ ] **Tahap 4:** kartu santri, dompet, kasir POS
 - [ ] **Tahap 5:** Mart & Warung
 - [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
@@ -16,6 +16,24 @@ Diperbarui setiap ada langkah selesai.
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 2
+
+- [x] Jenis tagihan, tarif bertingkat, cek tarif efektif (FIN-01, FIN-02, F-01)
+- [x] Penugasan per santri, diskon dan beasiswa (FIN-03, FIN-04)
+- [x] Generate tagihan dengan pratinjau wajib, idempoten, terjadwal H-7 (FIN-05, F-02)
+- [x] Tagihan manual, void wajib alasan, ekspor (FIN-06, FIN-16, F-03)
+- [x] Transfer manual: rekening, kode unik, unggah bukti, unggah ulang (FIN-08, W-04, W-05, W-06)
+- [x] Verifikasi transfer dengan pintasan keyboard (F-04)
+- [x] Pembayaran tunai, kembalian, cicilan ke tagihan tertua (FIN-09, FIN-10, F-05)
+- [x] Denda keterlambatan sekali saja (FIN-11)
+- [x] Tunggakan dan impor tunggakan awal (FIN-12, F-06, SET-03)
+- [x] Kwitansi PDF dengan QR dan teks Arab, halaman periksa publik (FIN-13)
+- [x] Laporan kas dan pengeluaran (FIN-14, F-07)
+- [x] Pengembalian dana tercatat (FIN-16)
+- [x] Portal wali: beranda, tagihan, detail, bayar, status (W-01 sampai W-06)
+- [x] Tab keuangan di detail santri, angka keuangan di dashboard
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 1
 
@@ -34,17 +52,16 @@ Diperbarui setiap ada langkah selesai.
 - [x] Kesehatan Sistem (SET-02, SE-08)
 - [x] Test policy, Delivery Gate, commit
 
-## Dikerjakan sebagian di Tahap 1, dilanjutkan nanti
+## Dikerjakan sebagian, dilanjutkan nanti
 
 Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 
 - [ ] OTP WhatsApp sungguhan (Tahap 3; sekarang kode hanya masuk log dan ditolak di produksi)
 - [ ] Tes koneksi Midtrans dan Fonnte, URL webhook, kanal bayar (Tahap 3)
 - [ ] Kirim pengumuman lewat WhatsApp (Tahap 3)
-- [ ] Rekening transfer manual di layar Integrasi (Tahap 2)
-- [ ] Langkah ke-7 checklist setup: jenis tagihan (Tahap 2)
-- [ ] Pencarian nomor invoice di topbar (Tahap 2)
-- [ ] Import tunggakan awal (Tahap 2) dan saldo dompet awal (Tahap 4)
+- [ ] Pengingat tagihan WhatsApp dan rekonsiliasi Midtrans (Tahap 3)
+- [ ] Layar tagihan di portal santri, bayar sebagian dari portal wali
+- [ ] Import saldo dompet awal (Tahap 4)
 - [ ] Tab lain di detail santri (mengikuti tahap modulnya)
 - [ ] Status backup di Kesehatan Sistem (Tahap 13)
 - [ ] Endpoint REST `/api/v1` data inti (belum ada klien yang memakainya)

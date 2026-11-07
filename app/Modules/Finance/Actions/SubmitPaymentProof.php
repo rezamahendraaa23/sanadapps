@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Storage;
 
 class SubmitPaymentProof
 {
+    public function __construct(private CompressProofImage $compressor) {}
+
     /**
      * Unggah pertama dan unggah ulang setelah ditolak memakai pembayaran yang sama (PRD Sistem 8.6).
      */
@@ -31,7 +33,7 @@ class SubmitPaymentProof
             }
 
             $old = $locked->proof_path;
-            $path = $proof->store('payment-proofs', 'local');
+            $path = $this->compressor->store($proof, 'payment-proofs');
 
             $locked->update(['proof_path' => $path, 'status' => 'review', 'reject_reason' => null]);
 

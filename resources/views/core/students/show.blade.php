@@ -26,7 +26,7 @@
     </x-ui.card>
 
     <div role="tablist" aria-label="Bagian data santri" class="flex flex-wrap gap-1">
-        @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] as $key => $label)
+        @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) as $key => $label)
             <button
                 type="button"
                 role="tab"
@@ -37,6 +37,9 @@
         @endforeach
     </div>
 
+    @if ($tab === 'keuangan' && $showFinance)
+        <livewire:finance.students.studentfinance :student="$student" />
+    @else
     <x-ui.card>
         @if ($tab === 'wali')
             @forelse ($student->guardians as $guardian)
@@ -94,4 +97,5 @@
             </dl>
         @endif
     </x-ui.card>
+    @endif
 </div>

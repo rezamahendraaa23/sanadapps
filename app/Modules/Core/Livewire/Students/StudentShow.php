@@ -4,6 +4,7 @@ namespace App\Modules\Core\Livewire\Students;
 
 use App\Modules\Core\Models\CustomFieldDefinition;
 use App\Modules\Core\Models\Student;
+use App\Modules\Core\Support\ModuleRegistry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -56,6 +57,7 @@ class StudentShow extends Component
         return view('core.students.show', [
             'fields' => CustomFieldDefinition::query()->where('entity', 'student')->where('is_active', true)->orderBy('sort_order')->get(),
             'canManage' => auth()->user()->can('update', $this->student),
+            'showFinance' => auth()->user()->can('finance.view') && app(ModuleRegistry::class)->enabled('finance'),
             'initialPassword' => $this->issuedPassword ?? session('initial_password'),
         ])->title($this->student->name);
     }
