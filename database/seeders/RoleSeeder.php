@@ -14,7 +14,7 @@ class RoleSeeder extends Seeder
 {
     /** @var array<string, list<string>> */
     public const ROLES = [
-        'admin' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'users.manage', 'settings.manage', 'audit.view', 'finance.view', 'finance.manage', 'wallet.view', 'wallet.manage', 'cards.view', 'cards.manage', 'devices.manage', 'pos.view', 'pos.operate', 'pos.void', 'merchants.manage', 'payouts.approve', 'academic.manage', 'attendance.take', 'grades.manage', 'reports.publish', 'leave.manage', 'leave.decide', 'gate.operate', 'gate.override', 'tahfidz.input', 'tahfidz.manage', 'exams.manage', 'face.enroll', 'ppdb.view', 'ppdb.manage', 'discipline.view', 'discipline.record', 'discipline.configure', 'health.summary', 'analytics.view', 'alumni.manage', 'inventory.manage', 'duty.manage', 'export.run', 'masjid.settings', 'masjid.schedule', 'masjid.screens', 'masjid.content', 'masjid.approve'],
+        'admin' => ['panel.access', 'letters.manage', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'users.manage', 'settings.manage', 'audit.view', 'finance.view', 'finance.manage', 'wallet.view', 'wallet.manage', 'cards.view', 'cards.manage', 'devices.manage', 'pos.view', 'pos.operate', 'pos.void', 'merchants.manage', 'payouts.approve', 'academic.manage', 'attendance.take', 'grades.manage', 'reports.publish', 'leave.manage', 'leave.decide', 'gate.operate', 'gate.override', 'tahfidz.input', 'tahfidz.manage', 'exams.manage', 'face.enroll', 'ppdb.view', 'ppdb.manage', 'discipline.view', 'discipline.record', 'discipline.configure', 'health.summary', 'analytics.view', 'alumni.manage', 'inventory.manage', 'duty.manage', 'export.run', 'masjid.settings', 'masjid.schedule', 'masjid.screens', 'masjid.content', 'masjid.approve'],
         'bendahara' => ['panel.access', 'students.view-all', 'finance.view', 'finance.manage', 'finance.verify', 'wallet.view', 'wallet.manage', 'cards.view', 'cards.manage', 'pos.view', 'payouts.approve', 'ppdb.view'],
         'admin_akademik' => ['panel.access', 'students.view-all', 'students.manage', 'guardians.manage', 'masters.manage', 'announcements.manage', 'imports.manage', 'finance.view', 'wallet.view', 'cards.view', 'academic.manage', 'attendance.take', 'grades.manage', 'reports.publish', 'tahfidz.manage', 'exams.manage', 'face.enroll', 'ppdb.view', 'discipline.view', 'analytics.view', 'alumni.manage', 'duty.manage', 'export.run'],
         'ustadz' => ['panel.access', 'students.view-own-class', 'attendance.take', 'grades.input', 'tahfidz.input', 'exams.own', 'discipline.record'],
@@ -23,6 +23,7 @@ class RoleSeeder extends Seeder
         'kasir' => ['panel.access', 'pos.operate'],
         'pengelola_merchant' => ['panel.access', 'pos.operate', 'pos.void', 'merchants.own'],
         'penjaga_gerbang' => ['panel.access', 'gate.operate'],
+        'tata_usaha' => ['panel.access', 'students.view-all', 'letters.manage'],
         'masjid_manager' => ['panel.access', 'masjid.schedule', 'masjid.screens', 'masjid.content', 'masjid.approve'],
         'masjid_content' => ['panel.access', 'masjid.content'],
         'panitia_ppdb' => ['panel.access', 'ppdb.view', 'ppdb.manage', 'exams.manage'],

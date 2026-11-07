@@ -89,6 +89,7 @@ return [
             ['label' => 'Lainnya', 'items' => [
                 ['key' => 'analytics', 'permission' => 'analytics.view', 'label' => 'Analitik Risiko', 'icon' => 'triangle-alert', 'route' => 'staff.analytics.index', 'module' => 'analytics'],
                 ['key' => 'alumni', 'permission' => 'alumni.manage', 'label' => 'Alumni', 'icon' => 'user-check', 'route' => 'staff.alumni.index', 'module' => 'alumni'],
+                ['key' => 'letters', 'permission' => 'letters.manage', 'label' => 'Surat', 'icon' => 'mail', 'route' => 'staff.letters.index', 'module' => 'letters'],
                 ['key' => 'inventory', 'permission' => 'inventory.manage', 'label' => 'Inventaris', 'icon' => 'package', 'route' => 'staff.inventory.index', 'module' => 'inventory'],
                 ['key' => 'duty', 'permission' => 'duty.manage', 'label' => 'Piket', 'icon' => 'calendar-clock', 'route' => 'staff.duty.index', 'module' => 'duty_roster'],
                 ['key' => 'export', 'permission' => 'export.run', 'label' => 'Ekspor Dapodik/EMIS', 'icon' => 'file-down', 'route' => 'staff.export.index', 'module' => 'export_dapodik'],

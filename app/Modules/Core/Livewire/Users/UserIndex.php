@@ -31,6 +31,7 @@ class UserIndex extends Component
         'kasir' => 'Kasir',
         'pengelola_merchant' => 'Pengelola merchant',
         'penjaga_gerbang' => 'Penjaga gerbang',
+        'tata_usaha' => 'Tata usaha (surat)',
         'panitia_ppdb' => 'Panitia PPDB',
         'masjid_manager' => 'Takmir masjid',
         'masjid_content' => 'Humas masjid',

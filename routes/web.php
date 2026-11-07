@@ -61,6 +61,7 @@ use App\Modules\Core\Livewire\Users\UserIndex;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
+use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Student as AffairsStudent;
 use App\Modules\Exam\Http\AttemptController;
@@ -104,6 +105,10 @@ use App\Modules\Leave\Livewire\GateToday;
 use App\Modules\Leave\Livewire\GuardianLeaves;
 use App\Modules\Leave\Livewire\LeaveDesk;
 use App\Modules\Leave\Models\GateLog;
+use App\Modules\Letters\Livewire\LetterCenter;
+use App\Modules\Letters\Models\Letter;
+use App\Modules\Letters\Models\Letterhead;
+use App\Modules\Letters\Support\LetterSettings;
 use App\Modules\Masjid\Http\DisplayController;
 use App\Modules\Masjid\Http\PublicMasjidController;
 use App\Modules\Masjid\Livewire\DisplayContents;
@@ -365,6 +370,31 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
             return Excel::download(new ArrayExport(['NIS', 'Nama', 'Tanggal lulus', 'Kegiatan', 'Telepon', 'Email'], $rows), 'alumni.xlsx');
         })->name('alumni.export');
+    });
+    Route::prefix('surat')->name('letters.')->middleware(['module:letters', 'can:letters.manage'])->group(function (): void {
+        Route::get('/', LetterCenter::class)->name('index');
+        Route::get('/kop/{letterhead}/{which}', function (Letterhead $letterhead, string $which) {
+            $path = $which === 'footer' ? $letterhead->footer_path : ($which === 'header' ? $letterhead->header_path : null);
+            abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+            return Storage::disk('local')->response($path);
+        })->name('kop');
+        Route::get('/{letter}/pdf', function (Letter $letter, PdfRenderer $pdf, SchoolIdentity $identity) {
+            $letterhead = $letter->letterhead;
+            $html = view('letters.pdf', [
+                'letter' => $letter,
+                'identity' => $identity,
+                'profile' => SchoolProfile::query()->first(),
+                'header' => $letterhead?->dataUri('header'),
+                'footer' => $letterhead?->dataUri('footer'),
+                'city' => LetterSettings::all()['city'],
+            ])->render();
+
+            return response($pdf->render($html), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="surat-'.str_replace(['/', '\\'], '-', $letter->letter_no).'.pdf"',
+            ]);
+        })->name('pdf');
     });
     Route::get('/inventaris', InventoryBoard::class)->middleware(['module:inventory', 'can:inventory.manage'])->name('inventory.index');
     Route::get('/piket', DutyBoard::class)->middleware(['module:duty_roster', 'can:duty.manage'])->name('duty.index');
