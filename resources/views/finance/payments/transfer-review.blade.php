@@ -74,7 +74,7 @@
                             </p>
                             <ul class="text-sm">
                                 @foreach ($selected->invoices as $invoice)
-                                    <li><a href="{{ route('staff.invoices.show', $invoice) }}" class="font-tabular text-primary hover:underline">{{ $invoice->invoice_no }}</a> {{ $invoice->student?->name }}</li>
+                                    <li><a href="{{ route('staff.invoices.show', $invoice) }}" wire:navigate class="font-tabular text-primary hover:underline">{{ $invoice->invoice_no }}</a> {{ $invoice->student?->name }}</li>
                                 @endforeach
                             </ul>
                             <div class="mt-auto flex flex-col gap-2">

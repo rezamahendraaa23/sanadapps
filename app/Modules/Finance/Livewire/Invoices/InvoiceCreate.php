@@ -76,7 +76,7 @@ class InvoiceCreate extends Component
             auth()->id(),
         );
 
-        return $this->redirectRoute('staff.invoices.show', $invoice);
+        return $this->redirectRoute('staff.invoices.show', $invoice, navigate: true);
     }
 
     public function render(): View

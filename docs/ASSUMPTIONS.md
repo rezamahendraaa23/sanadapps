@@ -65,4 +65,16 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A36 | Halaman periksa kwitansi publik tidak menampilkan nama santri, hanya nomor, nominal, tanggal, dan status | Data anak disaring; alamatnya tidak bisa ditebak tetapi bisa tersebar |
 | A37 | Kirim pengingat WA di layar Tunggakan dan rekonsiliasi Midtrans dibuat di Tahap 3 | Butuh Fonnte dan Midtrans |
 | A38 | Santri belum punya layar tagihan; portal santri baru menampilkan keuangan saat layar S-08 dan S-09 dibuat | Fokus Tahap 2 pada wali dan bendahara |
+| A39 | Midtrans memakai HTTP client Laravel di balik `PaymentGateway`, bukan paket `midtrans/midtrans-php` di PRD Sistem 4.1 | Paket itu memakai konfigurasi global statis dan tidak bisa diuji dengan `Http::fake`; endpoint dan tanda tangan sama dengan dokumentasi resmi |
+| A40 | Biaya admin mode `passed` berupa nominal tetap per transaksi yang diatur admin | Kanal baru diketahui setelah Snap terbuka, sedangkan `gross_amount` harus pasti sebelumnya |
+| A41 | Tambahan kolom `payments.needs_review`, `review_note`, `last_synced_at` | PRD 8.5 meminta tanda needs_review tetapi kolom statusnya tidak memuat nilai itu |
+| A42 | Uang yang masuk setelah pembayaran ditutup tetap dilunasi bila tagihan masih terbuka; bila sudah lunas lewat cara lain ditandai untuk ditinjau | Uangnya nyata dan tidak boleh hilang tanpa jejak |
+| A43 | Kode kanal Snap memakai `other_qris` untuk QRIS dan huruf kecil untuk minimarket | Dokumentasi Midtrans tidak merinci semua kode; perlu dipastikan dengan akun sandbox |
+| A44 | `SANAD_FAKE_MIDTRANS` mengganti Midtrans dengan tiruan untuk uji lokal, diabaikan di produksi | Uji alur penuh tanpa kunci sandbox |
+| A45 | Webhook status Fonnte dilindungi token rahasia di alamatnya | Dokumentasi Fonnte tidak menyebut tanda tangan atau rahasia webhook |
+| A46 | Nilai `state` Fonnte yang dipetakan: delivered, read, played menjadi sampai; failed, invalid, expired menjadi gagal; lainnya diabaikan | Dokumentasi tidak merinci nilainya, perlu dipastikan dengan akun sungguhan |
+| A47 | Tambahan kolom `notification_logs.dedupe_key` | Mencegah pengingat dan pesan pembayaran terkirim dua kali bila job berjalan ulang |
+| A48 | Pemicu WA aktif di Tahap 3 baru yang modulnya sudah ada; pemicu dompet, izin, gerbang, dan lainnya ditambah di tahapnya | Modulnya belum dibangun |
+| A49 | Horizon terpasang tetapi belum pernah dijalankan; pengujian antrean memakai `Queue::fake` dan job dipanggil langsung | Butuh Redis dan `pcntl`, keduanya tidak ada di Windows tanpa WSL2 atau Docker |
+| A50 | Pindah halaman memakai `wire:navigate`; tautan unduhan, alamat luar, dan layar masuk tetap muat penuh. Tautan halaman baru wajib memakai atribut ini | Reza meminta perpindahan terasa langsung. Jangan memakai `wire:navigate.hover`: salinan halaman disimpan sampai 30 detik, sehingga tagihan yang baru dibuat sempat tampak belum ada |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

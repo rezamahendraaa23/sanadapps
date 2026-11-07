@@ -82,7 +82,7 @@ class CashPayment extends Component
             return null;
         }
 
-        return $this->redirectRoute('staff.payments.show', $payment);
+        return $this->redirectRoute('staff.payments.show', $payment, navigate: true);
     }
 
     private function openInvoices()

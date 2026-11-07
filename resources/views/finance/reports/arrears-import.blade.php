@@ -10,7 +10,7 @@
             <x-ui.banner tone="success">{{ $imported }} tunggakan awal dibuat sebagai tagihan manual.</x-ui.banner>
             <div class="mt-4 flex flex-col gap-2 md:flex-row">
                 <x-ui.button variant="secondary" wire:click="startOver">Impor Lagi</x-ui.button>
-                <x-ui.button :href="route('staff.invoices.index')">Lihat Tagihan</x-ui.button>
+                <x-ui.button :href="route('staff.invoices.index')" wire:navigate>Lihat Tagihan</x-ui.button>
             </div>
         </x-ui.card>
     @elseif ($rows !== null)

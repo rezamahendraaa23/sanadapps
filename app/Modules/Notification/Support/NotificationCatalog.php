@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Modules\Notification\Support;
+
+/**
+ * Pemicu dari PRD Sistem 9 yang sudah aktif. Pemicu modul lain ditambah di tahapnya.
+ */
+final class NotificationCatalog
+{
+    /** @var array<string, array{label: string, critical: bool}> */
+    public const CATEGORIES = [
+        'billing' => ['label' => 'Tagihan dan pembayaran', 'critical' => true],
+        'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
+    ];
+
+    /** @var array<string, array{label: string, category: string|null, variables: list<string>, body: string}> */
+    public const EVENTS = [
+        'invoice_issued' => [
+            'label' => 'Tagihan terbit',
+            'category' => 'billing',
+            'variables' => ['nama_wali', 'nama_santri', 'periode', 'total', 'jatuh_tempo', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nTagihan {periode} untuk {nama_santri} sudah terbit: {total}, jatuh tempo {jatuh_tempo}.\nBayar di sini: {link}",
+        ],
+        'payment_reminder' => [
+            'label' => 'Pengingat tagihan',
+            'category' => 'billing',
+            'variables' => ['nama_wali', 'nama_santri', 'periode', 'sisa', 'jatuh_tempo', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nTagihan {periode} untuk {nama_santri} masih {sisa}, jatuh tempo {jatuh_tempo}.\nBayar di sini: {link}\nAbaikan bila sudah membayar.",
+        ],
+        'payment_success' => [
+            'label' => 'Pembayaran berhasil',
+            'category' => 'billing',
+            'variables' => ['nama_wali', 'nama_santri', 'nominal', 'metode', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nPembayaran {nominal} untuk {nama_santri} lewat {metode} sudah kami terima. Jazakumullahu khairan.\nKwitansi: {link}",
+        ],
+        'payment_failed' => [
+            'label' => 'Pembayaran gagal atau kedaluwarsa',
+            'category' => 'billing',
+            'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nPembayaran untuk {nama_santri} belum berhasil: {alasan}\nBayar ulang di sini: {link}",
+        ],
+        'proof_submitted' => [
+            'label' => 'Bukti transfer masuk (ke bendahara)',
+            'category' => null,
+            'variables' => ['nama_santri', 'nominal', 'link'],
+            'body' => "Bukti transfer baru dari wali {nama_santri} sebesar {nominal}.\nVerifikasi: {link}",
+        ],
+        'proof_rejected' => [
+            'label' => 'Bukti transfer ditolak',
+            'category' => 'billing',
+            'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nBukti transfer untuk {nama_santri} belum bisa kami terima: {alasan}\nUnggah ulang di sini: {link}",
+        ],
+        'announcement' => [
+            'label' => 'Pengumuman',
+            'category' => 'announcement',
+            'variables' => ['judul', 'isi'],
+            'body' => "{judul}\n\n{isi}",
+        ],
+    ];
+
+    /**
+     * @param  array<string, string|int|null>  $variables
+     */
+    public static function render(string $body, array $variables): string
+    {
+        return strtr($body, collect($variables)->mapWithKeys(fn ($value, $key) => ['{'.$key.'}' => (string) $value])->all());
+    }
+
+    /**
+     * @return list<string> Variabel di teks yang tidak dikenal event ini.
+     */
+    public static function unknownVariables(string $eventKey, string $body): array
+    {
+        preg_match_all('/\{([a-z_]+)\}/', $body, $matches);
+
+        return array_values(array_diff(array_unique($matches[1]), self::EVENTS[$eventKey]['variables']));
+    }
+}

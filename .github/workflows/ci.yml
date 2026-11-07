@@ -53,6 +53,9 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
 
       - run: vendor/bin/pint --test
+      - run: psql -h 127.0.0.1 -U sanad -d sanad_test -c 'CREATE DATABASE sanad_concurrency'
+        env:
+          PGPASSWORD: sanad
       - run: vendor/bin/pest
 
       - run: npx playwright install --with-deps chromium

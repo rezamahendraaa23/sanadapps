@@ -57,7 +57,7 @@
     @endif
 
     <div class="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-        <x-ui.button variant="secondary" :href="$studentId ? route('staff.students.show', \App\Modules\Core\Models\Student::find($studentId)) : route('staff.students.index')">Batal</x-ui.button>
+        <x-ui.button variant="secondary" :href="$studentId ? route('staff.students.show', \App\Modules\Core\Models\Student::find($studentId)) : route('staff.students.index')" wire:navigate>Batal</x-ui.button>
         <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save,photo">
             <span wire:loading.remove wire:target="save">Simpan Santri</span>
             <span wire:loading wire:target="save">Menyimpan…</span>

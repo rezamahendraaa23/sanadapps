@@ -5,8 +5,8 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 0:** fondasi proyek, design tokens, komponen, layout
 - [x] **Tahap 1:** auth, role dan policy, profil pesantren, modul, integrasi, audit log, wizard setup, import santri/wali
 - [x] **Tahap 2:** keuangan, tagihan, pembayaran tunai dan transfer manual, kwitansi PDF, tunggakan
-- [ ] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (berikutnya)
-- [ ] **Tahap 4:** kartu santri, dompet, kasir POS
+- [x] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (diuji dengan gateway tiruan, kunci sungguhan belum ada)
+- [ ] **Tahap 4:** kartu santri, dompet, kasir POS (berikutnya)
 - [ ] **Tahap 5:** Mart & Warung
 - [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
 - [ ] **Tahap 7:** perizinan dan pos gerbang
@@ -16,6 +16,26 @@ Diperbarui setiap ada langkah selesai.
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 3
+
+- [x] Bayar online lewat Snap, biaya admin, kedaluwarsa, kanal yang ditampilkan (FIN-07, SE-03)
+- [x] Webhook Midtrans: tanda tangan SHA-512, idempoten, status mundur diabaikan
+- [x] Job sinkronisasi 15 menit dan layar rekonsiliasi; selisih nominal ditandai untuk ditinjau
+- [x] Uji konkurensi multi-proses di PostgreSQL: webhook ganda, bayar serentak, tunai serentak
+- [x] Fonnte: tes koneksi, tes kirim, webhook status (NTF-01)
+- [x] Template per pemicu, variabel, pratinjau, aktif dan mati (NTF-02, SE-04)
+- [x] Antrean dengan jeda acak dan batas per jam (NTF-03)
+- [x] Log, ulang 3 kali lalu gagal, kirim ulang dari layar (NTF-04)
+- [x] Preferensi wali, kategori kritis terkunci (NTF-05, W-13)
+- [x] Notifikasi aplikasi dan lonceng portal (NTF-06, W-12)
+- [x] OTP lewat Fonnte: antrean terenkripsi, kode tidak masuk log
+- [x] Pengingat H-3, H0, H+3, H+7 dan pengingat massal dengan pratinjau (FIN-12, F-06)
+- [x] Pengumuman lewat WhatsApp, langsung dan terjadwal (COR-13)
+- [x] Tautan dari WhatsApp kembali ke halaman tujuan setelah masuk
+- [x] Konfigurasi Horizon: prioritas antrean `otp`, `notifications`, `default`
+- [x] Pindah halaman tanpa muat ulang, sorotan tab seketika, OPcache di PHP pengembangan
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 2
 
@@ -56,18 +76,16 @@ Diperbarui setiap ada langkah selesai.
 
 Rincian alasannya ada di `docs/ASSUMPTIONS.md`.
 
-- [ ] OTP WhatsApp sungguhan (Tahap 3; sekarang kode hanya masuk log dan ditolak di produksi)
-- [ ] Tes koneksi Midtrans dan Fonnte, URL webhook, kanal bayar (Tahap 3)
-- [ ] Kirim pengumuman lewat WhatsApp (Tahap 3)
-- [ ] Pengingat tagihan WhatsApp dan rekonsiliasi Midtrans (Tahap 3)
 - [ ] Layar tagihan di portal santri, bayar sebagian dari portal wali
 - [ ] Import saldo dompet awal (Tahap 4)
 - [ ] Tab lain di detail santri (mengikuti tahap modulnya)
 - [ ] Status backup di Kesehatan Sistem (Tahap 13)
+- [ ] Produksi: OPcache tanpa cek berkas, `artisan optimize` dan `icons:cache` saat deploy, ukur waktu layar (Tahap 13)
 - [ ] Endpoint REST `/api/v1` data inti (belum ada klien yang memakainya)
 
 ## Belum teruji
 
 - Docker dan CI baru lolos cek sintaks, belum pernah dijalankan
 - Tampilan dan teks Arab belum dicoba di HP Android sungguhan
-- Horizon belum dipasang, karena butuh WSL2 atau Docker
+- Horizon terpasang dan terkonfigurasi, tetapi belum pernah dijalankan, karena butuh Redis dan `pcntl` (WSL2 atau Docker)
+- Midtrans dan Fonnte belum pernah dicoba dengan kunci sungguhan. Yang perlu dipastikan: kode kanal bayar (A43) dan nilai `state` webhook Fonnte (A46)

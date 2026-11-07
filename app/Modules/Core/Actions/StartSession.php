@@ -17,7 +17,10 @@ class StartSession
         $user->forceFill(['last_login_at' => now()])->saveQuietly();
         $this->audit->handle('login', 'User', $user->id);
 
-        return self::homeFor($user);
+        $home = self::homeFor($user);
+        $intended = session()->pull('url.intended');
+
+        return is_string($intended) && str_starts_with($intended, $home) ? $intended : $home;
     }
 
     public static function homeFor(User $user): string

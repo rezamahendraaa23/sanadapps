@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'user.type' => EnsureUserType::class,
         ]);
         $middleware->web(append: [ApplySchoolTimezone::class]);
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => StartSession::homeFor($request->user()));
     })

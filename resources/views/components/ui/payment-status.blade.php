@@ -1,8 +1,8 @@
-@props(['status'])
+@props(['status', 'method' => null])
 
 @php
     [$label, $icon, $classes] = [
-        'pending' => ['Menunggu bukti', 'clock', 'border border-border bg-bg text-text-muted'],
+        'pending' => [$method === 'midtrans' ? 'Menunggu pembayaran' : 'Menunggu bukti', 'clock', 'border border-border bg-bg text-text-muted'],
         'review' => ['Menunggu verifikasi', 'hourglass', 'hatch border border-warning bg-surface text-text'],
         'settlement' => ['Lunas', 'circle-check', 'bg-success-soft text-success'],
         'failed' => ['Ditolak', 'circle-alert', 'bg-danger-soft text-danger'],

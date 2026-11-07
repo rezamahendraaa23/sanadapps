@@ -19,7 +19,7 @@
                 @foreach ($items as $item)
                     <li wire:key="notif-{{ $item->uuid }}" class="border-b border-border last:border-b-0">
                         @if ($item->link)
-                            <a href="{{ $item->link }}" class="block min-h-11 rounded-control p-2 hover:bg-primary-soft">
+                            <a href="{{ $item->link }}" wire:navigate class="block min-h-11 rounded-control p-2 hover:bg-primary-soft">
                                 <span @class(['block text-sm', 'font-semibold' => ! $item->read_at])>{{ $item->title }}</span>
                                 @if ($item->body)<span class="block text-xs text-text-muted">{{ $item->body }}</span>@endif
                             </a>

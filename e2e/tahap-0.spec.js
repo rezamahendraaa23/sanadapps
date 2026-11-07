@@ -253,6 +253,7 @@ test('tautan pratinjau antarpenampil berfungsi dan tombol lewati konten tersedia
     await page.getByRole('link', { name: 'Portal santri' }).click();
     await expect(page.getByRole('heading', { name: 'Beranda Santri' })).toBeVisible();
 
+    await page.reload();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Lewati ke konten utama' })).toBeFocused();
     await expect(page.getByRole('link', { name: 'Lewati ke konten utama' })).toBeVisible();

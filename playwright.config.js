@@ -27,6 +27,7 @@ export default defineConfig({
             CACHE_STORE: 'file',
             SESSION_DRIVER: 'file',
             MAIL_MAILER: 'array',
+            SANAD_FAKE_MIDTRANS: '1',
         },
     },
 });

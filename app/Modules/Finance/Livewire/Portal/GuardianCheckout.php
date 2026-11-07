@@ -7,6 +7,8 @@ use App\Modules\Finance\Actions\CreateManualPayment;
 use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Finance\Models\BankAccount;
 use App\Modules\Finance\Models\Invoice;
+use App\Modules\Payment\Actions\CreateOnlinePayment;
+use App\Modules\Payment\Support\MidtransConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -73,15 +75,40 @@ class GuardianCheckout extends Component
             return null;
         }
 
-        return $this->redirectRoute('wali.payments.show', $payment);
+        return $this->redirectRoute('wali.payments.show', $payment, navigate: true);
     }
 
-    public function render(ModuleRegistry $modules): View
+    public function payOnline(CreateOnlinePayment $action)
+    {
+        $this->resetErrorBag();
+        $invoices = $this->invoices();
+
+        if ($invoices->isEmpty()) {
+            $this->addError('online', 'Tidak ada tagihan yang perlu dibayar.');
+
+            return null;
+        }
+
+        try {
+            // Pembayaran dibuat dengan nomor baru; alamat selesai menunjuk halaman status yang sama.
+            $payment = $action->handle($invoices, auth()->user()->guardian?->id, auth()->id(), route('wali.invoices'));
+        } catch (FinanceException $exception) {
+            $this->addError('online', $exception->getMessage());
+
+            return null;
+        }
+
+        return $this->redirectRoute('wali.payments.show', $payment, navigate: true);
+    }
+
+    public function render(ModuleRegistry $modules, MidtransConfig $midtrans): View
     {
         return view('finance.portal.checkout', [
             'invoices' => $this->invoices(),
             'accounts' => BankAccount::query()->where('is_active', true)->orderBy('sort_order')->get(),
             'manualEnabled' => $modules->enabled('payment_manual'),
+            'onlineEnabled' => $modules->enabled('payment_midtrans') && $midtrans->isReady(),
+            'adminFee' => $midtrans->adminFee(),
         ]);
     }
 }

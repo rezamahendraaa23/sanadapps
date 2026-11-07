@@ -10,12 +10,12 @@
                 <p class="font-display text-2xl font-semibold font-tabular">{{ Rupiah::format($payment->amount) }}</p>
                 <p class="text-sm text-text-muted">{{ ['cash' => 'Tunai', 'manual_transfer' => 'Transfer manual', 'midtrans' => 'Pembayaran online', 'wallet' => 'Dompet'][$payment->method] }}</p>
             </div>
-            <x-ui.payment-status :status="$payment->status" />
+            <x-ui.payment-status :status="$payment->status" :method="$payment->method" />
         </div>
         <ul class="mt-3 text-sm">
             @foreach ($payment->invoices as $invoice)
                 <li class="flex justify-between gap-3 py-0.5">
-                    <a href="{{ route('staff.invoices.show', $invoice) }}" class="font-tabular text-primary hover:underline">{{ $invoice->invoice_no }}</a>
+                    <a href="{{ route('staff.invoices.show', $invoice) }}" wire:navigate class="font-tabular text-primary hover:underline">{{ $invoice->invoice_no }}</a>
                     <span>{{ $invoice->student?->name }}</span>
                     <span class="font-tabular">{{ Rupiah::format($invoice->pivot->amount) }}</span>
                 </li>

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Actions;
 
+use App\Modules\Finance\Events\PaymentSettled;
 use App\Modules\Finance\Models\CashCategory;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\Invoice;
@@ -16,16 +17,16 @@ class ApplySettlement
      *
      * @return bool true bila baru diterapkan, false bila sudah pernah.
      */
-    public function handle(Payment $payment, ?int $verifiedBy = null): bool
+    public function handle(Payment $payment, ?int $verifiedBy = null, bool $allowClosed = false): bool
     {
-        return DB::transaction(function () use ($payment, $verifiedBy): bool {
+        return DB::transaction(function () use ($payment, $verifiedBy, $allowClosed): bool {
             $locked = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->status === 'settlement') {
                 return false;
             }
 
-            if (! in_array($locked->status, ['pending', 'review'], true)) {
+            if (! in_array($locked->status, $allowClosed ? ['pending', 'review', 'failed', 'expired'] : ['pending', 'review'], true)) {
                 throw new FinanceException('Pembayaran ini sudah ditutup dan tidak bisa dilunasi.');
             }
 
@@ -58,6 +59,8 @@ class ApplySettlement
 
             $this->recordCash($locked, $verifiedBy);
             $payment->refresh();
+
+            PaymentSettled::dispatch($locked);
 
             return true;
         });

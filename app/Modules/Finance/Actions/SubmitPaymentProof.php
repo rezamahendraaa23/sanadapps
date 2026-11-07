@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Actions;
 
+use App\Modules\Finance\Events\ProofSubmitted;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +41,8 @@ class SubmitPaymentProof
             if ($old) {
                 Storage::disk('local')->delete($old);
             }
+
+            ProofSubmitted::dispatch($locked);
         });
 
         $payment->refresh();

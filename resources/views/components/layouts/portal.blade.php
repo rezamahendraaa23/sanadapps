@@ -15,6 +15,15 @@
             </div>
             {{ $actions }}
             @auth
+                @if (auth()->user()->type === 'guardian')
+                    @php($unread = auth()->user()->inAppNotifications()->whereNull('read_at')->count())
+                    <a href="{{ route('wali.more') }}" wire:navigate class="relative inline-flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-primary-soft" aria-label="Notifikasi{{ $unread ? ', '.$unread.' belum dibaca' : '' }}">
+                        <x-ui.icon name="bell" />
+                        @if ($unread)
+                            <span class="absolute top-1 right-1 flex min-w-5 items-center justify-center rounded-full bg-danger px-1 text-xs font-semibold text-on-primary" aria-hidden="true">{{ $unread > 9 ? '9+' : $unread }}</span>
+                        @endif
+                    </a>
+                @endif
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="inline-flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-primary-soft" aria-label="Keluar">
@@ -37,6 +46,7 @@
                     @if ($item['url'])
                         <a
                             href="{{ $item['url'] }}"
+                            wire:navigate
                             @if ($isActive) aria-current="page" @endif
                             @class([
                                 'flex min-h-16 flex-col items-center justify-center gap-1 px-0.5 text-center text-xs',

@@ -41,7 +41,7 @@ it('tidak menampilkan menu yang rutenya belum ada', function () {
     $keys = collect(app(Navigation::class)->staff())->flatMap(fn ($group) => $group['items'])->pluck('key');
 
     expect($keys)->toContain('home')->not->toContain('exams')
-        ->and(collect(app(Navigation::class)->portal('wali'))->pluck('key')->all())->toBe(['home', 'invoices']);
+        ->and(collect(app(Navigation::class)->portal('wali'))->pluck('key')->all())->toBe(['home', 'invoices', 'more']);
 });
 
 it('memakai isian profil pesantren di atas nilai awal', function () {

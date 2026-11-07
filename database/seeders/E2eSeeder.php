@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Modules\Core\Actions\SaveIntegration;
 use App\Modules\Core\Models\Guardian;
+use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
 use App\Modules\Finance\Models\BankAccount;
@@ -22,6 +24,8 @@ class E2eSeeder extends Seeder
         User::create(['name' => 'Admin Uji', 'email' => 'admin@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-admin'])->assignRole('admin');
 
         User::create(['name' => 'Bendahara Uji', 'email' => 'bendahara@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-bendahara'])->assignRole('bendahara');
+        app(SaveIntegration::class)->handle('midtrans', 'sandbox', ['server_key' => 'kunci-server-e2e', 'client_key' => 'kunci-klien-e2e'], [], true);
+        Module::query()->where('module_key', 'payment_midtrans')->update(['is_enabled' => true]);
         BankAccount::create(['bank_name' => 'Bank Uji', 'account_no' => '7001234567', 'account_holder' => 'Pesantren Uji']);
 
         $guardianUser = User::create(['name' => 'Wali Uji', 'phone' => '6281234567890', 'type' => 'guardian']);

@@ -10,7 +10,7 @@
                 <tbody>
                     @foreach ($invoices as $invoice)
                         <tr wire:key="inv-{{ $invoice->uuid }}">
-                            <x-ui.td label="Nomor"><a href="{{ route('staff.invoices.show', $invoice) }}" class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $invoice->invoice_no }}</a></x-ui.td>
+                            <x-ui.td label="Nomor"><a href="{{ route('staff.invoices.show', $invoice) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $invoice->invoice_no }}</a></x-ui.td>
                             <x-ui.td label="Total" numeric>{{ Rupiah::format($invoice->total) }}</x-ui.td>
                             <x-ui.td label="Sisa" numeric>{{ Rupiah::format($invoice->status === 'void' ? 0 : $invoice->outstanding()) }}</x-ui.td>
                             <x-ui.td label="Status"><x-ui.invoice-status :status="$invoice->status" /></x-ui.td>
@@ -24,7 +24,7 @@
     <x-ui.card title="Pembayaran">
         @forelse ($payments as $payment)
             <div wire:key="pay-{{ $payment->uuid }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-border py-1 last:border-b-0">
-                <a href="{{ route('staff.payments.show', $payment) }}" class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a>
+                <a href="{{ route('staff.payments.show', $payment) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a>
                 <span class="font-tabular">{{ Rupiah::format($payment->amount) }}</span>
                 <x-ui.payment-status :status="$payment->status" />
             </div>

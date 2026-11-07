@@ -36,3 +36,23 @@ window.addEventListener('toast', (event) => {
     const detail = Array.isArray(event.detail) ? event.detail[0] : event.detail;
     window.Alpine?.store('toasts').push(detail);
 });
+
+// Tab: sorotan pindah seketika, tanpa menunggu jawaban server.
+document.addEventListener('click', (event) => {
+    const tab = event.target.closest('[role="tab"][wire\\:click]');
+    if (!tab) return;
+    tab.closest('[role="tablist"]')?.querySelectorAll('[role="tab"]').forEach((item) => {
+        item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
+    });
+});
+
+// Pindah halaman tanpa muat ulang: fokus dan pembaca layar ikut pindah ke konten baru.
+let navigating = false;
+document.addEventListener('livewire:navigating', () => {
+    navigating = true;
+});
+document.addEventListener('livewire:navigated', () => {
+    if (!navigating) return;
+    navigating = false;
+    document.getElementById('konten')?.focus({ preventScroll: true });
+});

@@ -15,6 +15,14 @@ return [
     // Nilai awal zona tampilan; ditimpa school_profile.timezone per request. Penyimpanan selalu UTC.
     'display_timezone' => env('SANAD_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
 
+    // Mematikan pengiriman WA, dipakai uji konkurensi yang tidak berkaitan dengan notifikasi.
+    'notifications_off' => env('SANAD_NOTIFICATIONS_OFF', false),
+
+    'midtrans' => [
+        // Hanya untuk uji lokal tanpa kunci sandbox; diabaikan di produksi.
+        'fake' => env('SANAD_FAKE_MIDTRANS', false),
+    ],
+
     'pdf' => [
         'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
         'no_sandbox' => env('BROWSERSHOT_NO_SANDBOX', false),
@@ -70,7 +78,7 @@ return [
                 ['key' => 'modules', 'permission' => 'settings.manage', 'label' => 'Modul', 'icon' => 'toggle-right', 'route' => 'staff.settings.modules', 'module' => 'core'],
                 ['key' => 'integrations', 'permission' => 'settings.manage', 'label' => 'Integrasi', 'icon' => 'plug', 'route' => 'staff.settings.integrations', 'module' => 'core'],
                 ['key' => 'fee-types', 'permission' => 'finance.manage', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
-                ['key' => 'notifications', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'notification_wa'],
+                ['key' => 'notifications', 'permission' => 'settings.manage', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'core'],
                 ['key' => 'users', 'permission' => 'users.manage', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
                 ['key' => 'system', 'permission' => 'settings.manage', 'label' => 'Kesehatan Sistem', 'icon' => 'activity', 'route' => 'staff.settings.system', 'module' => 'core'],
                 ['key' => 'audit', 'permission' => 'audit.view', 'label' => 'Audit Log', 'icon' => 'scroll-text', 'route' => 'staff.settings.audit', 'module' => 'core'],

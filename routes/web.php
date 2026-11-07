@@ -53,6 +53,11 @@ use App\Modules\Finance\Livewire\Settings\FeeTypes;
 use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Support\ArrearsQuery;
+use App\Modules\Notification\Http\FonnteWebhookController;
+use App\Modules\Notification\Livewire\GuardianMore;
+use App\Modules\Notification\Livewire\Templates;
+use App\Modules\Payment\Http\MidtransWebhookController;
+use App\Modules\Payment\Livewire\Reconciliation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -61,6 +66,9 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 Route::view('/', 'home')->name('home');
+
+Route::post('/webhooks/fonnte/{secret}', FonnteWebhookController::class)->middleware('throttle:240,1')->name('webhooks.fonnte');
+Route::post('/webhooks/midtrans', MidtransWebhookController::class)->middleware('throttle:120,1')->name('webhooks.midtrans');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/masuk', Login::class)->name('login');
@@ -125,6 +133,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
             return Storage::disk('local')->response($payment->proof_path);
         })->middleware('can:finance.view')->name('payments.proof');
+        Route::get('/rekonsiliasi', Reconciliation::class)->middleware(['module:payment_midtrans', 'can:finance.view'])->name('reconciliation');
         Route::get('/verifikasi-transfer', TransferReview::class)->middleware(['module:payment_manual', 'can:finance.verify'])->name('transfers.index');
     });
 
@@ -153,6 +162,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
     Route::get('/kelas-asrama', MasterData::class)->middleware('can:masters.manage')->name('classrooms.index');
 
     Route::prefix('pengaturan')->name('settings.')->group(function (): void {
+        Route::get('/notifikasi', Templates::class)->middleware('can:settings.manage')->name('notifications');
         Route::get('/kesehatan-sistem', SystemHealth::class)->middleware('can:settings.manage')->name('system');
         Route::get('/pengguna', UserIndex::class)->middleware('can:users.manage')->name('users');
         Route::middleware('can:settings.manage')->group(function (): void {
@@ -166,6 +176,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
 Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix('wali')->name('wali.')->group(function (): void {
     Route::view('/', 'core.wali.home')->name('home');
+    Route::get('/lainnya', GuardianMore::class)->name('more');
 
     Route::middleware('module:finance')->group(function (): void {
         Route::get('/tagihan', GuardianInvoices::class)->name('invoices');
@@ -195,6 +206,11 @@ Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $p
 Route::get('/verifikasi-kwitansi/{payment}', fn (Payment $payment) => view('finance.receipts.verify', ['payment' => $payment]))
     ->middleware('throttle:30,1')
     ->name('receipts.verify');
+
+// Hanya untuk uji browser: alamat order diperlukan untuk menyusun notifikasi bertanda tangan.
+if (config('sanad.midtrans.fake') && ! app()->isProduction()) {
+    Route::get('/_uji/order/{payment}', fn (Payment $payment) => ['orderId' => $payment->gateway_order_id, 'gross' => $payment->gross_amount.'.00']);
+}
 
 Route::middleware(EnsurePreviewAllowed::class)->prefix('_pratinjau')->name('preview.')->group(function (): void {
     Route::view('/', 'preview.gallery')->name('gallery');

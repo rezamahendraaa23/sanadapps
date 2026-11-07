@@ -35,6 +35,8 @@ class Payment extends Model
             'verified_at' => 'immutable_datetime',
             'paid_at' => 'immutable_datetime',
             'expires_at' => 'immutable_datetime',
+            'last_synced_at' => 'immutable_datetime',
+            'needs_review' => 'boolean',
         ];
     }
 

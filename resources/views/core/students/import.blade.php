@@ -19,7 +19,7 @@
                         <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.import.errors', $import)">Unduh Baris Gagal</x-ui.button>
                     @endif
                     <x-ui.button variant="secondary" wire:click="startOver">Impor Lagi</x-ui.button>
-                    <x-ui.button :href="route('staff.students.index')">Lihat Santri</x-ui.button>
+                    <x-ui.button :href="route('staff.students.index')" wire:navigate>Lihat Santri</x-ui.button>
                 </div>
             @endif
         </x-ui.card>

@@ -40,6 +40,12 @@
                 <x-ui.select label="Asrama" name="audience_id" required placeholder="Pilih asrama" :options="$dormitories" wire:model="audience_id" />
             @endif
             <x-ui.input label="Jadwal tayang" name="publish_at" type="datetime-local" help="Kosongkan agar langsung tayang." wire:model="publish_at" />
+            @if ($waEnabled && ! $editingId)
+                <label class="flex min-h-11 items-center gap-3 text-base">
+                    <input type="checkbox" wire:model="send_wa" class="size-5 accent-primary">
+                    Kirim juga lewat WhatsApp ke wali
+                </label>
+            @endif
         </form>
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>

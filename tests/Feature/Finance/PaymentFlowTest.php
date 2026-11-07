@@ -18,11 +18,13 @@ use App\Modules\Finance\Models\CashTransaction;
 use App\Modules\Finance\Models\FeeType;
 use App\Support\Pdf\PdfRenderer;
 use Database\Seeders\ModuleSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     (new ModuleSeeder)->run();
+    (new RoleSeeder)->run();
     Storage::fake('local');
     $this->travelTo('2026-11-02 09:00:00');
     $this->bendahara = User::create(['name' => 'B', 'email' => 'b@uji.test', 'type' => 'staff']);

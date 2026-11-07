@@ -10,8 +10,11 @@
             <x-ui.select label="Status" name="status" placeholder="Semua status" :options="['pending' => 'Menunggu bukti', 'review' => 'Menunggu verifikasi', 'settlement' => 'Lunas', 'failed' => 'Ditolak', 'refunded' => 'Dikembalikan']" wire:model.live="status" />
             <x-ui.select label="Cara bayar" name="method" placeholder="Semua cara" :options="$methods" wire:model.live="method" />
         </div>
+        @if (app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('payment_midtrans'))
+            <x-ui.button variant="secondary" icon="refresh-cw" :href="route('staff.reconciliation')" wire:navigate>Rekonsiliasi Midtrans</x-ui.button>
+        @endif
         @can('finance.manage')
-            <x-ui.button icon="banknote" :href="route('staff.payments.cash')">Catat Tunai</x-ui.button>
+            <x-ui.button icon="banknote" :href="route('staff.payments.cash')" wire:navigate>Catat Tunai</x-ui.button>
         @endcan
     </x-ui.page-toolbar>
 
@@ -24,11 +27,11 @@
                 <tbody>
                     @foreach ($payments as $payment)
                         <tr wire:key="payment-{{ $payment->uuid }}" class="hover:bg-primary-soft">
-                            <x-ui.td label="Kwitansi"><a href="{{ route('staff.payments.show', $payment) }}" class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a></x-ui.td>
+                            <x-ui.td label="Kwitansi"><a href="{{ route('staff.payments.show', $payment) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a></x-ui.td>
                             <x-ui.td label="Santri">{{ $payment->invoices->pluck('student.name')->filter()->unique()->join(', ') }}</x-ui.td>
                             <x-ui.td label="Cara">{{ $methods[$payment->method] }}</x-ui.td>
                             <x-ui.td label="Nominal" numeric>{{ Rupiah::format($payment->amount) }}</x-ui.td>
-                            <x-ui.td label="Status"><x-ui.payment-status :status="$payment->status" /></x-ui.td>
+                            <x-ui.td label="Status"><x-ui.payment-status :status="$payment->status" :method="$payment->method" /></x-ui.td>
                             <x-ui.td label="Waktu">{{ $payment->created_at->setTimezone($tz)->translatedFormat('j M Y, H.i') }}</x-ui.td>
                         </tr>
                     @endforeach

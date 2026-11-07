@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Actions;
 
+use App\Modules\Finance\Events\ProofRejected;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,8 @@ class RejectManualPayment
             }
 
             $locked->update(['status' => 'failed', 'reject_reason' => trim($reason), 'verified_by' => $userId, 'verified_at' => now()]);
+
+            ProofRejected::dispatch($locked);
         });
 
         $payment->refresh();

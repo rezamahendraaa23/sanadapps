@@ -115,7 +115,7 @@ test('bendahara memverifikasi dengan pintasan; kwitansi PDF terunduh', async ({ 
     await loginStaff(page, 'bendahara@uji.test', 'sandi-uji-bendahara');
     await page.getByRole('link', { name: 'Verifikasi Transfer' }).click();
     await expect(page.getByAltText(/Bukti transfer/)).toBeVisible();
-    await expect(page.getByText('Rp 350.000').first()).toBeVisible();
+    await expect(page.getByRole('main').getByText('Rp 350.000').first()).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/verifikasi-1280.png`, fullPage: true });
 
     await pageReady(page);

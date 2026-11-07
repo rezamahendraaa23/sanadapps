@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
- * Pengirim sementara sampai Fonnte dibangun di Tahap 3. Di produksi menolak, agar kode tidak masuk log.
+ * Pengganti saat WhatsApp belum tersambung, untuk pengembangan. Di produksi menolak, agar kode tidak masuk log.
  */
 class LogOtpSender implements OtpSender
 {

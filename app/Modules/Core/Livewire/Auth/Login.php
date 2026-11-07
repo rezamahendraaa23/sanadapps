@@ -14,6 +14,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use RuntimeException;
 
 #[Layout('components.layouts.auth')]
 #[Title('Masuk')]
@@ -53,7 +54,16 @@ class Login extends Component
             return null;
         }
 
-        if (! $action->handle($phone)) {
+        try {
+            $accepted = $action->handle($phone);
+        } catch (RuntimeException $exception) {
+            report($exception);
+            $this->addError('phone', 'Kode belum bisa dikirim. Hubungi admin pesantren.');
+
+            return null;
+        }
+
+        if (! $accepted) {
             $this->addError('phone', 'Kode sudah diminta 3 kali. Coba lagi dalam 10 menit.');
 
             return null;

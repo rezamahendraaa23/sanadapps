@@ -43,9 +43,9 @@
     @if ($invoice->status === 'void')
         <x-ui.banner tone="warning">Tagihan ini dibatalkan pesantren: {{ $invoice->void_reason }}</x-ui.banner>
     @elseif ($openPayment)
-        <x-ui.button :href="route('wali.payments.show', $openPayment)" class="w-full">Lihat Status Pembayaran</x-ui.button>
+        <x-ui.button :href="route('wali.payments.show', $openPayment)" wire:navigate class="w-full">Lihat Status Pembayaran</x-ui.button>
     @elseif ($invoice->isOpen())
-        <x-ui.button :href="route('wali.checkout', ['tagihan' => $invoice->uuid])" class="w-full">Bayar Sekarang</x-ui.button>
+        <x-ui.button :href="route('wali.checkout', ['tagihan' => $invoice->uuid])" wire:navigate class="w-full">Bayar Sekarang</x-ui.button>
     @endif
 
     @php($settled = $invoice->payments->where('status', 'settlement'))

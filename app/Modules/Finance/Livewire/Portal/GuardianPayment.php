@@ -5,6 +5,8 @@ namespace App\Modules\Finance\Livewire\Portal;
 use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Finance\Actions\SubmitPaymentProof;
 use App\Modules\Finance\Models\Payment;
+use App\Modules\Payment\Actions\CancelOnlinePayment;
+use App\Modules\Payment\Support\MidtransConfig;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -64,10 +66,24 @@ class GuardianPayment extends Component
         ]);
     }
 
-    public function render(): View
+    public function cancelOnline(CancelOnlinePayment $action): void
     {
-        $this->payment->load(['invoices.student:id,name', 'bankAccount']);
+        $this->authorize('view', $this->payment);
 
-        return view('finance.portal.payment');
+        try {
+            $action->handle($this->payment);
+        } catch (FinanceException $exception) {
+            $this->dispatch('toast', message: $exception->getMessage(), tone: 'danger');
+        }
+    }
+
+    public function render(MidtransConfig $midtrans): View
+    {
+        $this->payment->refresh()->load(['invoices.student:id,name', 'bankAccount']);
+
+        return view('finance.portal.payment', [
+            'snapUrl' => $midtrans->snapScriptUrl(),
+            'clientKey' => $midtrans->clientKey(),
+        ]);
     }
 }

@@ -13,13 +13,13 @@ class RefundPayment
     /**
      * Koreksi lewat catatan baru: terbayar invoice dikurangi dan kas keluar dicatat (FIN-16).
      */
-    public function handle(Payment $payment, string $reason, int $userId): void
+    public function handle(Payment $payment, string $reason, ?int $userId, bool $recordCash = true): void
     {
         if (trim($reason) === '') {
             throw new FinanceException('Alasan pengembalian wajib diisi.');
         }
 
-        DB::transaction(function () use ($payment, $reason, $userId): void {
+        DB::transaction(function () use ($payment, $reason, $userId, $recordCash): void {
             $locked = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->status !== 'settlement') {
@@ -35,6 +35,10 @@ class RefundPayment
             }
 
             $locked->update(['status' => 'refunded', 'refund_reason' => trim($reason)]);
+
+            if (! $recordCash) {
+                return;
+            }
 
             CashTransaction::create([
                 'type' => 'out',

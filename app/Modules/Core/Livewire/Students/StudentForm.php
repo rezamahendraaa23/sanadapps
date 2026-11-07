@@ -200,7 +200,7 @@ class StudentForm extends Component
             session()->flash('initial_password', $password);
         }
 
-        return $this->redirectRoute('staff.students.show', $student);
+        return $this->redirectRoute('staff.students.show', $student, navigate: true);
     }
 
     public function render(): View

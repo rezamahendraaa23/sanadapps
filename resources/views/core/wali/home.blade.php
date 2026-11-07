@@ -19,7 +19,7 @@
         @if ($children->count() > 1)
             <nav aria-label="Pilih anak" class="flex gap-2 overflow-x-auto pb-1">
                 @foreach ($children as $item)
-                    <a href="{{ route('wali.home', ['anak' => $item->uuid]) }}" @if ($item->is($child)) aria-current="true" @endif
+                    <a href="{{ route('wali.home', ['anak' => $item->uuid]) }}" wire:navigate @if ($item->is($child)) aria-current="true" @endif
                         @class(['inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold', 'border-primary bg-primary-soft text-primary' => $item->is($child), 'border-border bg-surface' => ! $item->is($child)])>{{ $item->name }}</a>
                 @endforeach
             </nav>
@@ -30,7 +30,7 @@
                 <x-ui.hero-card label="Total yang harus dibayar" :value="Rupiah::format($total)">
                     {{ $child->name }}. Jatuh tempo terdekat {{ $open->first()->due_date->translatedFormat('j M Y') }}.
                     <x-slot:action>
-                        <x-ui.button variant="on-primary" class="w-full" :href="route('wali.checkout', ['tagihan' => $open->pluck('uuid')->join(',')])">Bayar Sekarang</x-ui.button>
+                        <x-ui.button variant="on-primary" class="w-full" :href="route('wali.checkout', ['tagihan' => $open->pluck('uuid')->join(',')])" wire:navigate>Bayar Sekarang</x-ui.button>
                     </x-slot:action>
                 </x-ui.hero-card>
             @else

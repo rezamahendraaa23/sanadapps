@@ -31,6 +31,7 @@ final class LockPayableInvoices
 
         $busy = Payment::query()
             ->whereIn('status', ['pending', 'review'])
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->whereHas('invoices', fn ($query) => $query->whereIn('invoices.id', $ids))
             ->exists();
 

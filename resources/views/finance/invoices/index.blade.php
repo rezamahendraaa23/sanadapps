@@ -14,8 +14,8 @@
         <div class="flex flex-wrap gap-2">
             <x-ui.button variant="secondary" icon="file-down" :href="route('staff.invoices.export', array_filter(['status' => $status, 'kelas' => $classroom, 'periode' => $period]))">Ekspor</x-ui.button>
             @if ($canManage)
-                <x-ui.button variant="secondary" :href="route('staff.invoices.create')">Tagihan Manual</x-ui.button>
-                <x-ui.button icon="plus" :href="route('staff.invoices.generate')">Generate Tagihan</x-ui.button>
+                <x-ui.button variant="secondary" :href="route('staff.invoices.create')" wire:navigate>Tagihan Manual</x-ui.button>
+                <x-ui.button icon="plus" :href="route('staff.invoices.generate')" wire:navigate>Generate Tagihan</x-ui.button>
             @endif
         </div>
     </x-ui.page-toolbar>
@@ -35,7 +35,7 @@
                 <tbody>
                     @foreach ($invoices as $invoice)
                         <tr wire:key="invoice-{{ $invoice->uuid }}" class="hover:bg-primary-soft">
-                            <x-ui.td label="Nomor"><a href="{{ route('staff.invoices.show', $invoice) }}" class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $invoice->invoice_no }}</a></x-ui.td>
+                            <x-ui.td label="Nomor"><a href="{{ route('staff.invoices.show', $invoice) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $invoice->invoice_no }}</a></x-ui.td>
                             <x-ui.td label="Santri">{{ $invoice->student?->name ?? 'Pendaftar' }}</x-ui.td>
                             <x-ui.td label="Periode">{{ $invoice->period?->translatedFormat('M Y') ?? '-' }}</x-ui.td>
                             <x-ui.td label="Total" numeric>{{ Rupiah::format($invoice->total) }}</x-ui.td>

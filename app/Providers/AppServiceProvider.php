@@ -8,16 +8,22 @@ use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Policies\GuardianPolicy;
 use App\Modules\Core\Policies\StudentPolicy;
-use App\Modules\Core\Support\LogOtpSender;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Policies\InvoicePolicy;
 use App\Modules\Finance\Policies\PaymentPolicy;
+use App\Modules\Notification\Listeners\SendFinanceNotifications;
+use App\Modules\Notification\Support\FonnteOtpSender;
+use App\Modules\Payment\Contracts\PaymentGateway;
+use App\Modules\Payment\Support\FakeMidtransGateway;
+use App\Modules\Payment\Support\MidtransConfig;
+use App\Modules\Payment\Support\MidtransGateway;
 use App\Support\Pdf\BrowsershotPdfRenderer;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\SchoolIdentity;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
@@ -30,8 +36,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(ModuleRegistry::class);
         $this->app->scoped(SchoolIdentity::class);
-        $this->app->bind(OtpSender::class, LogOtpSender::class);
+        $this->app->bind(OtpSender::class, FonnteOtpSender::class);
         $this->app->bind(PdfRenderer::class, BrowsershotPdfRenderer::class);
+        $this->app->scoped(MidtransConfig::class);
+        $this->app->bind(PaymentGateway::class, fn ($app) => config('sanad.midtrans.fake') && ! $app->isProduction()
+            ? new FakeMidtransGateway
+            : new MidtransGateway($app->make(MidtransConfig::class)));
 
         // Masuk memakai layar sendiri; Fortify hanya dipakai untuk logika 2FA.
         Fortify::ignoreRoutes();
@@ -41,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
     {
         SchoolProfile::saved(fn () => app(SchoolIdentity::class)->forget());
         Paginator::defaultView('components.ui.pagination');
+        Event::subscribe(SendFinanceNotifications::class);
 
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Guardian::class, GuardianPolicy::class);

@@ -38,7 +38,7 @@
     </x-ui.card>
 
     <div class="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-        <x-ui.button variant="secondary" :href="route('staff.invoices.index')">Batal</x-ui.button>
+        <x-ui.button variant="secondary" :href="route('staff.invoices.index')" wire:navigate>Batal</x-ui.button>
         <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">Buat Tagihan</x-ui.button>
     </div>
 </form>

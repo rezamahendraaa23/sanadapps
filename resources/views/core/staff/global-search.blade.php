@@ -21,7 +21,7 @@
         <ul>
             @foreach ($results as $student)
                 <li wire:key="hasil-{{ $student->uuid }}">
-                    <a href="{{ route('staff.students.show', $student) }}" class="flex min-h-11 flex-col justify-center rounded-control px-2 hover:bg-primary-soft">
+                    <a href="{{ route('staff.students.show', $student) }}" wire:navigate class="flex min-h-11 flex-col justify-center rounded-control px-2 hover:bg-primary-soft">
                         <span class="text-sm font-semibold">{{ $student->name }}</span>
                         <span class="text-xs text-text-muted">NIS {{ $student->nis }}{{ $student->classroom ? ' · '.$student->classroom->name : '' }}</span>
                     </a>
@@ -29,7 +29,7 @@
             @endforeach
             @foreach ($invoices as $invoice)
                 <li wire:key="tagihan-{{ $invoice->uuid }}">
-                    <a href="{{ route('staff.invoices.show', $invoice) }}" class="flex min-h-11 flex-col justify-center rounded-control px-2 hover:bg-primary-soft">
+                    <a href="{{ route('staff.invoices.show', $invoice) }}" wire:navigate class="flex min-h-11 flex-col justify-center rounded-control px-2 hover:bg-primary-soft">
                         <span class="font-tabular text-sm font-semibold">{{ $invoice->invoice_no }}</span>
                         <span class="text-xs text-text-muted">{{ $invoice->student?->name }}</span>
                     </a>

@@ -5,7 +5,7 @@
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
                 @if ($invoice->student)
-                    <a href="{{ route('staff.students.show', $invoice->student) }}" class="text-lg font-semibold text-primary hover:underline">{{ $invoice->student->name }}</a>
+                    <a href="{{ route('staff.students.show', $invoice->student) }}" wire:navigate class="text-lg font-semibold text-primary hover:underline">{{ $invoice->student->name }}</a>
                     <p class="text-sm text-text-muted">NIS {{ $invoice->student->nis }}{{ $invoice->student->classroom ? ' · '.$invoice->student->classroom->name : '' }}</p>
                 @endif
                 <p class="mt-1 text-sm text-text-muted">Jatuh tempo {{ $invoice->due_date->translatedFormat('j M Y') }}</p>
@@ -48,7 +48,7 @@
         @forelse ($invoice->payments as $payment)
             <div wire:key="payment-{{ $payment->id }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-b-0">
                 <div>
-                    <a href="{{ route('staff.payments.show', $payment) }}" class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a>
+                    <a href="{{ route('staff.payments.show', $payment) }}" wire:navigate class="font-tabular inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $payment->payment_no }}</a>
                     <span class="font-tabular text-sm text-text-muted"> {{ Rupiah::format($payment->pivot->amount) }}</span>
                 </div>
                 <x-ui.payment-status :status="$payment->status" />

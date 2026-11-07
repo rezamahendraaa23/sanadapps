@@ -29,7 +29,7 @@ class GuardianInvoices extends Component
             return null;
         }
 
-        return $this->redirectRoute('wali.checkout', ['tagihan' => implode(',', $ids)]);
+        return $this->redirectRoute('wali.checkout', ['tagihan' => implode(',', $ids)], navigate: true);
     }
 
     public function render(): View

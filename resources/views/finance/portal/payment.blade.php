@@ -5,7 +5,12 @@
         [$payment->status === 'failed' ? 'Ditolak' : 'Menunggu verifikasi', in_array($payment->status, ['review', 'settlement', 'failed', 'refunded'], true)],
         ['Lunas', $payment->status === 'settlement'],
     ];
-    $needsTransfer = in_array($payment->status, ['pending', 'failed'], true);
+    $online = $payment->method === 'midtrans';
+    $needsTransfer = ! $online && in_array($payment->status, ['pending', 'failed'], true);
+    if ($online) {
+        $steps[1] = ['Menunggu pembayaran', $payment->status !== 'failed' && $payment->status !== 'expired'];
+    }
+    $invoiceUuids = $payment->invoices->pluck('uuid')->join(',');
     $shareText = 'Kwitansi '.$payment->payment_no.' sebesar '.Rupiah::format($payment->amount).'. Periksa: '.route('receipts.verify', $payment);
 @endphp
 
@@ -25,7 +30,15 @@
         @endforeach
     </ol>
 
-    @if ($payment->status === 'failed')
+    @if ($online && in_array($payment->status, ['failed', 'expired'], true))
+        <x-ui.banner tone="danger">{{ $payment->reject_reason ?? 'Pembayaran tidak berhasil.' }} Tagihan belum terbayar, silakan bayar ulang.</x-ui.banner>
+        <x-ui.button class="w-full" :href="route('wali.checkout', ['tagihan' => $invoiceUuids])" wire:navigate>Bayar Ulang</x-ui.button>
+    @elseif ($online && $payment->status === 'pending')
+        <div wire:poll.5s class="hatch flex items-start gap-2 rounded-card border border-border bg-surface p-4">
+            <x-ui.icon name="clock" class="mt-0.5" />
+            <p class="text-base">Menunggu pembayaran{{ $payment->expires_at ? ' sampai '.$payment->expires_at->setTimezone(config('sanad.display_timezone'))->translatedFormat('j M, H.i') : '' }}. Status berubah otomatis setelah pembayaran diterima.</p>
+        </div>
+    @elseif ($payment->status === 'failed')
         <x-ui.banner tone="danger">Bukti ditolak: {{ $payment->reject_reason }}. Unggah bukti yang benar di bawah.</x-ui.banner>
     @elseif ($payment->status === 'review')
         <div class="hatch flex items-start gap-2 rounded-card border border-border bg-surface p-4">
@@ -40,7 +53,7 @@
                 <h2 class="font-tabular font-semibold whitespace-nowrap">{{ $payment->payment_no }}</h2>
                 <p class="text-sm text-text-muted">{{ $payment->invoices->pluck('student.name')->filter()->unique()->join(', ') }}</p>
             </div>
-            <x-ui.payment-status :status="$payment->status" class="shrink-0" />
+            <x-ui.payment-status :status="$payment->status" :method="$payment->method" class="shrink-0" />
         </div>
         @if ($needsTransfer)
             <div class="mt-3" x-data="{ copied: '' , copy(key, text) { navigator.clipboard?.writeText(text); this.copied = key; setTimeout(() => this.copied = '', 2000) } }">
@@ -59,10 +72,24 @@
                 @endif
             </div>
         @else
-            <p class="font-display font-tabular mt-3 text-2xl font-semibold">{{ Rupiah::format($payment->amount) }}</p>
+            <p class="font-display font-tabular mt-3 text-2xl font-semibold">{{ Rupiah::format($online ? $payment->gross_amount : $payment->amount) }}</p>
+            @if ($payment->admin_fee)
+                <p class="text-sm text-text-muted">Termasuk biaya admin {{ Rupiah::format($payment->admin_fee) }}</p>
+            @endif
         @endif
         <x-slot:proof>
-            @if ($needsTransfer)
+            @if ($online && $payment->status === 'pending')
+                <div class="flex flex-col gap-2" x-data>
+                    @if ($clientKey)
+                        <script data-navigate-once src="{{ $snapUrl }}" data-client-key="{{ $clientKey }}"></script>
+                    @endif
+                    <x-ui.button class="w-full" x-on:click="window.snap ? window.snap.pay(@js($payment->gateway_payload['snap_token'] ?? ''), { onSuccess: () => $wire.$refresh(), onPending: () => $wire.$refresh(), onError: () => $wire.$refresh() }) : (window.location.href = @js($payment->gateway_payload['redirect_url'] ?? ''))">Lanjutkan Pembayaran</x-ui.button>
+                    @if (! empty($payment->gateway_payload['redirect_url']))
+                        <x-ui.button variant="secondary" class="w-full" :href="$payment->gateway_payload['redirect_url']" target="_blank" rel="noopener">Buka di Halaman Midtrans</x-ui.button>
+                    @endif
+                    <x-ui.button variant="tertiary" class="w-full" wire:click="cancelOnline" wire:confirm="Batalkan pembayaran ini dan pilih cara lain?">Ganti Cara Bayar</x-ui.button>
+                </div>
+            @elseif ($needsTransfer)
                 <form wire:submit="submit" class="flex flex-col gap-3">
                     <div class="flex flex-col gap-1">
                         <label for="field-proof" class="text-sm font-semibold">Foto atau PDF bukti transfer</label>
@@ -93,5 +120,5 @@
         </x-slot:proof>
     </x-ui.ticket-card>
 
-    <x-ui.button variant="tertiary" :href="route('wali.invoices')">Kembali ke Tagihan</x-ui.button>
+    <x-ui.button variant="tertiary" :href="route('wali.invoices')" wire:navigate>Kembali ke Tagihan</x-ui.button>
 </div>

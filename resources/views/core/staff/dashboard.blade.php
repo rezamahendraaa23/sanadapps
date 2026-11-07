@@ -23,7 +23,7 @@
                                 <x-ui.icon name="circle-dashed" class="text-text-muted" />
                             @endif
                             <div class="min-w-0 flex-1 basis-48">
-                                <a href="{{ route($step['route']) }}" class="font-semibold text-primary hover:underline">{{ $step['label'] }}</a>
+                                <a href="{{ route($step['route']) }}" wire:navigate class="font-semibold text-primary hover:underline">{{ $step['label'] }}</a>
                                 <p class="text-sm text-text-muted">{{ $step['done'] ? 'Selesai.' : $step['hint'] }}</p>
                             </div>
                             @if (! $step['done'] && $step['can_mark'])
@@ -42,7 +42,7 @@
 
         <x-ui.card title="Perlu tindakan">
             @if ($pendingTransfers > 0)
-                <a href="{{ route('staff.transfers.index') }}" class="hatch flex min-h-11 items-center justify-between gap-3 rounded-control border border-warning p-3 font-semibold">
+                <a href="{{ route('staff.transfers.index') }}" wire:navigate class="hatch flex min-h-11 items-center justify-between gap-3 rounded-control border border-warning p-3 font-semibold">
                     <span class="flex items-center gap-2"><x-ui.icon name="hourglass" />Bukti transfer menunggu verifikasi</span>
                     <span class="font-tabular">{{ $pendingTransfers }}</span>
                 </a>
@@ -56,7 +56,7 @@
         @if ($heroIsFinance)
             <x-ui.hero-card label="Terbayar bulan ini" :value="\App\Modules\Finance\Support\Rupiah::format($finance['paidThisMonth'])">
                 <x-slot:action>
-                    <x-ui.button variant="on-primary" :href="route('staff.cash.index')">Lihat Kas</x-ui.button>
+                    <x-ui.button variant="on-primary" :href="route('staff.cash.index')" wire:navigate>Lihat Kas</x-ui.button>
                 </x-slot:action>
             </x-ui.hero-card>
         @elseif ($activeStudents !== null)
@@ -65,7 +65,7 @@
                     Belum ada santri.
                 @endif
                 <x-slot:action>
-                    <x-ui.button variant="on-primary" :href="route('staff.students.index')">Lihat Santri</x-ui.button>
+                    <x-ui.button variant="on-primary" :href="route('staff.students.index')" wire:navigate>Lihat Santri</x-ui.button>
                 </x-slot:action>
             </x-ui.hero-card>
         @endif

@@ -7,9 +7,9 @@
         @include('preview.banner')
 
         <nav aria-label="Pratinjau layout" class="flex flex-wrap gap-2">
-            <x-ui.button variant="secondary" :href="route('preview.staff')">Layout staf</x-ui.button>
+            <x-ui.button variant="secondary" :href="route('preview.staff')" wire:navigate>Layout staf</x-ui.button>
             @foreach (['wali' => 'Portal wali', 'santri' => 'Portal santri', 'ustadz' => 'Portal ustadz', 'musyrif' => 'Portal musyrif'] as $role => $label)
-                <x-ui.button variant="secondary" :href="route('preview.portal', $role)">{{ $label }}</x-ui.button>
+                <x-ui.button variant="secondary" :href="route('preview.portal', $role)" wire:navigate>{{ $label }}</x-ui.button>
             @endforeach
         </nav>
 

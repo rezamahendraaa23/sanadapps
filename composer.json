@@ -9,6 +9,7 @@
         "php": "^8.3",
         "laravel/fortify": "^1.41",
         "laravel/framework": "^13.17",
+        "laravel/horizon": "^5.50",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^3.8",
@@ -87,7 +88,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
-        }
+        },
+        "platform-check": "php-only"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

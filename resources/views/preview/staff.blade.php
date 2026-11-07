@@ -1,6 +1,6 @@
 <x-layouts.staff title="Dashboard" :home-url="route('preview.staff')" :preview="true" breadcrumb="Pratinjau layout staf">
     <x-slot:actions>
-        <x-ui.button variant="tertiary" :href="route('preview.gallery')">Komponen</x-ui.button>
+        <x-ui.button variant="tertiary" :href="route('preview.gallery')" wire:navigate>Komponen</x-ui.button>
     </x-slot:actions>
 
     @include('preview.banner')

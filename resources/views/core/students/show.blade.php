@@ -19,7 +19,7 @@
             @if ($canManage)
                 <div class="flex flex-wrap gap-2">
                     <x-ui.button variant="secondary" wire:click="issuePassword" wire:confirm="Buat sandi baru untuk {{ $student->name }}? Sandi lama langsung tidak berlaku.">Buat Sandi</x-ui.button>
-                    <x-ui.button variant="secondary" icon="pencil" :href="route('staff.students.edit', $student)">Ubah Data</x-ui.button>
+                    <x-ui.button variant="secondary" icon="pencil" :href="route('staff.students.edit', $student)" wire:navigate>Ubah Data</x-ui.button>
                 </div>
             @endif
         </div>
@@ -27,13 +27,7 @@
 
     <div role="tablist" aria-label="Bagian data santri" class="flex flex-wrap gap-1">
         @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) as $key => $label)
-            <button
-                type="button"
-                role="tab"
-                aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
-                wire:click="$set('tab', '{{ $key }}')"
-                @class(['min-h-11 rounded-control px-4 text-base font-semibold', 'bg-primary text-on-primary' => $tab === $key, 'text-text-muted hover:bg-primary-soft' => $tab !== $key])
-            >{{ $label }}</button>
+            <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
 

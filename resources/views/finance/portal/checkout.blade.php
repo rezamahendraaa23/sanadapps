@@ -7,7 +7,7 @@
     @if ($invoices->isEmpty())
         <x-ui.card>
             <x-ui.empty-state message="Tidak ada tagihan yang perlu dibayar.">
-                <x-slot:action><x-ui.button variant="secondary" :href="route('wali.invoices')">Kembali ke Tagihan</x-ui.button></x-slot:action>
+                <x-slot:action><x-ui.button variant="secondary" :href="route('wali.invoices')" wire:navigate>Kembali ke Tagihan</x-ui.button></x-slot:action>
             </x-ui.empty-state>
         </x-ui.card>
     @else
@@ -27,6 +27,25 @@
             </div>
         </x-ui.card>
 
+        @if ($onlineEnabled)
+            <x-ui.card title="Bayar online">
+                <p class="text-base">Virtual Account, QRIS, e-wallet, atau minimarket. Status lunas otomatis setelah bayar.</p>
+                @if ($adminFee > 0)
+                    <dl class="mt-2 grid grid-cols-2 gap-y-1 text-base">
+                        <dt class="text-text-muted">Biaya admin</dt><dd class="font-tabular text-right">{{ Rupiah::format($adminFee) }}</dd>
+                        <dt class="font-semibold">Total bayar</dt><dd class="font-tabular text-right font-semibold">{{ Rupiah::format($total + $adminFee) }}</dd>
+                    </dl>
+                @endif
+                @error('online')
+                    <p role="alert" class="mt-2 flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
+                @enderror
+                <x-ui.button class="mt-4 w-full" wire:click="payOnline" wire:loading.attr="disabled" wire:target="payOnline">
+                    <span wire:loading.remove wire:target="payOnline">Bayar Online</span>
+                    <span wire:loading wire:target="payOnline">Menyiapkan…</span>
+                </x-ui.button>
+            </x-ui.card>
+        @endif
+
         @if ($manualEnabled && $accounts->isNotEmpty())
             <x-ui.card title="Transfer manual">
                 <fieldset class="flex flex-col gap-2">
@@ -41,12 +60,12 @@
                 @error('bank_account')
                     <p role="alert" class="mt-2 flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
                 @enderror
-                <x-ui.button class="mt-4 w-full" wire:click="payByTransfer" wire:loading.attr="disabled" wire:target="payByTransfer">
+                <x-ui.button :variant="$onlineEnabled ? 'secondary' : 'primary'" class="mt-4 w-full" wire:click="payByTransfer" wire:loading.attr="disabled" wire:target="payByTransfer">
                     <span wire:loading.remove wire:target="payByTransfer">Lanjut Transfer</span>
                     <span wire:loading wire:target="payByTransfer">Menyiapkan…</span>
                 </x-ui.button>
             </x-ui.card>
-        @else
+        @elseif (! $onlineEnabled)
             <x-ui.card>
                 <x-ui.empty-state icon="landmark" message="Pembayaran belum bisa dilakukan lewat aplikasi. Hubungi bendahara pesantren." class="py-2" />
             </x-ui.card>

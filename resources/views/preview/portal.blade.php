@@ -35,8 +35,8 @@
 
     <nav aria-label="Pratinjau portal lain" class="flex flex-wrap gap-2">
         @foreach (['wali' => 'Wali', 'santri' => 'Santri', 'ustadz' => 'Ustadz', 'musyrif' => 'Musyrif'] as $key => $label)
-            <x-ui.button variant="tertiary" :href="route('preview.portal', $key)" :aria-current="$key === $role ? 'page' : null">{{ $label }}</x-ui.button>
+            <x-ui.button variant="tertiary" :href="route('preview.portal', $key)" wire:navigate :aria-current="$key === $role ? 'page' : null">{{ $label }}</x-ui.button>
         @endforeach
-        <x-ui.button variant="tertiary" :href="route('preview.gallery')">Komponen</x-ui.button>
+        <x-ui.button variant="tertiary" :href="route('preview.gallery')" wire:navigate>Komponen</x-ui.button>
     </nav>
 </x-layouts.portal>

@@ -5,6 +5,8 @@ namespace App\Modules\Core\Livewire\Announcements;
 use App\Modules\Core\Models\Announcement;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Dormitory;
+use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Notification\Actions\SendAnnouncement;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -32,9 +34,11 @@ class AnnouncementIndex extends Component
 
     public string $publish_at = '';
 
+    public bool $send_wa = false;
+
     public function create(): void
     {
-        $this->reset('editingId', 'title', 'body', 'audience', 'audience_id', 'publish_at');
+        $this->reset('editingId', 'title', 'body', 'audience', 'audience_id', 'publish_at', 'send_wa');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-pengumuman');
     }
@@ -48,6 +52,7 @@ class AnnouncementIndex extends Component
             'body' => $announcement->body,
             'audience' => $announcement->audience,
             'audience_id' => (string) $announcement->audience_id,
+            'send_wa' => (bool) $announcement->send_wa,
             'publish_at' => (string) $announcement->publish_at?->setTimezone(config('sanad.display_timezone'))->format('Y-m-d\TH:i'),
         ]);
         $this->resetErrorBag();
@@ -73,12 +78,17 @@ class AnnouncementIndex extends Component
             'publish_at' => $this->publish_at !== ''
                 ? CarbonImmutable::parse($this->publish_at, config('sanad.display_timezone'))->utc()
                 : now(),
+            'send_wa' => $this->send_wa,
         ];
 
         if ($this->editingId) {
             Announcement::query()->findOrFail($this->editingId)->update($data);
         } else {
-            Announcement::create([...$data, 'created_by' => auth()->id()]);
+            $announcement = Announcement::create([...$data, 'created_by' => auth()->id()]);
+
+            if ($this->send_wa && ! $announcement->publish_at->isFuture()) {
+                app(SendAnnouncement::class)->handle($announcement);
+            }
         }
 
         $this->dispatch('close-modal', 'form-pengumuman');
@@ -97,6 +107,7 @@ class AnnouncementIndex extends Component
             'announcements' => Announcement::query()->latest('publish_at')->paginate(20),
             'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'waEnabled' => app(ModuleRegistry::class)->enabled('notification_wa'),
         ]);
     }
 }

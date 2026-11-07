@@ -21,13 +21,13 @@
                 <div class="flex flex-col gap-2 md:flex-row md:flex-wrap">
                     <div class="hidden flex-col gap-2 md:contents" :class="actions && '!flex md:!contents'">
                         @can('masters.manage')
-                            <x-ui.button variant="secondary" :href="route('staff.students.promotion')">Kenaikan Kelas</x-ui.button>
-                            <x-ui.button variant="secondary" :href="route('staff.students.custom-fields')">Field Tambahan</x-ui.button>
+                            <x-ui.button variant="secondary" :href="route('staff.students.promotion')" wire:navigate>Kenaikan Kelas</x-ui.button>
+                            <x-ui.button variant="secondary" :href="route('staff.students.custom-fields')" wire:navigate>Field Tambahan</x-ui.button>
                         @endcan
                         <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.export')">Ekspor</x-ui.button>
-                        <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')">Impor</x-ui.button>
+                        <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')" wire:navigate>Impor</x-ui.button>
                     </div>
-                    <x-ui.button icon="plus" :href="route('staff.students.create')">Tambah Santri</x-ui.button>
+                    <x-ui.button icon="plus" :href="route('staff.students.create')" wire:navigate>Tambah Santri</x-ui.button>
                 </div>
             @endif
         </div>
@@ -41,7 +41,7 @@
                 </x-ui.empty-state>
             @elseif ($canManage)
                 <x-ui.empty-state icon="users" message="Belum ada santri. Impor dari Excel atau tambahkan satu per satu.">
-                    <x-slot:action><x-ui.button :href="route('staff.students.import')">Impor Santri</x-ui.button></x-slot:action>
+                    <x-slot:action><x-ui.button :href="route('staff.students.import')" wire:navigate>Impor Santri</x-ui.button></x-slot:action>
                 </x-ui.empty-state>
             @else
                 <x-ui.empty-state icon="users" message="Belum ada santri yang bisa Anda lihat. Santri tampil setelah Anda ditugaskan ke kelas atau asrama." />
@@ -80,7 +80,7 @@
                                     </label>
                                 </x-ui.td>
                             @endif
-                            <x-ui.td label="Nama"><a href="{{ route('staff.students.show', $student) }}" class="inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $student->name }}</a></x-ui.td>
+                            <x-ui.td label="Nama"><a href="{{ route('staff.students.show', $student) }}" wire:navigate class="inline-flex min-h-11 items-center font-semibold text-primary hover:underline">{{ $student->name }}</a></x-ui.td>
                             <x-ui.td label="NIS"><span class="font-tabular">{{ $student->nis }}</span></x-ui.td>
                             <x-ui.td label="Kelas">{{ $student->classroom?->name ?? 'Belum ada' }}</x-ui.td>
                             <x-ui.td label="Asrama">{{ $student->dormitory?->name ?? 'Belum ada' }}</x-ui.td>

@@ -8,7 +8,7 @@
     <x-ui.card>
         @if ($feeTypes->isEmpty())
             <x-ui.empty-state icon="tags" message="Belum ada jenis tagihan yang aktif.">
-                <x-slot:action><x-ui.button :href="route('staff.settings.fee-types')">Atur Jenis Tagihan</x-ui.button></x-slot:action>
+                <x-slot:action><x-ui.button :href="route('staff.settings.fee-types')" wire:navigate>Atur Jenis Tagihan</x-ui.button></x-slot:action>
             </x-ui.empty-state>
         @else
             <form wire:submit="runPreview" class="flex flex-col gap-4">
@@ -57,7 +57,7 @@
 
             <div class="mt-4 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
                 @if ($result)
-                    <x-ui.button :href="route('staff.invoices.index')">Lihat Tagihan</x-ui.button>
+                    <x-ui.button :href="route('staff.invoices.index')" wire:navigate>Lihat Tagihan</x-ui.button>
                 @elseif ($summary['invoices'] > 0)
                     <x-ui.button class="w-full md:w-auto" x-data x-on:click="$dispatch('open-modal', 'konfirmasi-generate')">Generate {{ $summary['invoices'] }} Tagihan</x-ui.button>
                 @else

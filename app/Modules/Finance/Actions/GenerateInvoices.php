@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\Actions;
 
 use App\Modules\Core\Models\Student;
+use App\Modules\Finance\Events\InvoiceIssued;
 use App\Modules\Finance\Models\FeeType;
 use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\InvoiceItem;
@@ -106,6 +107,8 @@ class GenerateInvoices
 
         $invoice->refreshTotals();
         $invoice->save();
+
+        InvoiceIssued::dispatch($invoice);
     }
 
     /**

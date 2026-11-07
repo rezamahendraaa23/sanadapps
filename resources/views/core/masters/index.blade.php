@@ -7,17 +7,7 @@
 <div class="flex flex-col gap-4">
     <div role="tablist" aria-label="Jenis data" class="flex flex-wrap gap-1">
         @foreach ($tabs as $key => $label)
-            <button
-                type="button"
-                role="tab"
-                aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
-                wire:click="selectTab('{{ $key }}')"
-                @class([
-                    'min-h-11 rounded-control px-4 text-base font-semibold',
-                    'bg-primary text-on-primary' => $tab === $key,
-                    'text-text-muted hover:bg-primary-soft' => $tab !== $key,
-                ])
-            >{{ $label }}</button>
+            <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="selectTab('{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
 

@@ -3,8 +3,7 @@
 <div class="flex flex-col gap-4 {{ $tab === 'belum' && $invoices->isNotEmpty() ? 'pb-20' : '' }}">
     <div role="tablist" aria-label="Jenis tagihan" class="grid grid-cols-2 gap-1 rounded-control bg-surface p-1">
         @foreach (['belum' => 'Belum dibayar', 'riwayat' => 'Riwayat'] as $key => $label)
-            <button type="button" role="tab" aria-selected="{{ $tab === $key ? 'true' : 'false' }}" wire:click="$set('tab', '{{ $key }}')"
-                @class(['min-h-11 rounded-control text-base font-semibold', 'bg-primary text-on-primary' => $tab === $key, 'text-text-muted' => $tab !== $key])>{{ $label }}</button>
+            <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
 
@@ -17,7 +16,7 @@
                         <input type="checkbox" value="{{ $invoice->uuid }}" wire:model.live="selected" class="size-6 accent-primary">
                     </label>
                 @endif
-                <a href="{{ route('wali.invoices.show', $invoice) }}" class="min-w-0 flex-1 p-4 {{ $tab === 'belum' ? 'pl-0' : '' }}">
+                <a href="{{ route('wali.invoices.show', $invoice) }}" wire:navigate class="min-w-0 flex-1 p-4 {{ $tab === 'belum' ? 'pl-0' : '' }}">
                     <div class="flex items-start justify-between gap-2">
                         <span class="min-w-0 font-semibold">{{ $invoice->period?->translatedFormat('F Y') ?? $invoice->invoice_no }}</span>
                         <x-ui.invoice-status :status="$invoice->status" class="shrink-0" />
