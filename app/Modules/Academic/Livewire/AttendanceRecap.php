@@ -4,6 +4,7 @@ namespace App\Modules\Academic\Livewire;
 
 use App\Modules\Academic\Support\AttendanceStats;
 use App\Modules\Core\Models\Classroom;
+use App\Support\SchoolDate;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -37,7 +38,7 @@ class AttendanceRecap extends Component
 
     public function render(): View
     {
-        $from = self::date($this->from) ?? now()->toDateString();
+        $from = self::date($this->from) ?? SchoolDate::today()->toDateString();
         $to = self::date($this->to) ?? $from;
         $rows = AttendanceStats::perStudent($this->classroom !== '' ? (int) $this->classroom : null, null, $from, $to);
 

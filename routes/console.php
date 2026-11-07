@@ -3,6 +3,9 @@
 use App\Modules\Academic\Actions\ManageBiometricConsent;
 use App\Modules\Academic\Actions\PurgeAttendanceEvidence;
 use App\Modules\Admission\Actions\AdmissionFlow;
+use App\Modules\Affairs\Actions\ComputeRiskScores;
+use App\Modules\Affairs\Actions\SyncAlumni;
+use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
 use App\Modules\Finance\Actions\GenerateMonthlyInvoices;
@@ -32,3 +35,9 @@ Schedule::call(fn () => app(PurgeAttendanceEvidence::class)->handle())->name('Pu
 Schedule::call(fn () => app(ManageBiometricConsent::class)->sweep())->name('SweepFaceData')->dailyAt('02:15')->timezone(config('sanad.display_timezone'));
 Schedule::call(fn () => app(AdmissionFlow::class)->announceDue())->name('AnnounceAdmissions')->everyFiveMinutes()->withoutOverlapping();
 Schedule::call(fn () => app(AdmissionFlow::class)->closeExpired())->name('CloseAdmissionPeriods')->everyFiveMinutes();
+Schedule::call(function () {
+    if (app(ModuleRegistry::class)->enabled('analytics')) {
+        app(ComputeRiskScores::class)->handle();
+    }
+})->name('ComputeRiskScores')->dailyAt('03:00')->timezone(config('sanad.display_timezone'));
+Schedule::call(fn () => app(SyncAlumni::class)->handle())->name('SyncAlumni')->dailyAt('03:30')->timezone(config('sanad.display_timezone'));

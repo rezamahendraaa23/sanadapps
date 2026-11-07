@@ -30,6 +30,8 @@
             </a>
         @endif
 
+        @include('affairs.student-summary')
+
         @if ($segment === 'absensi')
             <x-ui.card title="Kehadiran bulan ini">
                 @if ($attendance)

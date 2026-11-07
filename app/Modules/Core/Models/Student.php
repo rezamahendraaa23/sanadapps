@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Models;
 
 use App\Modules\Academic\Models\TeachingScope;
+use App\Modules\Affairs\Models\AlumniProfile;
 use App\Modules\Core\Support\Audited;
 use App\Modules\Wallet\Models\StudentCard;
 use App\Support\Concerns\HasPublicUuid;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -79,6 +81,11 @@ class Student extends Model
     public function cards(): HasMany
     {
         return $this->hasMany(StudentCard::class);
+    }
+
+    public function alumniProfile(): HasOne
+    {
+        return $this->hasOne(AlumniProfile::class);
     }
 
     public function enrollments(): HasMany

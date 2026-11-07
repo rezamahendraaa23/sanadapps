@@ -118,6 +118,11 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A96 | Halaman ujian pendaftar tetap menyimpan jawaban di HP saat putus, tetapi tidak bisa dimuat ulang saat offline | Service worker hanya menjaga `/ujian/` milik santri |
 | A97 | Kartu tercetak tidak memuat QRIS, tanda tangan, atau stempel digital seperti contoh pemilik. QR cetak hanya untuk absen dan gerbang, belanja dengan tap kartu atau QR dinamis. Kolom pengesahan dibiarkan kosong untuk tanda tangan dan stempel asli | QRIS butuh penyedia resmi; QR belanja tercetak bisa difoto dan dipakai orang lain; tanda tangan buatan menyesatkan |
 | A98 | Kartu tercetak bawaannya hanya foto, nama, NIS, QR, dan tahun masuk. Kelas, asrama, tahun ajaran, dan tanggal lahir bisa diaktifkan lewat tombol Isi Kartu | Permintaan pemilik: kartu fisik tidak ikut berubah saat santri naik kelas atau pindah asrama |
+| A99 | Berkas ekspor Dapodik dan EMIS memakai kolom umum, belum template resmi, dan layarnya menyatakan itu | D5 belum terverifikasi; mencocokkan butuh template resmi dari pesantren |
+| A100 | Musyrif dan ustadz mencatat pelanggaran untuk santri lingkupnya. Foto bukti disimpan, belum ditampilkan di daftar | Lingkup mengikuti kebijakan lihat santri yang sudah ada |
+| A101 | Santri tidak melihat data kesehatannya; wali hanya tanggal dan hasil | Matriks PRD: santri tanpa akses, wali ringkas |
+| A102 | Dashboard ANL-02 belum memakai cache 5 menit | Terukur cepat di data uji; dinilai ulang saat uji beban Tahap 13 |
+| A103 | Tukar piket hanya oleh pengelola, belum ada permintaan tukar dari santri | PKT-01 cukup tukar; persetujuan dua pihak menambah alur |
 | A82 | `face_enrollments.embedding` bertipe teks terenkripsi, bukan `jsonb` seperti PRD | PRD R10 meminta enkripsi; `jsonb` tidak bisa menyimpan ciphertext |
 | A83 | **Absen selfie dihapus, keputusan pemilik 7 November 2026.** Hanya wajah yang didaftarkan admin lalu dikenali otomatis, plus kartu, QR, dan manual sebagai cadangan. Persetujuan wali tetap wajib untuk pendaftaran wajah | Konsekuensi: sebelum PoC D8 selesai, absen di produksi hanya manual, kartu, dan QR, karena pencocokan wajah tiruan tertutup di produksi |
 | A84 | Wajah zona abu-abu tetap alpa sampai dikonfirmasi musyrif | Mengikuti PRD 8.9b |

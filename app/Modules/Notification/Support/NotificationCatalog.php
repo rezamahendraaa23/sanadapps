@@ -16,6 +16,8 @@ final class NotificationCatalog
         'attendance' => ['label' => 'Alpa dan terlambat', 'critical' => false, 'module' => 'attendance'],
         'academic' => ['label' => 'Rapor terbit', 'critical' => false, 'module' => 'grading'],
         'leave' => ['label' => 'Status izin dan terlambat kembali', 'critical' => true, 'module' => 'leave'],
+        'discipline' => ['label' => 'Sanksi pelanggaran', 'critical' => true, 'module' => 'discipline'],
+        'health' => ['label' => 'Santri dirujuk atau dipulangkan', 'critical' => true, 'module' => 'health'],
         'ppdb' => ['label' => 'Status pendaftaran PPDB', 'critical' => true, 'module' => 'ppdb'],
         'gate' => ['label' => 'Keluar masuk gerbang', 'critical' => false, 'module' => 'gate'],
         'announcement' => ['label' => 'Pengumuman pesantren', 'critical' => false],
@@ -23,6 +25,18 @@ final class NotificationCatalog
 
     /** @var array<string, array{label: string, category: string|null, variables: list<string>, body: string}> */
     public const EVENTS = [
+        'discipline_sanction' => [
+            'label' => 'Sanksi pelanggaran',
+            'category' => 'discipline',
+            'variables' => ['nama_wali', 'nama_santri', 'sanksi', 'poin'],
+            'body' => "Assalamu'alaikum {nama_wali}.\nPoin pelanggaran {nama_santri} mencapai {poin}, sehingga mendapat {sanksi}. Mohon hubungi musyrif.",
+        ],
+        'health_referred' => [
+            'label' => 'Kabar kesehatan',
+            'category' => 'health',
+            'variables' => ['nama_wali', 'nama_santri', 'tindakan', 'tanggal'],
+            'body' => "Assalamu'alaikum {nama_wali}.\n{nama_santri} {tindakan} oleh petugas kesehatan pada {tanggal}. Mohon hubungi pesantren untuk keterangan.",
+        ],
         'ppdb_status' => [
             'label' => 'Status PPDB berubah',
             'category' => 'ppdb',

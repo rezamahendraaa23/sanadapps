@@ -8,6 +8,7 @@ use App\Modules\Core\Models\Student;
 use App\Modules\Tahfidz\Models\MutabaahItem;
 use App\Modules\Tahfidz\Models\TahfidzTarget;
 use App\Modules\Tahfidz\Support\TahfidzRecap;
+use App\Support\SchoolDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -111,7 +112,7 @@ class TahfidzAdmin extends Component
 
     public function render(): View
     {
-        $from = TahfidzRecap::date($this->from) ?? now()->toDateString();
+        $from = TahfidzRecap::date($this->from) ?? SchoolDate::today()->toDateString();
         $to = TahfidzRecap::date($this->to) ?? $from;
 
         return view('tahfidz.admin', [

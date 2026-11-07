@@ -44,8 +44,8 @@ return [
                 ['key' => 'cards', 'permission' => 'cards.view', 'label' => 'Kartu Santri', 'icon' => 'id-card', 'route' => 'staff.cards.index', 'module' => 'card'],
                 ['key' => 'leaves', 'permission' => 'leave.manage', 'label' => 'Perizinan', 'icon' => 'door-open', 'route' => 'staff.leaves.index', 'module' => 'leave'],
                 ['key' => 'gate', 'permission' => 'gate.operate', 'label' => 'Pos Gerbang', 'icon' => 'shield-check', 'route' => 'staff.gate.index', 'module' => 'gate'],
-                ['key' => 'discipline', 'label' => 'Pelanggaran', 'icon' => 'clipboard-list', 'route' => 'staff.discipline.index', 'module' => 'discipline'],
-                ['key' => 'health', 'label' => 'Kesehatan', 'icon' => 'heart-pulse', 'route' => 'staff.health.index', 'module' => 'health'],
+                ['key' => 'discipline', 'permission' => ['discipline.view', 'discipline.record'], 'label' => 'Pelanggaran', 'icon' => 'clipboard-list', 'route' => 'staff.discipline.index', 'module' => 'discipline'],
+                ['key' => 'health', 'permission' => ['health.manage', 'health.summary'], 'label' => 'Kesehatan', 'icon' => 'heart-pulse', 'route' => 'staff.health.index', 'module' => 'health'],
             ]],
             ['label' => 'Akademik', 'items' => [
                 ['key' => 'classrooms', 'permission' => 'masters.manage', 'label' => 'Kelas & Asrama', 'icon' => 'school', 'route' => 'staff.classrooms.index', 'module' => 'core'],
@@ -74,11 +74,11 @@ return [
                 ['key' => 'ppdb-selection', 'permission' => 'ppdb.view', 'label' => 'Seleksi', 'icon' => 'list-checks', 'route' => 'staff.ppdb.selection.index', 'module' => 'ppdb'],
             ]],
             ['label' => 'Lainnya', 'items' => [
-                ['key' => 'analytics', 'label' => 'Analitik Risiko', 'icon' => 'triangle-alert', 'route' => 'staff.analytics.index', 'module' => 'analytics'],
-                ['key' => 'alumni', 'label' => 'Alumni', 'icon' => 'user-check', 'route' => 'staff.alumni.index', 'module' => 'alumni'],
-                ['key' => 'inventory', 'label' => 'Inventaris', 'icon' => 'package', 'route' => 'staff.inventory.index', 'module' => 'inventory'],
-                ['key' => 'duty', 'label' => 'Piket', 'icon' => 'calendar-clock', 'route' => 'staff.duty.index', 'module' => 'duty_roster'],
-                ['key' => 'export', 'label' => 'Ekspor Dapodik/EMIS', 'icon' => 'file-down', 'route' => 'staff.export.index', 'module' => 'export_dapodik'],
+                ['key' => 'analytics', 'permission' => 'analytics.view', 'label' => 'Analitik Risiko', 'icon' => 'triangle-alert', 'route' => 'staff.analytics.index', 'module' => 'analytics'],
+                ['key' => 'alumni', 'permission' => 'alumni.manage', 'label' => 'Alumni', 'icon' => 'user-check', 'route' => 'staff.alumni.index', 'module' => 'alumni'],
+                ['key' => 'inventory', 'permission' => 'inventory.manage', 'label' => 'Inventaris', 'icon' => 'package', 'route' => 'staff.inventory.index', 'module' => 'inventory'],
+                ['key' => 'duty', 'permission' => 'duty.manage', 'label' => 'Piket', 'icon' => 'calendar-clock', 'route' => 'staff.duty.index', 'module' => 'duty_roster'],
+                ['key' => 'export', 'permission' => 'export.run', 'label' => 'Ekspor Dapodik/EMIS', 'icon' => 'file-down', 'route' => 'staff.export.index', 'module' => 'export_dapodik'],
             ]],
             ['label' => 'Pengaturan', 'items' => [
                 ['key' => 'profile', 'permission' => 'settings.manage', 'label' => 'Profil & Branding', 'icon' => 'building-2', 'route' => 'staff.settings.profile', 'module' => 'core'],

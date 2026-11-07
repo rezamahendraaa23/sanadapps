@@ -14,9 +14,20 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 9:** ujian online dan PWA
 - [x] **Tahap 10:** absensi wajah dan persetujuan wali (selfie dihapus atas keputusan pemilik)
 - [x] **Tahap 11:** PPDB
-- [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
+- [x] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 12
+
+- [x] Pelanggaran: aturan, poin per tahun ajaran, ambang sanksi sekali, opsi poin terlambat kembali (DSC-01 sampai DSC-03, LEV-04)
+- [x] Kesehatan: terenkripsi, detail hanya UKS dan tercatat, ringkasan untuk admin, musyrif, wali (HLT-01, HLT-02)
+- [x] Skor risiko harian dengan alasan dan bobot yang bisa diubah (ANL-01)
+- [x] Alumni otomatis dari kelulusan, cari, ubah, ekspor (ALM-01)
+- [x] Inventaris dengan mutasi yang tidak bisa dihapus (INV-01)
+- [x] Piket mingguan, penugasan, tukar, tampil di portal (PKT-01)
+- [x] Ekspor kolom umum untuk Dapodik dan EMIS (EXP-01, template resmi belum dicocokkan)
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 11
 

@@ -5,6 +5,7 @@ namespace App\Modules\Tahfidz\Livewire;
 use App\Modules\Core\Models\Student;
 use App\Modules\Tahfidz\Models\MutabaahLog;
 use App\Modules\Tahfidz\Support\TahfidzRecap;
+use App\Support\SchoolDate;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -32,7 +33,7 @@ class MutabaahVerify extends Component
         return MutabaahLog::query()
             ->with(['student:id,name', 'item:id,name'])
             ->whereIn('student_id', Student::query()->visibleTo(auth()->user())->select('students.id'))
-            ->whereDate('log_date', TahfidzRecap::date($this->date) ?? now()->toDateString())
+            ->whereDate('log_date', TahfidzRecap::date($this->date) ?? SchoolDate::today()->toDateString())
             ->where('status', 'done')
             ->whereNull('verified_by');
     }

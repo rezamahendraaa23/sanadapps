@@ -21,7 +21,7 @@ beforeEach(function () {
     Module::query()->whereIn('module_key', ['wallet', 'card'])->update(['is_enabled' => true]);
     app(ModuleRegistry::class)->forget();
 
-    $this->student = Student::create(['nis' => 'S1', 'name' => 'Ahmad', 'gender' => 'L', 'entry_date' => '2026-07-13', 'classroom_id' => Classroom::create(['name' => '7A'])->id, 'dormitory_id' => Dormitory::create(['name' => 'Abu Bakar', 'gender' => 'L'])->id]);
+    $this->student = Student::create(['nis' => 'S1', 'name' => 'Ahmad', 'gender' => 'L', 'entry_date' => '2026-07-13', 'classroom_id' => Classroom::create(['name' => 'Kelas Mawar'])->id, 'dormitory_id' => Dormitory::create(['name' => 'Abu Bakar', 'gender' => 'L'])->id]);
     $this->card = StudentCard::create(['student_id' => $this->student->id, 'qr_secret' => 'rahasia', 'status' => 'active', 'issued_at' => now()]);
 });
 
@@ -33,7 +33,7 @@ function cardHtml($context): string
 it('bawaan: tidak memuat data yang gampang berubah', function () {
     expect(CardFields::selected())->toBe(['entry_year']);
 
-    expect(cardHtml($this))->toContain('Ahmad')->toContain('Masuk')->toContain('2026')->not->toContain('7A')->not->toContain('Abu Bakar')->not->toContain('2026/2027');
+    expect(cardHtml($this))->toContain('Ahmad')->toContain('Masuk')->toContain('2026')->not->toContain('Kelas Mawar')->not->toContain('Abu Bakar')->not->toContain('2026/2027');
 });
 
 it('admin memilih isi kartu; pilihan yang tidak dikenal dibuang; kasir tidak bisa', function () {
@@ -44,8 +44,8 @@ it('admin memilih isi kartu; pilihan yang tidak dikenal dibuang; kasir tidak bis
         ->set('cardFields', ['classroom', 'dormitory', 'academic_year', 'aneh'])->call('saveCardFields');
 
     expect(CardFields::selected())->toBe(['classroom', 'dormitory', 'academic_year']);
-    expect(cardHtml($this))->toContain('7A')->toContain('Abu Bakar')->toContain('2026/2027')->not->toContain('Masuk');
+    expect(cardHtml($this))->toContain('Kelas Mawar')->toContain('Abu Bakar')->toContain('2026/2027')->not->toContain('Masuk');
 
     $this->actingAs(tap(User::create(['name' => 'Bendahara', 'email' => 'b@uji.test', 'type' => 'staff']))->assignRole('kasir'));
-    expect(fn () => Livewire::test(CardAdmin::class)->call('saveCardFields'))->toThrow(Exception::class);
+    Livewire::test(CardAdmin::class)->call('saveCardFields')->assertForbidden();
 });

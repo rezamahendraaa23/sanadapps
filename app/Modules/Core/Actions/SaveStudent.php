@@ -6,6 +6,7 @@ use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\StudentEnrollment;
 use App\Modules\Core\Models\User;
+use App\Support\SchoolDate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -26,7 +27,7 @@ class SaveStudent
 
             if ($student === null) {
                 $data['nis'] = filled($data['nis'] ?? null) ? $data['nis'] : $this->nis->handle();
-                $data['entry_date'] ??= now()->toDateString();
+                $data['entry_date'] ??= SchoolDate::today()->toDateString();
                 $password = $issuePassword ? Str::password(10, symbols: false) : null;
 
                 $user = User::create(['name' => $data['name'], 'username' => $data['nis'], 'type' => 'student', 'password' => $password]);

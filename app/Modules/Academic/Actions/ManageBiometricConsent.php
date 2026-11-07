@@ -8,6 +8,7 @@ use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\InAppNotification;
 use App\Modules\Core\Models\Student;
+use App\Support\SchoolDate;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -94,7 +95,7 @@ class ManageBiometricConsent
                 'title' => 'Mohon keputusan data wajah untuk '.$student->name,
                 'body' => 'Absensi wajah butuh persetujuan Anda. Tanpa persetujuan, santri tetap absen dengan kartu atau manual.',
                 'link' => route('wali.face-consent'),
-                'dedupe_key' => 'face-consent:'.$student->id.':'.$guardian->user_id.':'.now()->toDateString(),
+                'dedupe_key' => 'face-consent:'.$student->id.':'.$guardian->user_id.':'.SchoolDate::today()->toDateString(),
             ]);
             $count++;
         }

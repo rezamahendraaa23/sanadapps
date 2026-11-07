@@ -9,6 +9,7 @@ use App\Modules\Admission\Models\Applicant;
 use App\Modules\Admission\Support\AdmissionException;
 use App\Modules\Core\Actions\OtpResult;
 use App\Modules\Core\Support\PhoneNumber;
+use App\Support\SchoolDate;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -149,7 +150,7 @@ class AdmissionWizard extends Component
             'name' => 'required|string|max:150',
             'gender' => 'required|in:L,P',
             'birth_place' => 'nullable|string|max:100',
-            'birth_date' => 'required|date|before:today',
+            'birth_date' => 'required|date|before:'.SchoolDate::today()->toDateString(),
             'address' => 'required|string|max:500',
             'previous_school' => 'nullable|string|max:150',
         ], [], ['name' => 'nama', 'gender' => 'jenis kelamin', 'birth_date' => 'tanggal lahir', 'address' => 'alamat']);

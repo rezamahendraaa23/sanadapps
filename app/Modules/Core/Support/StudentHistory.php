@@ -4,6 +4,8 @@ namespace App\Modules\Core\Support;
 
 use App\Modules\Academic\Models\AttendanceRecord;
 use App\Modules\Academic\Models\ReportCard;
+use App\Modules\Affairs\Models\DisciplineRecord;
+use App\Modules\Affairs\Models\HealthRecord;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
@@ -43,6 +45,8 @@ class StudentHistory
                 'tahfidz' => $this->modules->enabled('tahfidz') ? $this->tahfidz($student, $startDate, $endDate) : null,
                 'leaves' => $this->modules->enabled('leave') ? $this->leaves($student, $from, $until) : null,
                 'exams' => $this->modules->enabled('exam') ? $this->exams($student, $from, $until) : null,
+                'discipline' => $this->modules->enabled('discipline') ? $this->discipline($student, $startDate, $endDate) : null,
+                'health' => $viewer->canAny(['health.manage', 'health.summary']) && $this->modules->enabled('health') ? $this->health($student, $startDate, $endDate) : null,
                 'finance' => $viewer->can('finance.view') && $this->modules->enabled('finance') ? $this->finance($student, $startDate, $endDate) : null,
                 'wallet' => $viewer->can('wallet.view') && $this->modules->enabled('wallet') ? $this->wallet($student, $from, $until) : null,
             ]);
@@ -128,6 +132,29 @@ class StudentHistory
         $attempts = ExamAttempt::query()->with('exam:id,title')->where('student_id', $student->id)->whereBetween('started_at', [$from, $until])->whereNot('status', 'in_progress')->orderBy('started_at')->get();
 
         return $attempts->isEmpty() ? null : $attempts->map(fn (ExamAttempt $attempt) => ['title' => $attempt->exam->title, 'score' => $attempt->status === 'graded' ? $attempt->score : null])->all();
+    }
+
+    /**
+     * @return array{points: int, count: int}|null
+     */
+    private function discipline(Student $student, string $start, string $end): ?array
+    {
+        $row = DisciplineRecord::query()->where('student_id', $student->id)->whereBetween('occurred_on', [$start, $end])->selectRaw('COUNT(*) AS total, COALESCE(SUM(points), 0) AS points')->first();
+
+        return (int) $row->total === 0 ? null : ['points' => (int) $row->points, 'count' => (int) $row->total];
+    }
+
+    /**
+     * Hanya jumlah per hasil, tanpa keluhan dan obat.
+     *
+     * @return array<string, int>|null
+     */
+    private function health(Student $student, string $start, string $end): ?array
+    {
+        $counts = HealthRecord::query()->where('student_id', $student->id)->whereBetween('visit_date', [$start, $end])
+            ->selectRaw('outcome, COUNT(*) AS total')->groupBy('outcome')->pluck('total', 'outcome')->map(fn ($value) => (int) $value)->all();
+
+        return $counts === [] ? null : $counts;
     }
 
     /**

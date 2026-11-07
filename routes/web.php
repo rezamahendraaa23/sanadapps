@@ -24,6 +24,14 @@ use App\Modules\Admission\Livewire\AdmissionStatus;
 use App\Modules\Admission\Livewire\AdmissionWizard;
 use App\Modules\Admission\Livewire\ApplicantDetail;
 use App\Modules\Admission\Livewire\ApplicantList;
+use App\Modules\Affairs\Livewire\AlumniDirectory;
+use App\Modules\Affairs\Livewire\DisciplineBoard;
+use App\Modules\Affairs\Livewire\DutyBoard;
+use App\Modules\Affairs\Livewire\GovernmentExport;
+use App\Modules\Affairs\Livewire\HealthDesk;
+use App\Modules\Affairs\Livewire\InventoryBoard;
+use App\Modules\Affairs\Livewire\RiskBoard;
+use App\Modules\Affairs\Models\AlumniProfile;
 use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Exports\ImportErrorsExport;
 use App\Modules\Core\Exports\ImportTemplateExport;
@@ -54,6 +62,7 @@ use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
 use App\Modules\Core\Models\Student;
+use App\Modules\Core\Models\Student as AffairsStudent;
 use App\Modules\Exam\Http\AttemptController;
 use App\Modules\Exam\Livewire\ExamList;
 use App\Modules\Exam\Livewire\ExamMonitor;
@@ -318,6 +327,38 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/{exam}/hasil', ExamResults::class)->name('results');
     });
 
+    Route::get('/pelanggaran', DisciplineBoard::class)->middleware('module:discipline')->middleware('can:discipline.access')->name('discipline.index');
+    Route::get('/kesehatan', HealthDesk::class)->middleware('module:health')->name('health.index');
+    Route::get('/analitik', RiskBoard::class)->middleware(['module:analytics', 'can:analytics.view'])->name('analytics.index');
+    Route::middleware(['module:alumni', 'can:alumni.manage'])->group(function (): void {
+        Route::get('/alumni', AlumniDirectory::class)->name('alumni.index');
+        Route::get('/alumni/ekspor', function () {
+            $rows = AlumniProfile::query()->with('student:id,name,nis')->whereHas('student', fn ($query) => $query->where('status', 'graduated'))->get()
+                ->map(fn ($profile) => [$profile->student->nis, $profile->student->name, $profile->graduated_on?->toDateString(), $profile->current_activity, $profile->contact_phone, $profile->contact_email])->all();
+
+            return Excel::download(new ArrayExport(['NIS', 'Nama', 'Tanggal lulus', 'Kegiatan', 'Telepon', 'Email'], $rows), 'alumni.xlsx');
+        })->name('alumni.export');
+    });
+    Route::get('/inventaris', InventoryBoard::class)->middleware(['module:inventory', 'can:inventory.manage'])->name('inventory.index');
+    Route::get('/piket', DutyBoard::class)->middleware(['module:duty_roster', 'can:duty.manage'])->name('duty.index');
+    Route::middleware(['module:export_dapodik', 'can:export.run'])->group(function (): void {
+        Route::get('/ekspor', GovernmentExport::class)->name('export.index');
+        Route::get('/ekspor/unduh', function (Request $request) {
+            $status = (string) $request->query('status', 'active');
+            $rows = AffairsStudent::query()->with(['classroom:id,name', 'guardians'])
+                ->when($status !== 'all', fn ($query) => $query->where('status', $status === 'graduated' ? 'graduated' : 'active'))
+                ->when($request->filled('kelas'), fn ($query) => $query->where('classroom_id', $request->integer('kelas')))
+                ->orderBy('name')->get()->map(function ($student) {
+                    $guardian = $student->guardians->first();
+
+                    return [$student->nisn, $student->nis, $student->name, $student->gender, $student->birth_place, $student->birth_date?->toDateString(), $student->address, $student->classroom?->name, $student->entry_date?->toDateString(), $guardian?->name, $guardian?->phone_wa];
+                })->all();
+            $kind = $request->query('untuk') === 'emis' ? 'emis' : 'dapodik';
+
+            return Excel::download(new ArrayExport(['NISN', 'NIS', 'Nama', 'JK', 'Tempat lahir', 'Tanggal lahir', 'Alamat', 'Kelas', 'Tanggal masuk', 'Nama wali', 'HP wali'], $rows), 'ekspor-'.$kind.'.xlsx');
+        })->name('export.download');
+    });
+
     Route::prefix('ppdb')->name('ppdb.')->middleware(['module:ppdb', 'can:ppdb.view'])->group(function (): void {
         Route::get('/periode', AdmissionPeriods::class)->name('periods.index');
         Route::get('/pendaftar', ApplicantList::class)->name('applicants.index');
@@ -471,6 +512,7 @@ Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')-
 });
 
 Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif')->name('musyrif.')->group(function (): void {
+    Route::get('/pelanggaran', DisciplineBoard::class)->middleware('module:discipline')->name('discipline');
     Route::get('/', TeacherHome::class)->name('home');
     Route::get('/izin', LeaveDesk::class)->middleware('module:leave')->name('leaves');
     Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');

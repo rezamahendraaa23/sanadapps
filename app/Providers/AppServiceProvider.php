@@ -6,6 +6,7 @@ use App\Modules\Academic\Face\FaceApiMatcher;
 use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Face\FakeFaceMatcher;
 use App\Modules\Admission\Listeners\MarkApplicantPaid;
+use App\Modules\Affairs\Listeners\PenalizeLateReturn;
 use App\Modules\Core\Contracts\OtpSender;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\SchoolProfile;
@@ -18,6 +19,7 @@ use App\Modules\Finance\Models\Invoice;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Policies\InvoicePolicy;
 use App\Modules\Finance\Policies\PaymentPolicy;
+use App\Modules\Leave\Events\LeaveEvent;
 use App\Modules\Notification\Listeners\SendFinanceNotifications;
 use App\Modules\Notification\Support\FonnteOtpSender;
 use App\Modules\Payment\Contracts\PaymentGateway;
@@ -60,7 +62,9 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.ui.pagination');
         Event::subscribe(SendFinanceNotifications::class);
         Event::listen(PaymentSettled::class, MarkApplicantPaid::class);
+        Event::listen(LeaveEvent::class, PenalizeLateReturn::class);
 
+        Gate::define('discipline.access', fn ($user) => $user->canAny(['discipline.view', 'discipline.record']));
         Gate::define('exams.import', fn ($user) => $user->canAny(['exams.manage', 'exams.own']));
         Gate::define('merchants.access', fn ($user) => $user->canAny(['merchants.manage', 'merchants.own', 'pos.view']));
         Gate::policy(Student::class, StudentPolicy::class);

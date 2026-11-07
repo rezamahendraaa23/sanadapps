@@ -72,6 +72,22 @@
                         </dd>
                     </div>
                 @endisset
+                @isset($sections['discipline'])
+                    <div class="grid gap-1 border-t border-border py-3 md:grid-cols-[160px_1fr]">
+                        <dt class="text-sm font-semibold">Pelanggaran</dt>
+                        <dd class="text-base"><strong class="font-tabular">{{ $sections['discipline']['points'] }}</strong> poin dari {{ $sections['discipline']['count'] }} catatan</dd>
+                    </div>
+                @endisset
+                @isset($sections['health'])
+                    <div class="grid gap-1 border-t border-border py-3 md:grid-cols-[160px_1fr]">
+                        <dt class="text-sm font-semibold">Kunjungan UKS</dt>
+                        <dd class="flex flex-wrap gap-x-4 gap-y-1 text-base">
+                            @foreach ($sections['health'] as $outcome => $count)
+                                <span>{{ \App\Modules\Affairs\Models\HealthRecord::OUTCOMES[$outcome] }} <strong class="font-tabular">{{ $count }}</strong></span>
+                            @endforeach
+                        </dd>
+                    </div>
+                @endisset
                 @isset($sections['finance'])
                     <div class="grid gap-1 border-t border-border py-3 md:grid-cols-[160px_1fr]">
                         <dt class="text-sm font-semibold">Tagihan</dt>
