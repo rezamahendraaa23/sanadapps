@@ -3,6 +3,7 @@
 use App\Http\Middleware\ApplySchoolTimezone;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureUserType;
+use App\Http\Middleware\SecurityHeaders;
 use App\Modules\Core\Actions\StartSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
         ]);
         $middleware->web(append: [ApplySchoolTimezone::class]);
+        $middleware->append(SecurityHeaders::class);
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => StartSession::homeFor($request->user()));

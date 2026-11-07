@@ -214,6 +214,9 @@ describe('autosave', function () {
         $this->actingAs($this->outsiderUser);
         $this->postJson(route('exam.answers', $attempt), ['token' => $attempt->session_token, 'batch' => []])->assertForbidden();
         $this->get(route('exam.take', $attempt))->assertForbidden();
+        $this->postJson(route('exam.submit', $attempt), ['token' => $attempt->session_token])->assertForbidden();
+        $this->postJson(route('exam.events', $attempt), ['token' => $attempt->session_token, 'events' => []])->assertForbidden();
+        expect($attempt->fresh()->submitted_at)->toBeNull();
 
         $this->actingAs($this->studentUser);
         $this->postJson(route('exam.answers', $attempt), ['token' => $attempt->session_token, 'batch' => [['question_id' => $this->mcq->id, 'answer' => 'B', 'client_seq' => 1]]])
@@ -324,6 +327,7 @@ describe('penilaian', function () {
         $answer = ExamAnswer::where('question_id', $this->essay->id)->first();
 
         $this->actingAs($this->otherUstadz)->get(route('ustadz.exams.results', $this->exam))->assertForbidden();
+        $this->actingAs($this->otherUstadz)->get(route('ustadz.exams.monitor', $this->exam))->assertForbidden();
 
         $this->actingAs($this->ustadzUser);
         Livewire::test(ExamResults::class, ['exam' => $this->exam])->assertSee('Wudhu adalah')

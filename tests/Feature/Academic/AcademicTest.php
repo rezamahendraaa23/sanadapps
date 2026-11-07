@@ -228,6 +228,10 @@ describe('absensi', function () {
         $session = AttendanceSession::where('kind', 'sholat')->first();
         expect($session->records()->count())->toBe(2);
         $this->get(route('musyrif.attendance.session', $session))->assertOk();
+
+        $otherMusyrif = tap(User::create(['name' => 'Musyrif Lain', 'email' => 'm2@uji.test', 'type' => 'staff']))->assignRole('musyrif');
+        $this->actingAs($otherMusyrif)->get(route('musyrif.attendance.session', $session))->assertForbidden();
+        $this->actingAs($this->otherUser)->get(route('musyrif.attendance.session', $session))->assertForbidden();
     });
 
     it('kartu: belum pindai alpa; sebelum toleransi hadir, lewat toleransi terlambat; pindai ganda diabaikan', function () {
