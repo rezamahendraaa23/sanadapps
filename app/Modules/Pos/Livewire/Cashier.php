@@ -9,6 +9,7 @@ use App\Modules\Pos\Actions\VoidOrder;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Pos\Models\ProductCategory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -25,6 +26,9 @@ class Cashier extends Component
     public string $merchantUuid = '';
 
     public string $search = '';
+
+    #[Url(as: 'kategori', except: '')]
+    public string $category = '';
 
     public string $barcode = '';
 
@@ -74,6 +78,12 @@ class Cashier extends Component
     {
         $this->cartChanged();
         $this->cart = [];
+        $this->category = '';
+    }
+
+    public function pickCategory(string $uuid): void
+    {
+        $this->category = $this->category === $uuid ? '' : $uuid;
     }
 
     private function cartChanged(): void
@@ -251,16 +261,29 @@ class Cashier extends Component
         $inCart = $merchant && $this->cart !== [] ? MerchantProduct::query()->where('merchant_id', $merchant->id)->whereIn('uuid', array_keys($this->cart))->get()->keyBy('uuid') : collect();
         $lines = collect($this->cart)->map(fn (int $qty, string $uuid) => isset($inCart[$uuid]) ? ['product' => $inCart[$uuid], 'qty' => $qty, 'amount' => $inCart[$uuid]->price * $qty] : null)->filter();
 
+        $categories = $merchant
+            ? ProductCategory::query()->whereIn('id', MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)->whereNotNull('category_id')->select('category_id'))->orderBy('sort_order')->orderBy('name')->get()
+            : collect();
+        $categoryId = $categories->firstWhere('uuid', $this->category)?->id;
+        $today = $merchant
+            ? PosOrder::query()->where('merchant_id', $merchant->id)->where('status', '!=', 'void')->where('created_at', '>=', now(config('sanad.display_timezone'))->startOfDay()->utc())
+            : null;
+
         return view('pos.cashier', [
             'merchants' => $this->merchants(),
             'merchant' => $merchant,
+            'categories' => $categories,
             'products' => $merchant
                 ? MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)
+                    ->when($categoryId, fn ($query) => $query->where('category_id', $categoryId))
                     ->when($term !== '', fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%'))
                     ->orderBy('name')->limit(60)->get()
                 : collect(),
             'lines' => $lines,
             'total' => $lines->sum('amount'),
+            'itemCount' => $lines->sum('qty'),
+            'todayCount' => $today ? (clone $today)->count() : 0,
+            'todayTotal' => $today ? (int) (clone $today)->sum('total') : 0,
             'recent' => $merchant
                 ? PosOrder::query()->with('student:id,name')->where('merchant_id', $merchant->id)->where('created_at', '>=', now(config('sanad.display_timezone'))->startOfDay()->utc())->latest('id')->limit(8)->get()
                 : collect(),

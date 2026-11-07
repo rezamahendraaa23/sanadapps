@@ -159,6 +159,21 @@ test('kasir: kategori terlarang ditolak, stok berkurang, produk lain tetap bisa'
     await page.goto('/panel/kasir');
     await pageReady(page);
 
+    if (shots) {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.getByRole('button', { name: /Roti Uji/ }).click();
+        await page.getByRole('button', { name: 'Tambah Roti Uji' }).click();
+        await page.getByRole('button', { name: /Permen Uji/ }).click();
+        await expect(page.getByRole('button', { name: 'Kurangi Permen Uji' })).toBeVisible();
+        await page.screenshot({ path: `${shots}/kasir-keranjang-1440.png` });
+        await page.getByRole('button', { name: 'Bayar dengan Kartu atau QR' }).click();
+        await expect(page.getByLabel('Hasil pindai')).toBeFocused();
+        await page.screenshot({ path: `${shots}/kasir-tap-1440.png` });
+        await page.getByRole('dialog', { name: 'Tap kartu' }).getByRole('button', { name: 'Batal' }).click();
+        await page.getByRole('button', { name: 'Kosongkan' }).click();
+        await page.setViewportSize({ width: 1024, height: 768 });
+    }
+
     await page.getByRole('button', { name: /Permen Uji/ }).click();
     await pay(page, 'e2e-uid-t5');
     const result = page.getByRole('alertdialog', { name: 'Hasil pembayaran' });
