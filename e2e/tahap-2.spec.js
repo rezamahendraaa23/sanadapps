@@ -18,6 +18,7 @@ async function loginGuardian(page) {
     await page.getByLabel('Nomor WhatsApp').fill('081234567891');
     await page.getByRole('button', { name: 'Kirim Kode' }).click();
     await expect(page).toHaveURL(/masuk\/otp$/);
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     const code = [...readFileSync(LOG_FILE, 'utf8').matchAll(/OTP 6281234567891: (\d{6})/g)].at(-1)[1];
     await page.getByLabel('Kode OTP').fill(code);
     await page.getByRole('button', { name: 'Masuk' }).click();

@@ -11,16 +11,23 @@ use Illuminate\Support\Facades\DB;
  */
 final class SalesStats
 {
+    /** Nilai baris yang tidak diretur, setelah promo. */
+    private const KEPT_AMOUNT = '(pos_order_items.amount::numeric * (pos_order_items.qty - pos_order_items.returned_qty) / pos_order_items.qty)';
+
     /**
      * @param  list<int>  $merchantIds
-     * @return array{revenue: int, orders: int, commission: int, net: int, margin: int, margin_complete: bool}
+     *                                  Omzet sudah dikurangi retur; margin memakai harga setelah promo.
+     * @return array{revenue: int, orders: int, commission: int, net: int, margin: int, margin_complete: bool, cash: int, discount: int, returns: int}
      */
     public static function summary(array $merchantIds, string $from, string $to): array
     {
-        $row = self::orders($merchantIds, $from, $to)->selectRaw('COALESCE(SUM(total), 0) AS revenue, COUNT(*) AS orders, COALESCE(SUM(commission), 0) AS commission')->first();
+        $row = self::orders($merchantIds, $from, $to)
+            ->selectRaw('COALESCE(SUM(total - returned_amount), 0) AS revenue, COUNT(*) AS orders, COALESCE(SUM(commission), 0) AS commission')
+            ->selectRaw("COALESCE(SUM(CASE WHEN scan_method = 'cash' THEN total - returned_amount ELSE 0 END), 0) AS cash, COALESCE(SUM(discount), 0) AS discount, COALESCE(SUM(returned_amount), 0) AS returns")
+            ->first();
 
         $margin = self::items($merchantIds, $from, $to)
-            ->selectRaw('COALESCE(SUM(CASE WHEN pos_order_items.cost_price IS NOT NULL THEN (pos_order_items.unit_price - pos_order_items.cost_price) * pos_order_items.qty ELSE 0 END), 0) AS margin, COUNT(*) FILTER (WHERE pos_order_items.cost_price IS NULL) AS unknown')
+            ->selectRaw('COALESCE(SUM(CASE WHEN pos_order_items.cost_price IS NOT NULL THEN '.self::KEPT_AMOUNT.' - pos_order_items.cost_price * (pos_order_items.qty - pos_order_items.returned_qty) ELSE 0 END), 0) AS margin, COUNT(*) FILTER (WHERE pos_order_items.cost_price IS NULL) AS unknown')
             ->first();
 
         return [
@@ -28,8 +35,11 @@ final class SalesStats
             'orders' => (int) $row->orders,
             'commission' => (int) $row->commission,
             'net' => (int) $row->revenue - (int) $row->commission,
-            'margin' => (int) $margin->margin,
+            'margin' => (int) round((float) $margin->margin),
             'margin_complete' => (int) $margin->unknown === 0,
+            'cash' => (int) $row->cash,
+            'discount' => (int) $row->discount,
+            'returns' => (int) $row->returns,
         ];
     }
 
@@ -40,7 +50,7 @@ final class SalesStats
     public static function byProduct(array $merchantIds, string $from, string $to, int $limit = 50): Collection
     {
         return self::items($merchantIds, $from, $to)
-            ->selectRaw('pos_order_items.name, SUM(pos_order_items.qty) AS qty, SUM(pos_order_items.amount) AS amount')
+            ->selectRaw('pos_order_items.name, SUM(pos_order_items.qty - pos_order_items.returned_qty) AS qty, ROUND(SUM('.self::KEPT_AMOUNT.')) AS amount')
             ->groupBy('pos_order_items.name')->orderByDesc('amount')->limit($limit)->get();
     }
 
@@ -52,7 +62,7 @@ final class SalesStats
     {
         return self::items($merchantIds, $from, $to)
             ->leftJoin('product_categories', 'product_categories.id', '=', 'pos_order_items.category_id')
-            ->selectRaw("COALESCE(product_categories.name, 'Tanpa kategori') AS name, SUM(pos_order_items.qty) AS qty, SUM(pos_order_items.amount) AS amount")
+            ->selectRaw("COALESCE(product_categories.name, 'Tanpa kategori') AS name, SUM(pos_order_items.qty - pos_order_items.returned_qty) AS qty, ROUND(SUM(".self::KEPT_AMOUNT.')) AS amount')
             ->groupByRaw("COALESCE(product_categories.name, 'Tanpa kategori')")->orderByDesc('amount')->get();
     }
 
@@ -65,7 +75,7 @@ final class SalesStats
         $zone = DB::getPdo()->quote(config('sanad.display_timezone'));
 
         return self::orders($merchantIds, $from, $to)
-            ->selectRaw("EXTRACT(HOUR FROM pos_orders.created_at AT TIME ZONE {$zone})::int AS hour, COUNT(*) AS orders, SUM(total) AS amount")
+            ->selectRaw("EXTRACT(HOUR FROM pos_orders.created_at AT TIME ZONE {$zone})::int AS hour, COUNT(*) AS orders, SUM(total - returned_amount) AS amount")
             ->groupBy('hour')->orderBy('hour')->get();
     }
 
@@ -77,7 +87,7 @@ final class SalesStats
     {
         return self::orders($merchantIds, $from, $to)
             ->join('merchants', 'merchants.id', '=', 'pos_orders.merchant_id')
-            ->selectRaw('merchants.name, COUNT(*) AS orders, SUM(total) AS amount, SUM(commission) AS commission')
+            ->selectRaw('merchants.name, COUNT(*) AS orders, SUM(total - returned_amount) AS amount, SUM(commission) AS commission')
             ->groupBy('merchants.name')->orderByDesc('amount')->get();
     }
 

@@ -447,7 +447,7 @@ describe('laporan', function () {
 
         $summary = SalesStats::summary([$this->merchant->id], '2026-11-02', '2026-11-02');
 
-        expect($summary)->toBe(['revenue' => 15000, 'orders' => 2, 'commission' => 300, 'net' => 14700, 'margin' => 6000, 'margin_complete' => true])
+        expect($summary)->toBe(['revenue' => 15000, 'orders' => 2, 'commission' => 300, 'net' => 14700, 'margin' => 6000, 'margin_complete' => true, 'cash' => 0, 'discount' => 0, 'returns' => 0])
             ->and(SalesStats::byProduct([$this->merchant->id], '2026-11-02', '2026-11-02')->first()->name)->toBe('Roti')
             ->and((int) SalesStats::byProduct([$this->merchant->id], '2026-11-02', '2026-11-02')->first()->qty)->toBe(3);
 

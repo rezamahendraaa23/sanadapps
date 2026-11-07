@@ -36,10 +36,13 @@ class MerchantAdmin extends Component
 
     public bool $is_active = true;
 
+    /** Terima tunai untuk pembeli bukan santri (ustadz, tamu, wali berkunjung). */
+    public bool $accepts_cash = false;
+
     public function createMerchant(): void
     {
         abort_unless(auth()->user()->can('merchants.manage'), 403);
-        $this->reset('editingMerchant', 'name', 'type', 'location', 'commission_percent', 'pin_threshold', 'pic_user_id', 'cashiers', 'is_active');
+        $this->reset('editingMerchant', 'name', 'type', 'location', 'commission_percent', 'pin_threshold', 'pic_user_id', 'cashiers', 'is_active', 'accepts_cash');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-merchant');
     }
@@ -59,6 +62,7 @@ class MerchantAdmin extends Component
             'pic_user_id' => (string) $merchant->pic_user_id,
             'cashiers' => $merchant->cashiers->pluck('id')->map(fn ($id) => (string) $id)->all(),
             'is_active' => $merchant->is_active,
+            'accepts_cash' => in_array('cash', $merchant->payment_modes ?? [], true),
         ]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-merchant');
@@ -88,9 +92,11 @@ class MerchantAdmin extends Component
             'is_active' => $this->is_active,
         ];
 
-        $merchant = $this->editingMerchant
-            ? tap(Merchant::query()->findOrFail($this->editingMerchant))->update($data)
-            : Merchant::create($data + ['payment_modes' => ['card', 'qr']]);
+        $existing = $this->editingMerchant ? Merchant::query()->findOrFail($this->editingMerchant) : null;
+        $modes = array_values(array_diff($existing?->payment_modes ?? ['card', 'qr'], ['cash']));
+        $data['payment_modes'] = $this->accepts_cash ? [...$modes, 'cash'] : $modes;
+
+        $merchant = $existing ? tap($existing)->update($data) : Merchant::create($data);
 
         $merchant->cashiers()->sync($this->cashiers);
 

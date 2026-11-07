@@ -173,7 +173,7 @@ test('bendahara mencatat tunai; panitia memeriksa dokumen, menilai, menerima, me
     await modal.getByRole('button', { name: 'Proses Daftar Ulang' }).click();
     await expect(page.getByText('Sandi awal santri:')).toBeVisible();
     await page.getByRole('link', { name: 'Buka data santri' }).click();
-    await expect(page.locator('#konten').getByRole('heading', { name: 'Calon Uji' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Calon Uji', level: 1 })).toBeVisible();
 
     await page.setViewportSize({ width: 360, height: 640 });
     for (const url of ['/panel/ppdb/periode', '/panel/ppdb/pendaftar', '/panel/ppdb/seleksi']) {

@@ -23,7 +23,7 @@ class PosOrder extends Model
 
     protected function casts(): array
     {
-        return ['total' => 'integer', 'commission' => 'integer', 'voided_at' => 'immutable_datetime'];
+        return ['total' => 'integer', 'commission' => 'integer', 'paid_amount' => 'integer', 'change_amount' => 'integer', 'discount' => 'integer', 'returned_amount' => 'integer', 'voided_at' => 'immutable_datetime'];
     }
 
     public function merchant(): BelongsTo
@@ -51,9 +51,32 @@ class PosOrder extends Model
         return $this->belongsTo(WalletTransaction::class);
     }
 
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(PosShift::class, 'shift_id');
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PosReturn::class);
+    }
+
+    public function isCash(): bool
+    {
+        return $this->scan_method === 'cash';
+    }
+
+    public function buyerName(): string
+    {
+        return $this->student?->name ?? ($this->customer_name ?: 'Pembeli tunai');
+    }
+
+    /**
+     * Retur sebagian membuat pembatalan penuh tidak lagi masuk akal; sisa barang diretur satu per satu.
+     */
     public function canBeVoidedBy(User $user): bool
     {
-        if ($this->status !== 'paid') {
+        if ($this->status !== 'paid' || $this->returned_amount > 0) {
             return false;
         }
 

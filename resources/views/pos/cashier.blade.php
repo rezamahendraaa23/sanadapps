@@ -28,7 +28,16 @@
                     <p class="text-sm text-text-muted">Kasir: {{ auth()->user()->name }}</p>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                @if ($shift)
+                    <button type="button" x-on:click="$dispatch('open-modal', 'tutup-shift')" class="inline-flex min-h-11 items-center gap-2 rounded-full border border-success bg-success-soft px-4 text-sm font-semibold">
+                        <span class="size-2 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true"></span>Shift sejak {{ $shift->opened_at->setTimezone(config('sanad.display_timezone'))->format('H.i') }}<span class="text-text-muted">, Tutup Shift</span>
+                    </button>
+                @else
+                    <button type="button" x-on:click="$dispatch('open-modal', 'buka-shift')" class="inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-text-muted px-4 text-sm font-semibold hover:border-primary hover:bg-primary-soft">
+                        <x-ui.icon name="clock" size="sm" />Buka Shift
+                    </button>
+                @endif
                 <span class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm">
                     <x-ui.icon name="receipt-text" size="sm" class="text-primary" /><span class="font-tabular font-semibold">{{ $todayCount }}</span> transaksi
                 </span>
@@ -129,6 +138,9 @@
                                     <span class="min-w-0 flex-1">
                                         <span class="block text-base font-semibold break-words">{{ $line['product']->name }}</span>
                                         <span class="font-tabular block text-sm opacity-75">{{ $line['qty'] }} x {{ Rupiah::format($line['product']->price) }}</span>
+                                        @if ($line['discount'] > 0)
+                                            <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-text"><x-ui.icon name="tag" size="sm" />{{ $line['promo'] }}, hemat {{ Rupiah::format($line['discount']) }}</span>
+                                        @endif
                                     </span>
                                     <span class="flex shrink-0 items-center rounded-full bg-on-primary/10 p-1">
                                         <button type="button" wire:click="decrease('{{ $uuid }}')" class="inline-flex size-11 items-center justify-center rounded-full hover:bg-on-primary/15" aria-label="Kurangi {{ $line['product']->name }}"><x-ui.icon name="minus" size="sm" /></button>
@@ -146,6 +158,9 @@
                         </div>
 
                         <div class="relative px-5 pb-5">
+                            @if ($discount > 0)
+                                <p class="font-tabular mb-1 text-right text-sm font-semibold opacity-80">Hemat {{ Rupiah::format($discount) }}</p>
+                            @endif
                             <div class="flex items-end justify-between gap-3">
                                 <span class="text-sm font-semibold opacity-75">Total</span>
                                 <span class="font-display font-tabular text-hero font-semibold">{{ Rupiah::format($total) }}</span>
@@ -153,6 +168,11 @@
                             <button type="button" wire:click="startPayment" wire:loading.attr="disabled" wire:target="startPayment" class="font-display mt-4 inline-flex min-h-16 w-full items-center justify-center gap-2 rounded-control bg-accent-soft text-lg font-semibold text-text shadow-md transition-transform hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-on-primary/40 motion-safe:active:scale-[0.98]">
                                 <x-ui.icon name="nfc" />Bayar dengan Kartu atau QR
                             </button>
+                            @if ($acceptsCash)
+                                <button type="button" wire:click="startCash" class="mt-2 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control border border-on-primary/30 font-semibold hover:bg-on-primary/10">
+                                    <x-ui.icon name="banknote" />Bayar Tunai
+                                </button>
+                            @endif
                             <button type="button" wire:click="removeAll" class="mt-2 min-h-11 w-full rounded-control text-sm font-semibold opacity-80 hover:bg-on-primary/10 hover:opacity-100">Kosongkan</button>
                         </div>
                     @endif
@@ -162,13 +182,14 @@
                     <h2 class="mb-1 flex items-center gap-2 text-base font-semibold"><x-ui.icon name="history" size="sm" class="text-text-muted" />Transaksi hari ini</h2>
                     @forelse ($recent as $order)
                         <div wire:key="order-{{ $order->uuid }}" class="flex items-center gap-3 border-b border-border py-2 last:border-b-0">
-                            <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($order->student->name, 0, 1)) }}</span>
+                            <span @class(['inline-flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold', 'bg-primary-soft text-primary' => ! $order->isCash(), 'bg-accent-soft text-accent' => $order->isCash()]) aria-hidden="true">@if ($order->isCash())<x-ui.icon name="banknote" size="sm" />@else{{ mb_strtoupper(mb_substr($order->buyerName(), 0, 1)) }}@endif</span>
                             <span class="min-w-0 flex-1">
-                                <span class="block text-sm font-semibold break-words">{{ $order->student->name }}</span>
+                                <span class="block text-sm font-semibold break-words">{{ $order->buyerName() }}</span>
                                 <span class="font-tabular block text-xs text-text-muted">{{ $order->receipt_no }}, {{ $order->created_at->setTimezone(config('sanad.display_timezone'))->format('H.i') }}</span>
                             </span>
                             <span class="shrink-0 text-right">
                                 <span @class(['font-tabular block text-sm font-semibold', 'line-through text-text-muted' => $order->status === 'void'])>{{ Rupiah::format($order->total) }}</span>
+                                <a href="{{ route('staff.pos.receipt', $order) }}" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center px-1 text-xs font-semibold text-primary hover:underline">Struk<span class="sr-only"> {{ $order->receipt_no }}</span></a>
                                 @if ($order->status === 'void')
                                     <span class="text-xs text-text-muted">Dibatalkan</span>
                                 @elseif ($order->canBeVoidedBy(auth()->user()))
@@ -228,7 +249,7 @@
         </div>
     @elseif ($stage === 'result' && $result)
         <div role="alertdialog" aria-modal="true" aria-label="Hasil pembayaran" @class(['fixed inset-0 z-100 flex flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center', 'bg-success-soft' => $result['ok'], 'bg-danger-soft' => ! $result['ok']])
-            @if ($result['ok']) x-data x-init="setTimeout(() => $wire.backToCart(), 3000)" @endif>
+            @if ($result['ok'] && ! isset($result['change'])) x-data x-init="setTimeout(() => $wire.backToCart(), 3000)" @endif>
             <span @class(['relative inline-flex size-28 items-center justify-center rounded-full text-on-primary shadow-lg', 'bg-success' => $result['ok'], 'bg-danger' => ! $result['ok']])>
                 @if ($result['ok'])<span class="absolute inset-0 rounded-full bg-success opacity-40 motion-safe:animate-ping" aria-hidden="true"></span>@endif
                 <x-ui.icon :name="$result['ok'] ? 'check' : 'x'" size="xl" class="relative" />
@@ -239,7 +260,12 @@
             @endif
             <p @class(['text-2xl font-semibold', 'rounded-full bg-surface px-5 py-2 shadow-sm' => $result['ok']])>{{ $result['message'] }}</p>
             @if ($result['ok'])
-                <x-ui.button variant="secondary" wire:click="backToCart">Transaksi Baru</x-ui.button>
+                <div class="flex flex-wrap justify-center gap-2">
+                    @if (! empty($result['receipt']))
+                        <x-ui.button icon="printer" :href="route('staff.pos.receipt', $result['receipt'])" target="_blank">Cetak Struk</x-ui.button>
+                    @endif
+                    <x-ui.button variant="secondary" wire:click="backToCart">Transaksi Baru</x-ui.button>
+                </div>
             @else
                 <div class="flex flex-wrap justify-center gap-2">
                     <x-ui.button wire:click="backToTap">Coba Lagi</x-ui.button>
@@ -247,6 +273,60 @@
                 </div>
             @endif
         </div>
+    @endif
+
+    <x-ui.modal name="buka-shift" title="Buka shift">
+        <p class="mb-3 text-base">Hitung uang di laci sebelum mulai berjualan.</p>
+        <x-ui.input-rupiah label="Modal awal di laci" name="openingCash" wire:model="openingCash" />
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button wire:click="openShift" wire:loading.attr="disabled" wire:target="openShift">Buka Shift</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
+
+    @if ($shift && $shiftTotals)
+        <x-ui.modal name="tutup-shift" title="Tutup shift">
+            <dl class="mb-4 grid grid-cols-2 gap-3">
+                <div class="rounded-control bg-bg p-3"><dt class="text-xs text-text-muted">Transaksi</dt><dd class="font-tabular text-lg font-semibold">{{ $shiftTotals['order_count'] }}</dd></div>
+                <div class="rounded-control bg-bg p-3"><dt class="text-xs text-text-muted">Kartu dan QR</dt><dd class="font-tabular text-lg font-semibold">{{ Rupiah::format($shiftTotals['card_sales']) }}</dd></div>
+                <div class="rounded-control bg-bg p-3"><dt class="text-xs text-text-muted">Penjualan tunai</dt><dd class="font-tabular text-lg font-semibold">{{ Rupiah::format($shiftTotals['cash_sales']) }}</dd></div>
+                <div class="rounded-control bg-primary-soft p-3"><dt class="text-xs text-text-muted">Seharusnya di laci</dt><dd class="font-tabular text-lg font-semibold">{{ Rupiah::format($shiftTotals['expected_cash']) }}</dd></div>
+            </dl>
+            <div class="flex flex-col gap-3">
+                <x-ui.input-rupiah label="Uang di laci sekarang" name="countedCash" required help="Hitung fisik. Selisih dicatat, tidak dibetulkan otomatis." wire:model="countedCash" />
+                <x-ui.input label="Catatan" name="shiftNote" wire:model="shiftNote" />
+            </div>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+                <x-ui.button wire:click="closeShift" wire:loading.attr="disabled" wire:target="closeShift">Tutup Shift</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endif
+
+    @if ($acceptsCash)
+        <x-ui.modal name="bayar-tunai" title="Bayar tunai">
+            <div class="flex flex-col gap-3" x-data="{ total: {{ (int) $total }}, get paid() { return Number(String($wire.cashPaid ?? '').replace(/\D/g, '')) || 0 } }">
+                <p class="font-display font-tabular text-center text-3xl font-semibold">{{ Rupiah::format($total) }}</p>
+                <x-ui.input-rupiah label="Uang diterima" name="cashPaid" required wire:model.live="cashPaid" />
+                <div class="flex flex-wrap gap-2" role="group" aria-label="Uang cepat">
+                    <button type="button" class="min-h-11 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary" x-on:click="$wire.cashPaid = String(total)">Uang pas</button>
+                    @foreach ([10000, 20000, 50000, 100000] as $note)
+                        @if ($note > $total)
+                            <button type="button" class="font-tabular min-h-11 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary" x-on:click="$wire.cashPaid = '{{ $note }}'">{{ Rupiah::format($note) }}</button>
+                        @endif
+                    @endforeach
+                </div>
+                <p class="flex items-center justify-between rounded-control bg-bg p-3 text-base font-semibold" aria-live="polite">
+                    <span>Kembalian</span>
+                    <span class="font-tabular text-xl" x-text="paid >= total ? 'Rp ' + (paid - total).toLocaleString('id-ID') : 'Uang kurang'"></span>
+                </p>
+                <x-ui.input label="Nama pembeli" name="customerName" help="Tidak wajib. Misalnya Ustadz Ahmad atau tamu." wire:model="customerName" />
+            </div>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+                <x-ui.button icon="banknote" wire:click="payCash" wire:loading.attr="disabled" wire:target="payCash">Terima Pembayaran</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
     @endif
 
     <x-ui.modal name="batal-transaksi" title="Batalkan transaksi?">

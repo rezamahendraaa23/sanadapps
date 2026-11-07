@@ -5,11 +5,14 @@ namespace App\Modules\Pos\Livewire;
 use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Finance\Support\Rupiah;
 use App\Modules\Pos\Actions\CheckoutOrder;
+use App\Modules\Pos\Actions\ManageShift;
 use App\Modules\Pos\Actions\VoidOrder;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Pos\Models\PosPromotion;
 use App\Modules\Pos\Models\ProductCategory;
+use App\Modules\Wallet\Support\WalletException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -50,11 +53,21 @@ class Cashier extends Component
     #[Locked]
     public ?string $pinMessage = null;
 
-    /** @var array{ok: bool, message: string, name?: string}|null */
+    /** @var array{ok: bool, message: string, name?: string, receipt?: string, change?: int}|null */
     #[Locked]
     public ?array $result = null;
 
     public string $voidReason = '';
+
+    public string $openingCash = '';
+
+    public string $countedCash = '';
+
+    public string $shiftNote = '';
+
+    public string $cashPaid = '';
+
+    public string $customerName = '';
 
     #[Locked]
     public ?string $voidTarget = null;
@@ -206,7 +219,7 @@ class Cashier extends Component
         $this->stage = 'result';
 
         if ($result->ok) {
-            $this->result = ['ok' => true, 'message' => 'Sisa saldo '.Rupiah::format((int) $result->balance), 'name' => $result->order->student->name];
+            $this->result = ['ok' => true, 'message' => 'Sisa saldo '.Rupiah::format((int) $result->balance), 'name' => $result->order->student->name, 'receipt' => $result->order->uuid];
             $this->cart = [];
             $this->reset('checkoutKey', 'credential', 'pinMessage');
 
@@ -215,6 +228,85 @@ class Cashier extends Component
 
         $this->result = ['ok' => false, 'message' => $result->message];
         $this->reset('credential', 'pinMessage');
+    }
+
+    public function openShift(ManageShift $shifts): void
+    {
+        $merchant = $this->merchant();
+        abort_if($merchant === null, 403);
+        $this->resetErrorBag();
+
+        try {
+            $shifts->open($merchant, auth()->user(), (int) preg_replace('/\D/', '', $this->openingCash));
+        } catch (WalletException $exception) {
+            $this->addError('openingCash', $exception->getMessage());
+
+            return;
+        }
+
+        $this->reset('openingCash');
+        $this->dispatch('close-modal', 'buka-shift');
+        $this->dispatch('toast', message: 'Shift dibuka.', tone: 'success');
+    }
+
+    public function closeShift(ManageShift $shifts): void
+    {
+        $merchant = $this->merchant();
+        $shift = $merchant ? ManageShift::current($merchant, auth()->user()) : null;
+        abort_if($shift === null, 404);
+        $this->resetErrorBag();
+
+        if (preg_replace('/\D/', '', $this->countedCash) === '') {
+            $this->addError('countedCash', 'Isi jumlah uang di laci.');
+
+            return;
+        }
+
+        $closed = $shifts->close($shift, auth()->user(), (int) preg_replace('/\D/', '', $this->countedCash), $this->shiftNote);
+        $this->reset('countedCash', 'shiftNote');
+        $this->dispatch('close-modal', 'tutup-shift');
+        $difference = (int) $closed->difference();
+        $this->dispatch('toast', message: $difference === 0 ? 'Shift ditutup. Uang cocok.' : 'Shift ditutup. Selisih '.($difference > 0 ? 'lebih ' : 'kurang ').Rupiah::format(abs($difference)).'.', tone: $difference === 0 ? 'success' : 'warning');
+    }
+
+    public function startCash(): void
+    {
+        if ($this->cart === [] || ! in_array('cash', $this->merchant()?->payment_modes ?? [], true)) {
+            return;
+        }
+
+        $this->checkoutKey ??= (string) Str::uuid();
+        $this->reset('cashPaid', 'customerName');
+        $this->resetErrorBag();
+        $this->dispatch('open-modal', 'bayar-tunai');
+    }
+
+    public function payCash(CheckoutOrder $checkout): void
+    {
+        $merchant = $this->merchant();
+        abort_if($merchant === null, 403);
+        $this->resetErrorBag();
+        $this->validate(['customerName' => 'nullable|string|max:100'], [], ['customerName' => 'nama pembeli']);
+
+        $ids = MerchantProduct::query()->where('merchant_id', $merchant->id)->whereIn('uuid', array_keys($this->cart))->pluck('id', 'uuid');
+        $lines = [];
+        foreach ($this->cart as $uuid => $qty) {
+            $lines[$ids[$uuid] ?? 0] = $qty;
+        }
+
+        try {
+            $order = $checkout->cash($merchant, $lines, (int) preg_replace('/\D/', '', $this->cashPaid), $this->customerName, (string) ($this->checkoutKey ??= (string) Str::uuid()), auth()->id());
+        } catch (WalletException $exception) {
+            $this->addError('cashPaid', $exception->getMessage());
+
+            return;
+        }
+
+        $this->dispatch('close-modal', 'bayar-tunai');
+        $this->stage = 'result';
+        $this->result = ['ok' => true, 'message' => 'Kembalian '.Rupiah::format((int) $order->change_amount), 'name' => $order->buyerName(), 'receipt' => $order->uuid, 'change' => (int) $order->change_amount];
+        $this->cart = [];
+        $this->reset('checkoutKey', 'credential', 'pinMessage', 'cashPaid', 'customerName');
     }
 
     public function backToTap(): void
@@ -259,7 +351,16 @@ class Cashier extends Component
         $merchant = $this->merchant();
         $term = trim($this->search);
         $inCart = $merchant && $this->cart !== [] ? MerchantProduct::query()->where('merchant_id', $merchant->id)->whereIn('uuid', array_keys($this->cart))->get()->keyBy('uuid') : collect();
-        $lines = collect($this->cart)->map(fn (int $qty, string $uuid) => isset($inCart[$uuid]) ? ['product' => $inCart[$uuid], 'qty' => $qty, 'amount' => $inCart[$uuid]->price * $qty] : null)->filter();
+        $promotions = $merchant ? PosPromotion::query()->where('merchant_id', $merchant->id)->runningOn(now(config('sanad.display_timezone'))->toDateString())->get() : collect();
+        $lines = collect($this->cart)->map(function (int $qty, string $uuid) use ($inCart, $promotions) {
+            if (! isset($inCart[$uuid])) {
+                return null;
+            }
+            [$discount, $promotionId] = CheckoutOrder::bestPromotion($promotions, $inCart[$uuid], $qty);
+
+            return ['product' => $inCart[$uuid], 'qty' => $qty, 'discount' => $discount, 'promo' => $promotionId ? $promotions->firstWhere('id', $promotionId)?->name : null, 'amount' => $inCart[$uuid]->price * $qty - $discount];
+        })->filter();
+        $shift = $merchant ? ManageShift::current($merchant, auth()->user()) : null;
 
         $categories = $merchant
             ? ProductCategory::query()->whereIn('id', MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)->whereNotNull('category_id')->select('category_id'))->orderBy('sort_order')->orderBy('name')->get()
@@ -281,6 +382,11 @@ class Cashier extends Component
                 : collect(),
             'lines' => $lines,
             'total' => $lines->sum('amount'),
+            'discount' => $lines->sum('discount'),
+            'promotions' => $promotions,
+            'shift' => $shift,
+            'shiftTotals' => $shift ? ManageShift::totals($shift) : null,
+            'acceptsCash' => in_array('cash', $merchant?->payment_modes ?? [], true),
             'itemCount' => $lines->sum('qty'),
             'todayCount' => $today ? (clone $today)->count() : 0,
             'todayTotal' => $today ? (int) (clone $today)->sum('total') : 0,

@@ -32,8 +32,8 @@ class VoidOrder
         }
 
         DB::transaction(function () use ($order, $reason, $user): void {
-            $walletId = $order->walletTransaction()->value('wallet_id');
-            $wallet = $this->ledger->lock($walletId);
+            // Tunai: uang dikembalikan langsung oleh kasir, jadi hanya stok dan status yang berubah.
+            $wallet = $order->isCash() ? null : $this->ledger->lock($order->walletTransaction()->value('wallet_id'));
             $items = $order->items()->whereNotNull('product_id')->get();
             $products = MerchantProduct::query()->whereIn('id', $items->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $merchant = Merchant::query()->whereKey($order->merchant_id)->lockForUpdate()->firstOrFail();
@@ -43,26 +43,28 @@ class VoidOrder
                 throw new WalletException('Transaksi ini sudah dibatalkan.');
             }
 
-            $net = $locked->total - $locked->commission;
+            if ($wallet !== null) {
+                $net = $locked->total - $locked->commission;
 
-            if ($merchant->balance() < $net) {
-                throw new WalletException('Saldo merchant sudah disalurkan. Selesaikan lewat penyesuaian oleh bendahara.');
+                if ($merchant->balance() < $net) {
+                    throw new WalletException('Saldo merchant sudah disalurkan. Selesaikan lewat penyesuaian oleh bendahara.');
+                }
+
+                $this->ledger->post($wallet, 'refund', 'credit', $locked->total, [
+                    'ref_type' => 'pos_order',
+                    'ref_id' => $locked->id,
+                    'merchant_id' => $locked->merchant_id,
+                    'idempotency_key' => 'void:'.$locked->id,
+                    'note' => trim($reason),
+                    'created_by' => $user->id,
+                ]);
+
+                if ($locked->commission > 0) {
+                    MerchantLedgerEntry::post($merchant, 'commission', $locked->commission, 'pos_order', $locked->id, 'Pembatalan');
+                }
+
+                MerchantLedgerEntry::post($merchant, 'refund', -$locked->total, 'pos_order', $locked->id, trim($reason));
             }
-
-            $this->ledger->post($wallet, 'refund', 'credit', $locked->total, [
-                'ref_type' => 'pos_order',
-                'ref_id' => $locked->id,
-                'merchant_id' => $locked->merchant_id,
-                'idempotency_key' => 'void:'.$locked->id,
-                'note' => trim($reason),
-                'created_by' => $user->id,
-            ]);
-
-            if ($locked->commission > 0) {
-                MerchantLedgerEntry::post($merchant, 'commission', $locked->commission, 'pos_order', $locked->id, 'Pembatalan');
-            }
-
-            MerchantLedgerEntry::post($merchant, 'refund', -$locked->total, 'pos_order', $locked->id, trim($reason));
 
             foreach ($items as $item) {
                 $product = $products[$item->product_id] ?? null;

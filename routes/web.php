@@ -118,12 +118,16 @@ use App\Modules\Payment\Livewire\Reconciliation;
 use App\Modules\Pos\Livewire\Cashier;
 use App\Modules\Pos\Livewire\CatalogImport;
 use App\Modules\Pos\Livewire\MerchantAdmin;
+use App\Modules\Pos\Livewire\OrderHistory;
 use App\Modules\Pos\Livewire\PayoutQueue;
 use App\Modules\Pos\Livewire\ProductCatalog;
+use App\Modules\Pos\Livewire\Promotions;
+use App\Modules\Pos\Livewire\Purchasing;
 use App\Modules\Pos\Livewire\SalesReport;
 use App\Modules\Pos\Livewire\StockScreen;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
+use App\Modules\Pos\Models\PosOrder;
 use App\Modules\Pos\Support\SalesStats;
 use App\Modules\Tahfidz\Livewire\MutabaahVerify;
 use App\Modules\Tahfidz\Livewire\SetoranForm;
@@ -146,6 +150,7 @@ use App\Modules\Wallet\Models\CardScan;
 use App\Modules\Wallet\Models\Device;
 use App\Modules\Wallet\Models\StudentCard;
 use App\Support\Pdf\PdfRenderer;
+use App\Support\SchoolIdentity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -422,6 +427,15 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
     Route::middleware('module:pos')->group(function (): void {
         Route::get('/kasir', Cashier::class)->middleware('can:pos.operate')->name('pos.index');
+        Route::get('/kasir/struk/{order}', function (PosOrder $order, Request $request, SchoolIdentity $identity) {
+            abort_unless(Merchant::query()->accessibleBy($request->user())->whereKey($order->merchant_id)->exists(), 403);
+
+            return view('pos.receipt', [
+                'order' => $order->load(['merchant', 'items', 'cashier:id,name', 'student:id,name', 'walletTransaction']),
+                'identity' => $identity,
+                'width' => (int) $request->query('lebar') === 80 ? 80 : 58,
+            ]);
+        })->name('pos.receipt');
         Route::get('/pencairan', PayoutQueue::class)->middleware('can:payouts.approve')->name('payouts.index');
 
         Route::prefix('merchant')->name('merchants.')->middleware('can:merchants.access')->group(function (): void {
@@ -473,6 +487,9 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
                 ]);
             })->name('pricelist');
             Route::get('/{merchant}/stok', StockScreen::class)->name('stock');
+            Route::get('/{merchant}/pembelian', Purchasing::class)->name('purchases');
+            Route::get('/{merchant}/promo', Promotions::class)->name('promotions');
+            Route::get('/{merchant}/transaksi', OrderHistory::class)->name('orders');
             Route::get('/{merchant}/laporan', SalesReport::class)->name('report');
         });
     });

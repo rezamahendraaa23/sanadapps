@@ -13,7 +13,7 @@ use Symfony\Component\Process\Process;
  */
 function backupTestEnv(): array
 {
-    return ['APP_ENV' => 'testing', 'DB_CONNECTION' => 'pgsql', 'DB_DATABASE' => getenv('CONCURRENCY_DB') ?: 'sanad_concurrency', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array'];
+    return ['APP_ENV' => 'testing', 'DB_CONNECTION' => 'pgsql', 'DB_DATABASE' => getenv('BACKUP_TEST_DB') ?: 'sanad_backup_test', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array'];
 }
 
 beforeEach(function () {
@@ -22,6 +22,11 @@ beforeEach(function () {
         $this->markTestSkipped('pg_dump tidak tersedia.');
     }
 
+    // Database sendiri: test konkurensi juga menjalankan migrate:fresh dan bisa berjalan bersamaan.
+    $database = backupTestEnv()['DB_DATABASE'];
+    if (! DB::connection('pgsql')->selectOne('select 1 as ok from pg_database where datname = ?', [$database])) {
+        DB::connection('pgsql')->statement('CREATE DATABASE "'.$database.'"');
+    }
     (new Process([(new PhpExecutableFinder)->find(), base_path('artisan'), 'migrate:fresh', '--force'], base_path(), backupTestEnv(), null, 120))->mustRun();
     config(['database.connections.pgsql.database' => backupTestEnv()['DB_DATABASE'], 'sanad.backup.path' => sys_get_temp_dir().'/sanad-backup-test-'.getmypid(), 'sanad.backup.disk' => null]);
     DB::purge('pgsql');

@@ -63,6 +63,7 @@
                         <p class="text-sm text-text-muted">Belum ada pengguna ber-role kasir. Tambahkan di Pengguna &amp; Role.</p>
                     @endforelse
                 </fieldset>
+                <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="accepts_cash" class="size-5 accent-primary">Terima tunai untuk pembeli bukan santri</label>
                 <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="is_active" class="size-5 accent-primary">Aktif</label>
             </div>
             <x-slot:footer>

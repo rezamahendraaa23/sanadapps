@@ -31,6 +31,9 @@
                 <div class="flex justify-between gap-3"><dt class="text-text-muted">Komisi pesantren</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['commission']) }}</dd></div>
                 <div class="flex justify-between gap-3"><dt class="text-text-muted">Bagian merchant</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['net']) }}</dd></div>
                 <div class="flex justify-between gap-3"><dt class="text-text-muted">Margin</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['margin']) }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-text-muted">Tunai (dipegang merchant)</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['cash']) }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-text-muted">Potongan promo</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['discount']) }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-text-muted">Retur</dt><dd class="font-tabular font-semibold">{{ Rupiah::format($summary['returns']) }}</dd></div>
             </dl>
             @unless ($summary['margin_complete'])
                 <p class="mt-2 text-sm text-text-muted">Margin belum lengkap: ada produk terjual tanpa harga modal.</p>

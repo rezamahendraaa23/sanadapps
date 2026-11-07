@@ -9,6 +9,8 @@ use App\Modules\Pos\Models\MerchantLedgerEntry;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
 use App\Modules\Pos\Models\PosOrderItem;
+use App\Modules\Pos\Models\PosPromotion;
+use App\Modules\Pos\Models\PosShift;
 use App\Modules\Wallet\Actions\RecordScan;
 use App\Modules\Wallet\Actions\WalletLedger;
 use App\Modules\Wallet\Events\WalletSpent;
@@ -18,6 +20,7 @@ use App\Modules\Wallet\Models\WalletMerchantLimit;
 use App\Modules\Wallet\Support\CardResolver;
 use App\Modules\Wallet\Support\ChargeResult;
 use App\Modules\Wallet\Support\QrToken;
+use App\Modules\Wallet\Support\WalletException;
 use App\Modules\Wallet\Support\WalletSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -107,6 +110,82 @@ class CheckoutOrder
 
             return $this->record($merchant, $items, $total, $products, $card, $wallet, $resolved['method'], $key, $cashierId, $deviceId);
         });
+    }
+
+    /**
+     * Penjualan tunai untuk ustadz, tamu, atau wali yang berkunjung. Uang dipegang merchant, jadi
+     * tidak ada potongan dompet, kredit buku besar merchant, maupun komisi.
+     *
+     * @param  array<int, int>  $lines
+     */
+    public function cash(Merchant $merchant, array $lines, int $paid, ?string $customerName, string $key, int $cashierId): PosOrder
+    {
+        if (($previous = PosOrder::query()->where('idempotency_key', $key)->first()) !== null) {
+            return $previous;
+        }
+
+        if (! in_array('cash', $merchant->payment_modes ?? [], true)) {
+            throw new WalletException('Merchant ini belum menerima pembayaran tunai.');
+        }
+
+        return DB::transaction(function () use ($merchant, $lines, $paid, $customerName, $key, $cashierId): PosOrder {
+            $priced = $this->price($merchant, $lines, null);
+
+            if ($priced === null) {
+                throw new WalletException('Keranjang tidak valid. Muat ulang daftar produk.');
+            }
+
+            if (is_string($priced)) {
+                throw new WalletException($priced);
+            }
+
+            [$items, $total, $products] = $priced;
+
+            if ($paid < $total) {
+                throw new WalletException('Uang yang diterima kurang dari total ('.Rupiah::format($total).').');
+            }
+
+            $order = PosOrder::create([
+                'merchant_id' => $merchant->id,
+                'receipt_no' => DocumentNumber::next('ST'),
+                'cashier_user_id' => $cashierId,
+                'shift_id' => $this->openShift($merchant->id, $cashierId),
+                'customer_name' => filled($customerName) ? trim((string) $customerName) : null,
+                'total' => $total,
+                'discount' => array_sum(array_column($items, 'discount')),
+                'commission' => 0,
+                'scan_method' => 'cash',
+                'paid_amount' => $paid,
+                'change_amount' => $paid - $total,
+                'idempotency_key' => $key,
+            ]);
+
+            $this->storeItems($order, $items, $products, $cashierId);
+
+            return $order;
+        });
+    }
+
+    private function openShift(int $merchantId, ?int $cashierId): ?int
+    {
+        return $cashierId === null ? null : PosShift::query()->where('merchant_id', $merchantId)->where('cashier_user_id', $cashierId)->whereNull('closed_at')->value('id');
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $items
+     * @param  Collection<int, MerchantProduct>  $products
+     */
+    private function storeItems(PosOrder $order, array $items, Collection $products, ?int $cashierId): void
+    {
+        foreach ($items as $item) {
+            PosOrderItem::create([...$item, 'pos_order_id' => $order->id]);
+
+            $product = $products[$item['product_id']] ?? null;
+
+            if ($product?->stock !== null) {
+                $this->stock->move($product, 'sale', -$item['qty'], null, $cashierId, 'pos_order', $order->id);
+            }
+        }
     }
 
     /**
@@ -248,11 +327,12 @@ class CheckoutOrder
     {
         if ($lines === []) {
             return $amount !== null && $amount > 0
-                ? [[['product_id' => null, 'category_id' => null, 'cost_price' => null, 'name' => 'Belanja', 'qty' => 1, 'unit_price' => $amount, 'amount' => $amount]], $amount, collect()]
+                ? [[['product_id' => null, 'category_id' => null, 'cost_price' => null, 'name' => 'Belanja', 'qty' => 1, 'unit_price' => $amount, 'discount' => 0, 'promotion_id' => null, 'amount' => $amount]], $amount, collect()]
                 : null;
         }
 
         $products = MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)->whereIn('id', array_keys($lines))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+        $promotions = PosPromotion::query()->where('merchant_id', $merchant->id)->runningOn(now(config('sanad.display_timezone'))->toDateString())->get();
         $items = [];
 
         foreach ($lines as $productId => $qty) {
@@ -266,6 +346,8 @@ class CheckoutOrder
                 return "Stok {$product->name} tinggal {$product->stock}.";
             }
 
+            [$discount, $promotionId] = self::bestPromotion($promotions, $product, $qty);
+
             $items[] = [
                 'product_id' => $product->id,
                 'category_id' => $product->category_id,
@@ -273,13 +355,34 @@ class CheckoutOrder
                 'name' => $product->name,
                 'qty' => $qty,
                 'unit_price' => $product->price,
-                'amount' => $product->price * $qty,
+                'discount' => $discount,
+                'promotion_id' => $promotionId,
+                'amount' => $product->price * $qty - $discount,
             ];
         }
 
         $total = array_sum(array_column($items, 'amount'));
 
         return $total > 0 ? [$items, $total, $products] : null;
+    }
+
+    /**
+     * Potongan terbesar dari promo yang berlaku; promo tidak ditumpuk.
+     *
+     * @param  Collection<int, PosPromotion>  $promotions
+     * @return array{0: int, 1: int|null}
+     */
+    public static function bestPromotion(Collection $promotions, MerchantProduct $product, int $qty): array
+    {
+        $best = [0, null];
+
+        foreach ($promotions as $promotion) {
+            if ($promotion->appliesTo($product) && ($discount = $promotion->discountFor($product->price, $qty)) > $best[0]) {
+                $best = [$discount, $promotion->id];
+            }
+        }
+
+        return $best;
     }
 
     /**
@@ -295,23 +398,17 @@ class CheckoutOrder
             'merchant_id' => $lockedMerchant->id,
             'receipt_no' => DocumentNumber::next('ST'),
             'cashier_user_id' => $cashierId,
+            'shift_id' => $this->openShift($lockedMerchant->id, $cashierId),
             'device_id' => $deviceId,
             'student_id' => $card->student_id,
             'total' => $total,
+            'discount' => array_sum(array_column($items, 'discount')),
             'commission' => $commission,
             'scan_method' => $method,
             'idempotency_key' => $key,
         ]);
 
-        foreach ($items as $item) {
-            PosOrderItem::create([...$item, 'pos_order_id' => $order->id]);
-
-            $product = $products[$item['product_id']] ?? null;
-
-            if ($product?->stock !== null) {
-                $this->stock->move($product, 'sale', -$item['qty'], null, $cashierId, 'pos_order', $order->id);
-            }
-        }
+        $this->storeItems($order, $items, $products, $cashierId);
 
         $scan = $this->scan->handle($card, $deviceId, 'canteen', 'ok', null, 'pos_order', $order->id);
 

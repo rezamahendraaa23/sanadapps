@@ -12,6 +12,6 @@ class PosOrderItem extends Model
 
     protected function casts(): array
     {
-        return ['qty' => 'integer', 'unit_price' => 'integer', 'amount' => 'integer'];
+        return ['qty' => 'integer', 'unit_price' => 'integer', 'amount' => 'integer', 'discount' => 'integer', 'returned_qty' => 'integer', 'cost_price' => 'integer'];
     }
 }
