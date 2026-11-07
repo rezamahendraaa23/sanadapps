@@ -89,6 +89,14 @@ use App\Modules\Pos\Livewire\StockScreen;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Support\SalesStats;
+use App\Modules\Tahfidz\Livewire\MutabaahVerify;
+use App\Modules\Tahfidz\Livewire\SetoranForm;
+use App\Modules\Tahfidz\Livewire\StudentTahfidz;
+use App\Modules\Tahfidz\Livewire\TahfidzAdmin;
+use App\Modules\Tahfidz\Models\QuranSurah;
+use App\Modules\Tahfidz\Models\TahfidzRecord;
+use App\Modules\Tahfidz\Support\TahfidzProgress;
+use App\Modules\Tahfidz\Support\TahfidzRecap;
 use App\Modules\Wallet\Actions\BuildCardsPdf;
 use App\Modules\Wallet\Livewire\CardAdmin;
 use App\Modules\Wallet\Livewire\DeviceAdmin;
@@ -243,6 +251,30 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         })->name('photo');
     });
 
+    Route::prefix('tahfidz')->name('tahfidz.')->middleware('module:tahfidz')->group(function (): void {
+        Route::get('/', SetoranForm::class)->middleware('can:tahfidz.input')->name('index');
+        Route::get('/mutabaah', MutabaahVerify::class)->middleware('can:tahfidz.input')->name('mutabaah');
+        Route::middleware('can:tahfidz.manage')->group(function (): void {
+            Route::get('/kelola', TahfidzAdmin::class)->name('admin');
+            Route::get('/rekap/ekspor', function (Request $request) {
+                $from = TahfidzRecap::date($request->query('dari')) ?? now()->startOfMonth()->toDateString();
+                $to = TahfidzRecap::date($request->query('sampai')) ?? now()->toDateString();
+                $rows = TahfidzRecap::rows($request->filled('kelas') ? $request->integer('kelas') : null, $from, $to)
+                    ->map(fn (array $row) => [$row['student']->nis, $row['student']->name, $row['ziyadah_pages'], $row['murojaah'], $row['tahsin'], $row['mutabaah']])->all();
+
+                return Excel::download(new ArrayExport(['NIS', 'Santri', 'Ziyadah (halaman)', 'Murojaah (kali)', 'Tahsin (kali)', 'Amalan selesai'], $rows), 'rekap-tahfidz.xlsx');
+            })->name('export');
+            Route::get('/ringkasan/{student}', function (Student $student, PdfRenderer $pdf) {
+                return response($pdf->render(view('tahfidz.pdf.summary', [
+                    'student' => $student->load('classroom'),
+                    'juzMap' => TahfidzProgress::juzMap($student),
+                    'memorized' => QuranSurah::query()->whereIn('number', TahfidzProgress::memorizedSurahs($student))->orderBy('number')->get(),
+                    'history' => TahfidzRecord::query()->with(['surahFrom', 'surahTo'])->where('student_id', $student->id)->latest('record_date')->limit(30)->get(),
+                ])->render()), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="ringkasan-hafalan-'.$student->nis.'.pdf"']);
+            })->name('summary');
+        });
+    });
+
     Route::get('/dompet', WalletAdmin::class)->middleware(['module:wallet', 'can:wallet.view'])->name('wallets.index');
 
     Route::middleware('module:card')->group(function (): void {
@@ -373,11 +405,15 @@ Route::middleware(['auth', 'user.type:staff', 'role:ustadz'])->prefix('ustadz')-
     Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
     Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
     Route::get('/nilai', GradeBook::class)->middleware(['module:grading', 'can:grades.input'])->name('grades');
+    Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');
+    Route::get('/mutabaah', MutabaahVerify::class)->middleware('module:tahfidz')->name('mutabaah');
 });
 
 Route::middleware(['auth', 'user.type:staff', 'role:musyrif'])->prefix('musyrif')->name('musyrif.')->group(function (): void {
     Route::get('/', TeacherHome::class)->name('home');
     Route::get('/izin', LeaveDesk::class)->middleware('module:leave')->name('leaves');
+    Route::get('/tahfidz', SetoranForm::class)->middleware('module:tahfidz')->name('tahfidz');
+    Route::get('/mutabaah', MutabaahVerify::class)->middleware('module:tahfidz')->name('mutabaah');
     Route::get('/absensi', AttendanceToday::class)->middleware('module:attendance')->name('attendance');
     Route::get('/absensi/{session}', AttendanceSheet::class)->middleware('module:attendance')->name('attendance.session');
 });
@@ -386,6 +422,7 @@ Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix(
     Route::view('/', 'core.wali.home')->name('home');
     Route::get('/lainnya', GuardianMore::class)->name('more');
     Route::get('/perkembangan', StudentAcademics::class)->name('progress');
+    Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 
     Route::middleware('module:finance')->group(function (): void {
@@ -406,6 +443,7 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::view('/', 'core.santri.home')->name('home');
     Route::get('/kartu', StudentCardPage::class)->middleware('module:card')->name('card');
     Route::get('/jadwal', StudentAcademics::class)->middleware('module:academic')->name('schedule');
+    Route::get('/tahfidz', StudentTahfidz::class)->middleware('module:tahfidz')->name('tahfidz');
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 });
 

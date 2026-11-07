@@ -10,13 +10,22 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 5:** Mart & Warung
 - [x] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
 - [x] **Tahap 7:** perizinan dan pos gerbang
-- [ ] **Tahap 8:** tahfidz dan mutabaah (berikutnya)
-- [ ] **Tahap 9:** ujian online dan PWA
+- [x] **Tahap 8:** tahfidz dan mutabaah
+- [ ] **Tahap 9:** ujian online dan PWA (berikutnya)
 - [ ] **Tahap 10:** absensi selfie dan wajah
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 8
+
+- [x] Setoran ziyadah, murojaah, tahsin; surat dan ayat divalidasi dari 114 surat (THF-01, U-05)
+- [x] Target per term dan progres di portal wali dan santri (THF-02)
+- [x] Peta hafalan per juz, ringkasan PDF (THF-03)
+- [x] Mutabaah: santri mencentang, musyrif memverifikasi massal, terkunci setelah diverifikasi (THF-04, U-12, S-07)
+- [x] Rekap dan ekspor Excel (THF-05)
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 7
 

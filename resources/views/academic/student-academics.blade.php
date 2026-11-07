@@ -23,6 +23,13 @@
             @endforeach
         </div>
 
+        @if ($isGuardian && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('tahfidz'))
+            <a href="{{ route('wali.tahfidz', ['anak' => $child->uuid]) }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4 text-base font-semibold">
+                <span class="flex min-w-0 items-center gap-3"><x-ui.icon name="book-open" />Tahfidz dan mutabaah</span>
+                <x-ui.icon name="chevron-right" class="shrink-0" />
+            </a>
+        @endif
+
         @if ($segment === 'absensi')
             <x-ui.card title="Kehadiran bulan ini">
                 @if ($attendance)

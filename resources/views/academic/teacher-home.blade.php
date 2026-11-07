@@ -21,6 +21,20 @@
         </a>
     @endif
 
+    @if ($mutabaahWaiting > 0)
+        <a href="{{ route($role.'.mutabaah') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4 text-base font-semibold">
+            <span class="min-w-0">{{ $mutabaahWaiting }} amalan mutabaah menunggu verifikasi</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
+    @if ($role === 'musyrif' && app(\App\Modules\Core\Support\ModuleRegistry::class)->enabled('tahfidz'))
+        <a href="{{ route('musyrif.tahfidz') }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4 text-base font-semibold">
+            <span class="flex min-w-0 items-center gap-3"><x-ui.icon name="book-open" />Setoran tahfidz</span>
+            <x-ui.icon name="chevron-right" class="shrink-0" />
+        </a>
+    @endif
+
     @if ($openSessions > 0)
         <x-ui.banner tone="warning">{{ $openSessions }} sesi absensi hari ini belum disimpan.</x-ui.banner>
     @endif

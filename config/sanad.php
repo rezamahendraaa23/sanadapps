@@ -50,7 +50,7 @@ return [
                 ['key' => 'schedules', 'permission' => 'academic.manage', 'label' => 'Jadwal', 'icon' => 'calendar-days', 'route' => 'staff.schedules.index', 'module' => 'academic'],
                 ['key' => 'attendance', 'permission' => 'academic.manage', 'label' => 'Absensi', 'icon' => 'calendar-check', 'route' => 'staff.attendance.index', 'module' => 'attendance'],
                 ['key' => 'grades', 'permission' => 'grades.manage', 'label' => 'Nilai & Rapor', 'icon' => 'graduation-cap', 'route' => 'staff.grades.index', 'module' => 'grading'],
-                ['key' => 'tahfidz', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
+                ['key' => 'tahfidz', 'permission' => 'tahfidz.input', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
                 ['key' => 'exams', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],
             ]],
             ['label' => 'Keuangan', 'items' => [

@@ -98,4 +98,7 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A69 | Override darurat cukup lewat akun musyrif atau admin yang sedang masuk, tanpa PIN terpisah | K-04 menyebut PIN musyrif, tetapi PRD Sistem tidak punya kolom PIN untuk staf. Penjaga tetap tidak bisa melakukannya |
 | A70 | Toleransi bawaan: kembali 15 menit, boleh keluar lebih awal 30 menit | PRD menyebut bisa diatur tanpa nilai bawaan |
 | A71 | Tombol Panggil Musyrif mengirim notifikasi aplikasi, bukan WhatsApp | Harus seketika dan tidak ikut jeda antrean WhatsApp |
+| A72 | Referensi 114 surat dimasukkan lewat migrasi, bukan seeder | Data rujukan yang sama di semua lingkungan; validasi setoran bergantung padanya. Jumlah 6236 ayat diuji otomatis |
+| A73 | Peta hafalan menghitung surat yang semua ayatnya tercakup ziyadah (predikat selain rasib), lalu dikelompokkan per juz awal surat | PRD tidak punya tabel batas ayat per juz, jadi peta ini perkiraan tingkat surat, bukan halaman mushaf |
+| A74 | Progres target: bila target halaman kosong, target juz dikonversi 20 halaman per juz | PRD hanya menyebut target halaman atau juz |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |
