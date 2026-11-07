@@ -11,6 +11,7 @@
                 <div class="flex flex-wrap gap-2">
                     @if ($selected !== [])
                         <x-ui.button variant="secondary" icon="printer" :href="route('staff.cards.print', ['kartu' => implode(',', $selected)])">Cetak {{ count($selected) }} Kartu</x-ui.button>
+                        <x-ui.button variant="tertiary" icon="printer" :href="route('staff.cards.print', ['kartu' => implode(',', $selected), 'format' => 'printer'])">Untuk Printer Kartu</x-ui.button>
                     @endif
                     <x-ui.button icon="plus" x-data x-on:click="$dispatch('open-modal', 'terbitkan-kartu')">Terbitkan Kartu</x-ui.button>
                 </div>

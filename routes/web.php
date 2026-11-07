@@ -351,7 +351,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
                 $cards = StudentCard::query()->where('status', 'active')->whereIn('uuid', array_filter(explode(',', (string) $request->query('kartu')), fn (string $uuid) => Str::isUuid($uuid)))->limit(200)->get();
                 abort_if($cards->isEmpty(), 404);
 
-                return response($pdf->handle($cards), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="kartu-santri.pdf"']);
+                return response($pdf->handle($cards, (string) $request->query('format')), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="kartu-santri.pdf"']);
             })->name('cards.print');
         });
         Route::get('/kartu/perangkat', DeviceAdmin::class)->middleware('can:devices.manage')->name('cards.devices');
