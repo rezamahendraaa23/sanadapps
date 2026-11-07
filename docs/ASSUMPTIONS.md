@@ -106,4 +106,5 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A77 | Halaman ujian memakai halaman biasa dengan Alpine, bukan Livewire | Harus tetap berjalan tanpa server |
 | A78 | Kabar ujian ke santri lewat notifikasi aplikasi saat terbit; pengingat H-1 dan saat mulai lewat WhatsApp belum ada | Santri tidak punya nomor WhatsApp di data; PRD 9 menyebut penerima santri |
 | A79 | Multi pilihan dinilai himpunan sama persis, tanpa skor parsial | PRD menyebut parsial sebagai opsi; default paling ketat |
+| A80 | Lingkungan dev Windows memakai `DB_PERSISTENT=true` dan `opcache.revalidate_freq=2`; bawaan dan test tetap tanpa koneksi persisten | Terukur menurunkan waktu server pindah halaman dari sekitar 310 ms ke 164 ms. Efek samping: perubahan kode PHP terlihat sampai 2 detik kemudian. Produksi dibahas di Tahap 13 |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

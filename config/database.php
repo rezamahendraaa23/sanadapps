@@ -98,6 +98,8 @@ return [
             'search_path' => 'public',
             'timezone' => 'UTC',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Di Windows membuka koneksi baru memakan sekitar 75 ms per permintaan. Hanya untuk dev.
+            'options' => env('DB_PERSISTENT', false) ? [PDO::ATTR_PERSISTENT => true] : [],
         ],
 
         'sqlsrv' => [
