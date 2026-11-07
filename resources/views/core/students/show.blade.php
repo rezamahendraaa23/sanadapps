@@ -31,12 +31,14 @@
     </x-ui.card>
 
     <div role="tablist" aria-label="Bagian data santri" class="flex flex-wrap gap-1">
-        @foreach (['profil' => 'Profil', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) + ($showWallet ? ['dompet' => 'Dompet & Kartu'] : []) as $key => $label)
+        @foreach (['profil' => 'Profil', 'lengkap' => 'Riwayat Lengkap', 'wali' => 'Wali', 'riwayat' => 'Riwayat kelas'] + ($showFinance ? ['keuangan' => 'Keuangan'] : []) + ($showWallet ? ['dompet' => 'Dompet & Kartu'] : []) as $key => $label)
             <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
 
-    @if ($tab === 'keuangan' && $showFinance)
+    @if ($tab === 'lengkap')
+        @include('core.students.history')
+    @elseif ($tab === 'keuangan' && $showFinance)
         <livewire:finance.students.studentfinance :student="$student" />
     @elseif ($tab === 'dompet' && $showWallet)
         <x-ui.card>

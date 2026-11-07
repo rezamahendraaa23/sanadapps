@@ -5,6 +5,7 @@ namespace App\Modules\Core\Livewire\Students;
 use App\Modules\Core\Models\CustomFieldDefinition;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Core\Support\StudentHistory;
 use App\Modules\Wallet\Models\Wallet;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -63,6 +64,7 @@ class StudentShow extends Component
             'wallet' => $showWallet && $this->tab === 'dompet' ? Wallet::forStudent($this->student) : null,
             'studentCard' => $showWallet && $this->tab === 'dompet' ? $this->student->cards()->latest('id')->first() : null,
             'initialPassword' => $this->issuedPassword ?? session('initial_password'),
+            'history' => $this->tab === 'lengkap' ? app(StudentHistory::class)->build($this->student, auth()->user()) : [],
         ])->title($this->student->name);
     }
 }
