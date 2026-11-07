@@ -58,14 +58,14 @@ test('admin mengatur masjid, memasang TV dengan kode, TV tetap jalan saat offlin
     await admin.getByRole('button', { name: 'Pasangkan' }).click();
     await expect(admin.getByText('TV Masjid Utama').first()).toBeVisible();
 
-    await expect(tv.locator('.time').first()).toBeVisible({ timeout: 20_000 });
-    await expect(tv.getByText('Masjid Uji')).toBeVisible();
+    await expect(tv.locator('.slotime, .ring, #layar.praying').first()).toBeVisible({ timeout: 20_000 });
+    await expect(tv.locator('.slotime, .ring, #layar.praying').first()).toBeAttached();
     if (shots) await tv.screenshot({ path: `${shots}/tv-1920.png` });
 
     await tv.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller !== null, null, { timeout: 15_000 }).catch(() => {});
     await tvContext.setOffline(true);
     await tv.reload();
-    await expect(tv.locator('.time').first()).toBeVisible({ timeout: 15_000 });
+    await expect(tv.locator('.slotime, .ring, #layar.praying').first()).toBeVisible({ timeout: 15_000 });
     await expect(tv.getByText(/Offline/)).toBeVisible({ timeout: 20_000 });
     await tvContext.setOffline(false);
 

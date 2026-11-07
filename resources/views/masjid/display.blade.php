@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Layar Masjid</title>
-    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=2">
     @if ($brandCss = app(\App\Support\SchoolIdentity::class)->brandCss())
         <style>{!! $brandCss !!}</style>
     @endif
@@ -18,6 +18,6 @@
             preview: {!! json_encode($preview) !!}
         };
     </script>
-    <script src="{{ asset('tv/display.js') }}?v=1"></script>
+    <script src="{{ asset('tv/display.js') }}?v=2"></script>
 </body>
 </html>

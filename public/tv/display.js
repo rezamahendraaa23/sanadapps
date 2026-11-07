@@ -85,7 +85,8 @@
         return manifest.names[prayer];
     }
 
-    /* Mode dihitung dari jadwal tersimpan, tanpa server (PRD Masjid 8.5). */
+    /* Mode dihitung dari jadwal tersimpan, tanpa server. Setelah adzan langsung hitung mundur iqamah,
+       lalu layar gelap selama sholat (keputusan pemilik). */
     function currentMode(t, row) {
         if (!row) { return { name: 'normal' }; }
         var secondsNow = t.minutes * 60 + t.seconds;
@@ -96,9 +97,8 @@
             var iqamah = adhan + iq.minutes * 60;
             var end = iqamah + iq.duration * 60;
             var lead = (manifest.countdown_minutes || 15) * 60;
-            if (secondsNow >= adhan - lead && secondsNow < adhan) { return { name: 'before_adhan', prayer: prayer, left: adhan - secondsNow }; }
-            if (secondsNow >= adhan && secondsNow < adhan + 60) { return { name: 'adhan', prayer: prayer }; }
-            if (secondsNow >= adhan + 60 && secondsNow < iqamah) { return { name: 'before_iqamah', prayer: prayer, left: iqamah - secondsNow }; }
+            if (secondsNow >= adhan - lead && secondsNow < adhan) { return { name: 'before_adhan', prayer: prayer, left: adhan - secondsNow, total: lead }; }
+            if (secondsNow >= adhan && secondsNow < iqamah) { return { name: 'before_iqamah', prayer: prayer, left: iqamah - secondsNow, total: iqamah - adhan }; }
             if (secondsNow >= iqamah && secondsNow < end) { return { name: 'praying', prayer: prayer }; }
         }
         return { name: 'normal' };
@@ -180,13 +180,14 @@
         if (item.type === 'quote') {
             return { media: false, html: '<div class="arab" lang="ar">' + escapeHtml(body.arabic) + '</div><p>' + escapeHtml(body.text) + '</p><div class="ref">' + escapeHtml(body.source) + '</div>' };
         }
-        return { media: false, html: '<h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(body.text) + '</p>' };
+        var kinds = { text: 'Pengumuman', agenda: 'Agenda', obituary: 'Kabar duka' };
+        return { media: false, html: (kinds[item.type] ? '<div class="kind">' + kinds[item.type] + '</div>' : '') + '<h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(body.text) + '</p>' };
     }
 
     /* Bergilir per slide, atau daftar maksimal 3 item bersamaan. */
     function slotHtml(t, row) {
         var items = activeContents(t, row).concat(autoCards(t));
-        if (!items.length) { return { key: 'empty', cls: '', html: '<p class="empty">Selamat datang.</p>' }; }
+        if (!items.length) { return { key: 'empty', cls: '', html: '<p class="empty">Selamat datang di ' + escapeHtml(manifest.identity.name) + '.</p>' }; }
 
         if (manifest.screen.pattern === 'list') {
             var list = items.slice(0, 3);
@@ -209,18 +210,26 @@
     }
 
     function header(t, row) {
-        var hijri = row ? row.hijri : '';
-        return '<div class="head"><div>' + escapeHtml(manifest.identity.name) + '</div><div class="date">' + DAYS[t.weekday] + ', ' + t.label + (hijri ? '<br>' + escapeHtml(hijri) : '') + '</div></div>';
+        var logo = manifest.identity.logo ? '<img src="' + escapeHtml(manifest.identity.logo) + '" alt="">' : '';
+        return '<div class="head"><div class="brand">' + logo + '<div><b>' + escapeHtml(manifest.identity.name) + '</b><span>Jadwal sholat dan informasi</span></div></div>'
+            + '<div class="cal">' + DAYS[t.weekday] + ', ' + t.label + (row ? '<span>' + escapeHtml(row.hijri) + '</span>' : '') + '</div></div>';
     }
-    function timesHtml(row, next, t) {
-        var html = '<div class="times">';
-        for (var i = 0; i < LIST.length; i++) {
-            var key = LIST[i];
-            if (key === 'dhuha' || (key === 'imsak' && !isRamadan(t.date) && LIST.length > 7 && false)) { continue; }
-            html += '<div class="time' + (next && next.prayer === key ? ' is-next' : '') + '"><b>' + escapeHtml(prayerLabel(key, t.weekday)) + '</b><span>' + (row ? row[key].replace(':', '.') : '-') + '</span></div>';
+
+    /* Garis waktu: isi batang menunjukkan posisi sekarang di antara Imsak dan Isya. */
+    function lineHtml(row, next, t) {
+        var keys = ['imsak', 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        var html = '';
+        var first = row ? toMinutes(row.imsak) : 0;
+        var last = row ? toMinutes(row.isha) : 1;
+        var progress = row ? Math.max(0, Math.min(1, (t.minutes - first) / Math.max(1, last - first))) : 0;
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var past = row && toMinutes(row[key]) <= t.minutes && !(next && next.prayer === key);
+            html += '<div class="slotime' + (next && next.prayer === key ? ' is-next' : '') + (past ? ' past' : '') + '"><b>' + escapeHtml(prayerLabel(key, t.weekday)) + '</b><span>' + (row ? row[key].replace(':', '.') : '-') + '</span></div>';
         }
-        return html + '</div>';
+        return '<div class="line"><div class="track"></div><div class="fill" id="fill" style="width:' + (progress * 100).toFixed(2) + '%"></div>' + html + '</div>';
     }
+
     function syncNote() {
         if (online) { return ''; }
         if (!lastSync) { return 'Offline'; }
@@ -229,7 +238,8 @@
     }
     function footer() {
         var text = tickerText();
-        return '<div class="foot"><div class="ticker">' + escapeHtml(text) + '</div><div class="sync" id="sync">' + escapeHtml(syncNote()) + '</div></div>';
+        if (!text && online) { return ''; }
+        return '<div class="foot"><div class="ticker">' + escapeHtml(text) + '</div><div class="sync">' + escapeHtml(syncNote()) + '</div></div>';
     }
 
     function paint(key, cls, html) {
@@ -242,8 +252,14 @@
     function setText(id, text) { var el = document.getElementById(id); if (el && el.textContent !== text) { el.textContent = text; } }
 
     function renderPairing() {
-        if (!pairing) { paint('pair-wait', 'pair', '<div class="full"><h1>Menyiapkan layar…</h1></div>'); return; }
-        paint('pair:' + pairing.code, 'pair', '<div class="full"><h1>Pasangkan layar ini</h1><div class="code">' + escapeHtml(pairing.code) + '</div><div class="sub">Masukkan kode ini di panel SANAD, menu Layar</div><div class="sub" style="font-size:3.2rem">' + escapeHtml(config.pairHint) + '</div></div>');
+        if (!pairing) { paint('pair-wait', 'pair', '<div class="full"><div class="box"><h1>Menyiapkan layar…</h1></div></div>'); return; }
+        paint('pair:' + pairing.code, 'pair', '<div class="full"><div class="box"><h1>Pasangkan layar ini</h1><div class="code">' + escapeHtml(pairing.code) + '</div><p>Masukkan kode ini di panel SANAD, menu Layar TV</p><p>' + escapeHtml(config.pairHint) + '</p></div></div>');
+    }
+
+    var RING = 2 * Math.PI * 46;
+    function countdownHtml(title, kicker, note) {
+        return '<div class="full"><div class="count"><div class="ring"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"></circle><circle class="fg" id="ring" cx="50" cy="50" r="46" stroke-dasharray="' + RING.toFixed(2) + '" stroke-dashoffset="0"></circle></svg><div class="num" id="count"></div></div>'
+            + '<div class="words"><p>' + escapeHtml(kicker) + '</p><h1>' + escapeHtml(title) + '</h1>' + (note ? '<span>' + escapeHtml(note) + '</span>' : '') + '</div></div></div>';
     }
 
     function render() {
@@ -258,52 +274,48 @@
         document.title = 'Layar ' + clock;
 
         if (Date.now() < testUntil) {
-            paint('test', 'test', '<div class="full"><div>Layar tes: ' + escapeHtml(manifest.screen.name) + '</div></div>');
+            paint('test', 'test', '<div class="full"><div class="box">Layar tes: ' + escapeHtml(manifest.screen.name) + '</div></div>');
             return;
         }
 
         if (manifest.emergency && (!manifest.emergency.ends_at || manifest.emergency.ends_at > nowMs())) {
-            paint('emergency:' + manifest.emergency.id + manifest.emergency.text, 'emergency', '<div class="full"><h1>Pengumuman Penting</h1><div class="sub">' + escapeHtml(manifest.emergency.text) + '</div></div>');
+            paint('emergency:' + manifest.emergency.id + manifest.emergency.text, 'emergency', '<div class="full"><div class="box"><h1>Pengumuman Penting</h1><p>' + escapeHtml(manifest.emergency.text) + '</p></div></div>');
             return;
         }
 
         var mode = manifest.screen.profile === 'announcement_only' ? { name: 'normal' } : currentMode(t, row);
 
         if (mode.name === 'praying') {
-            paint('praying:' + mode.prayer, 'praying', '<div class="full"><div class="clock" id="clock">' + clock + '</div><p>Sholat sedang berlangsung</p></div>');
-            setText('clock', clock);
-            return;
-        }
-        if (mode.name === 'adhan') {
-            paint('adhan:' + mode.prayer, theme, '<div class="full"><h1>Waktu ' + escapeHtml(prayerLabel(mode.prayer, t.weekday)) + '</h1><div class="big" id="clock">' + clock + '</div></div>');
-            setText('clock', clock);
+            paint('praying', 'praying', '');
             return;
         }
         if (mode.name === 'before_adhan' || mode.name === 'before_iqamah') {
             var isAdhan = mode.name === 'before_adhan';
-            var note = '';
+            var label = prayerLabel(mode.prayer, t.weekday);
+            var note = 'Sekarang ' + clock;
             if (mode.prayer === 'dhuhr' && t.weekday === 5 && manifest.friday_mode && manifest.khutbah.length && manifest.khutbah[0].date === t.date) {
                 var fr = manifest.khutbah[0];
-                note = (fr.khatib ? 'Khatib: ' + fr.khatib + '  ' : '') + (fr.imam ? 'Imam: ' + fr.imam : '');
+                note = (fr.khatib ? 'Khatib ' + fr.khatib : '') + (fr.imam ? (fr.khatib ? ', imam ' : 'Imam ') + fr.imam : '');
             }
-            paint(mode.name + mode.prayer, theme, '<div class="full"><h1>' + (isAdhan ? 'Menuju ' : 'Iqamah ') + escapeHtml(prayerLabel(mode.prayer, t.weekday)) + '</h1><div class="big" id="count"></div><div class="sub strong">' + clock + '</div>' + (note ? '<div class="sub">' + escapeHtml(note) + '</div>' : '') + '</div>');
+            paint(mode.name + mode.prayer + theme, theme, countdownHtml(isAdhan ? label : 'Iqamah', isAdhan ? 'Menuju adzan' : 'Adzan ' + label + ' telah berkumandang', isAdhan ? note : 'Rapatkan dan luruskan shaf'));
             setText('count', clockLeft(mode.left));
+            var ring = document.getElementById('ring');
+            if (ring) { ring.setAttribute('stroke-dashoffset', (RING * (1 - mode.left / mode.total)).toFixed(2)); }
             return;
         }
 
         var showTimes = manifest.screen.profile !== 'announcement_only';
         var next = showTimes ? nextPrayer(t, row) : null;
         var slot = slotHtml(t, row);
-        var note2 = next ? iqamahFor(next.prayer, t.date, t.weekday) : null;
+        var iq = next ? iqamahFor(next.prayer, t.date, t.weekday) : null;
         var ramadanLine = isRamadan(t.date) && row ? 'Imsak ' + row.imsak.replace(':', '.') + ', berbuka ' + row.maghrib.replace(':', '.') : '';
-        var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online;
-        var left = showTimes
-            ? '<div class="col-left"><div class="clock"><span id="clock">' + clock + '</span><small>.<span id="sec">' + seconds + '</span></small></div><div class="next-label">' + (next ? 'Menuju ' + escapeHtml(prayerLabel(next.prayer, t.weekday)) : '') + '</div><div class="next-count" id="left"></div><div class="next-note">' + (next ? 'Iqamah +' + note2.minutes + ' menit' : '') + (ramadanLine ? '<br>' + ramadanLine : '') + '</div></div>'
+        var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online + ':' + t.minutes;
+        var hero = showTimes
+            ? '<div class="hero"><div class="clock"><span id="clock">' + clock + '</span><small>.<span id="sec">' + seconds + '</span></small></div>'
+                + (next ? '<div class="next"><b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span></div><div class="note">Iqamah ' + iq.minutes + ' menit setelah adzan' + (ramadanLine ? '. ' + ramadanLine : '') + '</div>' : '')
+                + '</div>'
             : '';
-        var right = showTimes
-            ? '<div class="col-right">' + timesHtml(row, next, t) + '<div class="slot' + slot.cls + '">' + slot.html + '</div></div>'
-            : '<div class="only"><div class="slot' + slot.cls + '">' + slot.html + '</div></div>';
-        paint(key, theme, '<div class="safe nudge" id="safe">' + header(t, row) + '<div class="main">' + left + right + '</div>' + footer() + '</div>');
+        paint(key, theme, '<div class="safe nudge" id="safe">' + header(t, row) + '<div class="main">' + hero + '<div class="slot' + slot.cls + '">' + slot.html + '</div></div>' + (showTimes ? lineHtml(row, next, t) : '') + footer() + '</div>');
         setText('clock', clock);
         setText('sec', seconds);
         if (next) { setText('left', clockLeft(next.left)); }
