@@ -30,7 +30,9 @@ class E2eSeeder extends Seeder
         Module::query()->where('module_key', 'payment_midtrans')->update(['is_enabled' => true]);
         $cashier = User::create(['name' => 'Kasir Uji', 'email' => 'kasir@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-kasir']);
         $cashier->assignRole('kasir');
-        $merchant = Merchant::create(['name' => 'Warung Uji', 'type' => 'warung', 'payment_modes' => ['card', 'qr']]);
+        $manager = User::create(['name' => 'Pengelola Uji', 'email' => 'pengelola@uji.test', 'type' => 'staff', 'password' => 'sandi-uji-pengelola']);
+        $manager->assignRole('pengelola_merchant');
+        $merchant = Merchant::create(['name' => 'Warung Uji', 'type' => 'warung', 'pic_user_id' => $manager->id, 'payment_modes' => ['card', 'qr']]);
         $merchant->cashiers()->attach($cashier->id);
         MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Roti Uji', 'price' => 5000, 'barcode' => '8990001']);
         MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Paket Besar', 'price' => 25000]);
@@ -45,6 +47,11 @@ class E2eSeeder extends Seeder
         $student = Student::create(['nis' => '2026001', 'name' => 'Santri Uji', 'gender' => 'L', 'user_id' => $studentUser->id]);
 
         $guardian->students()->attach($student->id, ['relation' => 'ayah', 'is_primary' => true]);
+
+        $secondGuardianUser = User::create(['name' => 'Wali Dua', 'phone' => '6281234567892', 'type' => 'guardian']);
+        $secondGuardianUser->assignRole('wali');
+        $second = Student::create(['nis' => '2026002', 'name' => 'Santri Dua', 'gender' => 'L', 'status' => 'inactive']);
+        Guardian::create(['user_id' => $secondGuardianUser->id, 'name' => 'Wali Dua', 'phone_wa' => '6281234567892'])->students()->attach($second->id, ['relation' => 'ayah']);
 
         $payerUser = User::create(['name' => 'Ibu Uji', 'phone' => '6281234567891', 'type' => 'guardian']);
         $payerUser->assignRole('wali');

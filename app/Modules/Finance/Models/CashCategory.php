@@ -19,6 +19,8 @@ class CashCategory extends Model
 
     public const WALLET_WITHDRAW = 'Penarikan saldo dompet';
 
+    public const MERCHANT_PAYOUT = 'Penyaluran merchant';
+
     protected $guarded = ['id', 'uuid'];
 
     public static function named(string $name, string $type): self

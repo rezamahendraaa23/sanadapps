@@ -52,13 +52,25 @@ class Merchant extends Model
      */
     public function scopeAccessibleBy(Builder $query, User $user): Builder
     {
-        if ($user->can('merchants.manage')) {
+        if ($user->can('merchants.manage') || $user->can('pos.view')) {
             return $query;
         }
 
         return $query->where(fn (Builder $scoped) => $scoped
             ->where('pic_user_id', $user->id)
             ->orWhereHas('cashiers', fn (Builder $cashiers) => $cashiers->whereKey($user->id)));
+    }
+
+    /**
+     * Mengubah katalog, stok, dan mengajukan pencairan. Bendahara hanya melihat, kasir hanya berjualan.
+     */
+    public function canBeManagedBy(User $user): bool
+    {
+        if ($user->can('merchants.manage')) {
+            return true;
+        }
+
+        return $user->can('merchants.own') && static::query()->accessibleBy($user)->whereKey($this->id)->exists();
     }
 
     public function balance(): int

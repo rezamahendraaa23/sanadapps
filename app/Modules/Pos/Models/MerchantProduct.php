@@ -11,6 +11,9 @@ class MerchantProduct extends Model
 {
     use Audited, HasPublicUuid;
 
+    /** @var list<string> */
+    protected array $auditExcept = ['stock'];
+
     protected $guarded = ['id', 'uuid'];
 
     protected $attributes = ['is_active' => true];
@@ -18,6 +21,16 @@ class MerchantProduct extends Model
     protected function casts(): array
     {
         return ['price' => 'integer', 'cost_price' => 'integer', 'stock' => 'integer', 'min_stock' => 'integer', 'is_active' => 'boolean'];
+    }
+
+    public function isLowStock(): bool
+    {
+        return $this->stock !== null && $this->min_stock !== null && $this->stock <= $this->min_stock;
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return $this->stock !== null && $this->stock <= 0;
     }
 
     public function merchant(): BelongsTo

@@ -59,10 +59,19 @@ use App\Modules\Notification\Livewire\Templates;
 use App\Modules\Payment\Http\MidtransWebhookController;
 use App\Modules\Payment\Livewire\Reconciliation;
 use App\Modules\Pos\Livewire\Cashier;
+use App\Modules\Pos\Livewire\CatalogImport;
 use App\Modules\Pos\Livewire\MerchantAdmin;
+use App\Modules\Pos\Livewire\PayoutQueue;
+use App\Modules\Pos\Livewire\ProductCatalog;
+use App\Modules\Pos\Livewire\SalesReport;
+use App\Modules\Pos\Livewire\StockScreen;
+use App\Modules\Pos\Models\Merchant;
+use App\Modules\Pos\Models\MerchantProduct;
+use App\Modules\Pos\Support\SalesStats;
 use App\Modules\Wallet\Actions\BuildCardsPdf;
 use App\Modules\Wallet\Livewire\CardAdmin;
 use App\Modules\Wallet\Livewire\DeviceAdmin;
+use App\Modules\Wallet\Livewire\GuardianSpendingRules;
 use App\Modules\Wallet\Livewire\GuardianTopup;
 use App\Modules\Wallet\Livewire\GuardianWallet;
 use App\Modules\Wallet\Livewire\ScanLog;
@@ -71,6 +80,7 @@ use App\Modules\Wallet\Livewire\WalletAdmin;
 use App\Modules\Wallet\Models\CardScan;
 use App\Modules\Wallet\Models\Device;
 use App\Modules\Wallet\Models\StudentCard;
+use App\Support\Pdf\PdfRenderer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -184,7 +194,59 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
     Route::middleware('module:pos')->group(function (): void {
         Route::get('/kasir', Cashier::class)->middleware('can:pos.operate')->name('pos.index');
-        Route::get('/merchant', MerchantAdmin::class)->middleware('can:merchants.manage')->name('merchants.index');
+        Route::get('/pencairan', PayoutQueue::class)->middleware('can:payouts.approve')->name('payouts.index');
+
+        Route::prefix('merchant')->name('merchants.')->middleware('can:merchants.access')->group(function (): void {
+            Route::get('/', MerchantAdmin::class)->name('index');
+            Route::get('/laporan', SalesReport::class)->name('report.all');
+            Route::get('/laporan/ekspor', function (Request $request) {
+                $user = $request->user();
+                $accessible = Merchant::query()->accessibleBy($user);
+
+                if ($request->filled('merchant')) {
+                    abort_unless(Str::isUuid((string) $request->query('merchant')), 403);
+                    $accessible->where('uuid', $request->query('merchant'));
+                }
+
+                $ids = $accessible->pluck('id')->all();
+                abort_if($ids === [], 403);
+
+                $today = now(config('sanad.display_timezone'))->toDateString();
+                $from = SalesReport::validDate($request->query('dari')) ?? $today;
+                $to = SalesReport::validDate($request->query('sampai')) ?? $today;
+                $summary = SalesStats::summary($ids, $from, $to);
+
+                $rows = [
+                    ['Omzet', $summary['revenue'], ''],
+                    ['Jumlah transaksi', $summary['orders'], ''],
+                    ['Komisi pesantren', $summary['commission'], ''],
+                    ['Bagian merchant', $summary['net'], ''],
+                    ['Margin', $summary['margin'], $summary['margin_complete'] ? '' : 'Belum lengkap'],
+                    ['', '', ''],
+                    ...SalesStats::byProduct($ids, $from, $to, 1000)->map(fn ($row) => [$row->name, (int) $row->amount, (int) $row->qty.' terjual'])->all(),
+                ];
+
+                return Excel::download(new ArrayExport(["Laporan {$from} sampai {$to}", 'Nominal', 'Catatan'], $rows), 'laporan-mart-warung.xlsx');
+            })->name('report.export');
+            Route::get('/impor/template', fn () => Excel::download(new ArrayExport(CatalogImport::HEADINGS, []), 'template-katalog.xlsx'))->name('import.template');
+            Route::get('/produk/{product}/foto', function (MerchantProduct $product, Request $request) {
+                abort_unless($product->photo_path && Merchant::query()->accessibleBy($request->user())->whereKey($product->merchant_id)->exists() && Storage::disk('local')->exists($product->photo_path), 404);
+
+                return Storage::disk('local')->response($product->photo_path);
+            })->name('product-photo');
+            Route::get('/{merchant}/katalog', ProductCatalog::class)->name('catalog');
+            Route::get('/{merchant}/katalog/impor', CatalogImport::class)->name('import');
+            Route::get('/{merchant}/daftar-harga', function (Merchant $merchant, Request $request, PdfRenderer $pdf) {
+                abort_unless(Merchant::query()->accessibleBy($request->user())->whereKey($merchant->id)->exists(), 403);
+
+                return response($pdf->render(view('pos.pdf.pricelist', ['merchant' => $merchant, 'products' => $merchant->products()->where('is_active', true)->orderBy('name')->get()])->render()), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="daftar-harga.pdf"',
+                ]);
+            })->name('pricelist');
+            Route::get('/{merchant}/stok', StockScreen::class)->name('stock');
+            Route::get('/{merchant}/laporan', SalesReport::class)->name('report');
+        });
     });
 
     Route::get('/santri', StudentIndex::class)->middleware('can:viewAny,'.Student::class)->name('students.index');
@@ -238,6 +300,7 @@ Route::middleware(['auth', 'user.type:guardian', 'module:portal_wali'])->prefix(
     Route::middleware('module:wallet')->group(function (): void {
         Route::get('/dompet', GuardianWallet::class)->name('wallet');
         Route::get('/dompet/top-up', GuardianTopup::class)->name('wallet.topup');
+        Route::get('/dompet/aturan', GuardianSpendingRules::class)->middleware('module:pos')->name('wallet.rules');
     });
 });
 

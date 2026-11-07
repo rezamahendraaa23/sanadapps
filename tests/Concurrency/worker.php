@@ -24,7 +24,9 @@ use App\Modules\Finance\Models\Payment;
 use App\Modules\Payment\Actions\ProcessMidtransWebhook;
 use App\Modules\Pos\Actions\CheckoutOrder;
 use App\Modules\Pos\Models\Merchant;
+use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Pos\Models\StockMovement;
 use App\Modules\Wallet\Actions\IssueCard;
 use App\Modules\Wallet\Actions\ReconcileWallets;
 use App\Modules\Wallet\Actions\RecordCashTopup;
@@ -74,7 +76,14 @@ switch ($mode) {
         app(IssueCard::class)->handle($sameKey, 'KONKUREN2');
         app(RecordCashTopup::class)->handle($sameKey, 90000, User::first()->id);
 
-        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id, 'merchant' => $merchant->id]);
+        // Stok 3, saldo berlebih: yang membatasi hanya stok.
+        $buyer = Student::create(['nis' => 'K4', 'name' => 'Santri Stok', 'gender' => 'L', 'status' => 'inactive']);
+        app(IssueCard::class)->handle($buyer, 'KONKUREN3');
+        app(RecordCashTopup::class)->handle($buyer, 500000, User::first()->id);
+        $product = MerchantProduct::create(['merchant_id' => $merchant->id, 'name' => 'Stok Terakhir', 'price' => 1000]);
+        MerchantProduct::query()->whereKey($product->id)->update(['stock' => 3]);
+
+        echo json_encode(['payment' => $payment->id, 'cash_invoice' => $cashInvoice->id, 'merchant' => $merchant->id, 'product' => $product->id]);
         break;
 
     case 'settle':
@@ -114,6 +123,13 @@ switch ($mode) {
         echo $result->ok ? 'paid:'.$result->balance : $result->code;
         break;
 
+    case 'stock':
+        $product = MerchantProduct::findOrFail((int) $argument);
+        $waitUntil();
+        $result = app(CheckoutOrder::class)->handle($product->merchant, [$product->id => 1], null, 'KONKUREN3', null, 'stock-'.getmypid(), null);
+        echo $result->ok ? 'paid' : $result->code;
+        break;
+
     case 'generate':
         $waitUntil();
         echo app(GenerateInvoices::class)->run(CarbonImmutable::parse('2030-02-01'))['invoices'];
@@ -135,6 +151,8 @@ switch ($mode) {
             'tap_orders' => PosOrder::query()->whereHas('student', fn ($query) => $query->where('nis', 'K3'))->count(),
             'merchant_balance' => Merchant::query()->where('name', 'Warung Konkuren')->first()?->balance(),
             'ledger_differences' => count(app(ReconcileWallets::class)->handle()),
+            'product_stock' => MerchantProduct::query()->where('name', 'Stok Terakhir')->value('stock'),
+            'stock_sales' => StockMovement::query()->where('type', 'sale')->count(),
         ]);
         break;
 }

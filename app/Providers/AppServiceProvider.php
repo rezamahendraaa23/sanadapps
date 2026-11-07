@@ -53,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.ui.pagination');
         Event::subscribe(SendFinanceNotifications::class);
 
+        Gate::define('merchants.access', fn ($user) => $user->canAny(['merchants.manage', 'merchants.own', 'pos.view']));
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Guardian::class, GuardianPolicy::class);
         Gate::policy(Invoice::class, InvoicePolicy::class);

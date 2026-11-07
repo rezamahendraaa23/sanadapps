@@ -20,18 +20,26 @@
             <x-ui.card class="min-w-0">
                 <div class="mb-4 grid gap-3 xl:grid-cols-2">
                     <x-ui.input label="Cari produk" name="search" type="search" autocomplete="off" wire:model.live.debounce.200ms="search" />
-                    <form wire:submit="addBarcode">
-                        <x-ui.input label="Barcode" name="barcode" autocomplete="off" inputmode="numeric" help="Pindai lalu otomatis masuk keranjang." wire:model="barcode" />
-                    </form>
+                    <div class="flex flex-col gap-2">
+                        <form wire:submit="addBarcode">
+                            <x-ui.input label="Barcode" name="barcode" autocomplete="off" inputmode="numeric" help="Pindai lalu otomatis masuk keranjang." wire:model="barcode" />
+                        </form>
+                        @include('pos.partials.camera-barcode', ['target' => 'barcode', 'then' => 'addBarcode'])
+                    </div>
                 </div>
                 @if ($products->isEmpty())
                     <x-ui.empty-state icon="package" :message="$search !== '' ? 'Produk tidak ditemukan.' : 'Belum ada produk di merchant ini.'" class="py-2" />
                 @else
                     <div class="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-2">
                         @foreach ($products as $product)
-                            <button type="button" wire:key="produk-{{ $product->uuid }}" wire:click="add('{{ $product->uuid }}')" class="flex min-h-20 flex-col justify-between gap-1 rounded-control border border-border bg-surface p-3 text-left hover:border-primary hover:bg-primary-soft">
+                            <button type="button" wire:key="produk-{{ $product->uuid }}" wire:click="add('{{ $product->uuid }}')" @disabled($product->isOutOfStock()) class="flex min-h-20 flex-col justify-between gap-1 rounded-control border border-border bg-surface p-3 text-left hover:border-primary hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-surface">
                                 <span class="min-w-0 text-base font-semibold break-words">{{ $product->name }}</span>
                                 <span class="font-tabular text-sm whitespace-nowrap text-text-muted">{{ Rupiah::format($product->price) }}</span>
+                                @if ($product->isOutOfStock())
+                                    <span class="text-xs font-semibold text-danger">Habis</span>
+                                @elseif ($product->isLowStock())
+                                    <span class="text-xs font-semibold text-warning">Sisa {{ $product->stock }}</span>
+                                @endif
                             </button>
                         @endforeach
                     </div>

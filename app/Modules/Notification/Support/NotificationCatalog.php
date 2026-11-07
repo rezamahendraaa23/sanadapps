@@ -78,6 +78,18 @@ final class NotificationCatalog
             'variables' => ['nama_wali', 'nama_santri', 'alasan', 'link'],
             'body' => "Assalamu'alaikum {nama_wali}.\nKartu {nama_santri} sudah diblokir: {alasan}. Saldo tetap aman di dompet.\nDetail: {link}",
         ],
+        'stock_low' => [
+            'label' => 'Stok menipis (ke pengelola)',
+            'category' => null,
+            'variables' => ['merchant', 'produk', 'sisa', 'link'],
+            'body' => "Stok {produk} di {merchant} tinggal {sisa}.\nCek stok: {link}",
+        ],
+        'payout_status' => [
+            'label' => 'Status pencairan (ke pengelola)',
+            'category' => null,
+            'variables' => ['merchant', 'nominal', 'status', 'link'],
+            'body' => "Pencairan {merchant} sebesar {nominal}: {status}.\nDetail: {link}",
+        ],
         'announcement' => [
             'label' => 'Pengumuman',
             'category' => 'announcement',

@@ -6,6 +6,7 @@ use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Models\User;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantLedgerEntry;
+use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
 use App\Modules\Wallet\Actions\WalletLedger;
 use App\Modules\Wallet\Support\WalletException;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class VoidOrder
 {
-    public function __construct(private WalletLedger $ledger, private RecordAudit $audit) {}
+    public function __construct(private WalletLedger $ledger, private RecordAudit $audit, private StockLedger $stock) {}
 
     /**
      * Saldo kembali lewat baris baru di buku besar dompet dan merchant, tidak ada yang dihapus (POS-12).
@@ -33,6 +34,8 @@ class VoidOrder
         DB::transaction(function () use ($order, $reason, $user): void {
             $walletId = $order->walletTransaction()->value('wallet_id');
             $wallet = $this->ledger->lock($walletId);
+            $items = $order->items()->whereNotNull('product_id')->get();
+            $products = MerchantProduct::query()->whereIn('id', $items->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $merchant = Merchant::query()->whereKey($order->merchant_id)->lockForUpdate()->firstOrFail();
             $locked = PosOrder::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
@@ -60,6 +63,14 @@ class VoidOrder
             }
 
             MerchantLedgerEntry::post($merchant, 'refund', -$locked->total, 'pos_order', $locked->id, trim($reason));
+
+            foreach ($items as $item) {
+                $product = $products[$item->product_id] ?? null;
+
+                if ($product?->stock !== null) {
+                    $this->stock->move($product, 'void', $item->qty, trim($reason), $user->id, 'pos_order', $locked->id);
+                }
+            }
 
             $locked->update(['status' => 'void', 'voided_by' => $user->id, 'void_reason' => trim($reason), 'voided_at' => now()]);
 

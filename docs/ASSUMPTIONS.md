@@ -83,4 +83,8 @@ Catatan keputusan saat dokumen sumber bertentangan atau punya celah. Urutan sumb
 | A54 | Scope kartu `library` dan `meal` selalu ditolak | PRD 2.1 belum punya modul untuk keduanya, dan CRD-02 meminta scope tanpa modul aktif ditolak |
 | A55 | Tahap 4 memuat merchant, produk, kasir, struk, void, komisi. Stok, impor, aturan wali per merchant, penyaluran, dan laporan menyusul di Tahap 5 | Pembagian tahap di master prompt |
 | A56 | Top-up dan penarikan saldo dicatat di kas sebagai kategori sendiri | Uang fisik atau transfer masuk ke pesantren saat top-up, jadi harus terlihat di kas |
+| A57 | Tambahan kolom `stock_movements.stock_after`, `pos_order_items.cost_price`, `pos_order_items.category_id`, `merchant_payouts.reject_reason`, izin `merchants.own` dan `payouts.approve` | Margin harus memakai harga modal saat terjual, bukan harga modal terbaru; batas kategori tetap benar walau produk dipindah kategori |
+| A58 | Wali tidak mengatur ambang PIN sendiri, walau W-15 menyebutnya | PRD Sistem hanya punya ambang di sistem dan merchant; ambang per santri belum ada kolomnya. Perlu dikonfirmasi bila memang dibutuhkan |
+| A59 | Stok di berkas impor dianggap hasil hitung, selisihnya menjadi mutasi `adjust` | Stok tidak boleh berubah tanpa jejak, dan berkas yang sama aman diimpor ulang |
+| A60 | Kamera barcode memakai `BarcodeDetector` bawaan browser; bila tidak didukung tombolnya tidak tampil dan kasir memakai reader atau ketik | Tanpa pustaka tambahan. Tersedia di Chrome Android, tidak di Safari dan Firefox |
 | A10 | `CLAUDE.md` dan `AGENTS.md` bawaan template Laravel diganti dengan catatan proyek; Laravel Boost tidak dipasang | Bukan bagian stack PRD |

@@ -3,6 +3,7 @@
 namespace App\Modules\Wallet\Livewire;
 
 use App\Modules\Core\Models\Student;
+use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Finance\Actions\FinanceException;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Pos\Models\PosOrder;
@@ -166,6 +167,7 @@ class GuardianWallet extends Component
 
         return view('wallet.guardian', [
             'children' => $this->children(),
+            'posEnabled' => app(ModuleRegistry::class)->enabled('pos'),
             'child' => $child,
             'wallet' => $wallet,
             'card' => $this->card(),

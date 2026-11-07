@@ -29,7 +29,7 @@ class ReconcileWallets
             ->map(fn ($row) => ['wallet' => $row->uuid, 'balance' => (int) $row->balance, 'ledger' => (int) $row->ledger_total])
             ->all();
 
-        $merchants = MerchantLedgerEntry::mismatchedMerchants();
+        $merchants = array_values(array_unique([...MerchantLedgerEntry::mismatchedMerchants(), ...MerchantLedgerEntry::salesMismatchedMerchants()]));
 
         if ($differences !== [] || $merchants !== []) {
             Log::critical('Selisih saldo dompet atau merchant', ['wallets' => $differences, 'merchants' => $merchants]);

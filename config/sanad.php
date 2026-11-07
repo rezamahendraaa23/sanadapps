@@ -59,7 +59,8 @@ return [
                 ['key' => 'arrears', 'permission' => 'finance.view', 'label' => 'Tunggakan', 'icon' => 'clock-alert', 'route' => 'staff.arrears.index', 'module' => 'finance'],
                 ['key' => 'wallets', 'permission' => 'wallet.view', 'label' => 'Dompet', 'icon' => 'wallet', 'route' => 'staff.wallets.index', 'module' => 'wallet'],
                 ['key' => 'pos', 'permission' => 'pos.operate', 'label' => 'Kasir', 'icon' => 'store', 'route' => 'staff.pos.index', 'module' => 'pos'],
-                ['key' => 'merchants', 'permission' => 'merchants.manage', 'label' => 'Mart & Warung', 'icon' => 'shopping-basket', 'route' => 'staff.merchants.index', 'module' => 'pos'],
+                ['key' => 'merchants', 'permission' => ['merchants.manage', 'merchants.own', 'pos.view'], 'label' => 'Mart & Warung', 'icon' => 'shopping-basket', 'route' => 'staff.merchants.index', 'module' => 'pos'],
+                ['key' => 'payouts', 'permission' => 'payouts.approve', 'label' => 'Pencairan', 'icon' => 'hand-coins', 'route' => 'staff.payouts.index', 'module' => 'pos'],
                 ['key' => 'cash', 'permission' => 'finance.view', 'label' => 'Laporan Kas', 'icon' => 'landmark', 'route' => 'staff.cash.index', 'module' => 'finance'],
             ]],
             ['label' => 'PPDB', 'items' => [

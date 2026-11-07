@@ -5,25 +5,17 @@ namespace App\Modules\Pos\Livewire;
 use App\Modules\Core\Models\User;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
+use App\Modules\Pos\Support\SalesStats;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 #[Layout('components.layouts.staff', ['active' => 'merchants'])]
-#[Title('Merchant')]
+#[Title('Mart & Warung')]
 class MerchantAdmin extends Component
 {
-    use WithPagination;
-
-    #[Url(as: 'merchant', except: '')]
-    public string $selected = '';
-
     #[Locked]
     public ?int $editingMerchant = null;
 
@@ -44,19 +36,9 @@ class MerchantAdmin extends Component
 
     public bool $is_active = true;
 
-    #[Locked]
-    public ?int $editingProduct = null;
-
-    public string $product_name = '';
-
-    public string $product_price = '';
-
-    public string $product_barcode = '';
-
-    public bool $product_active = true;
-
     public function createMerchant(): void
     {
+        abort_unless(auth()->user()->can('merchants.manage'), 403);
         $this->reset('editingMerchant', 'name', 'type', 'location', 'commission_percent', 'pin_threshold', 'pic_user_id', 'cashiers', 'is_active');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-merchant');
@@ -64,6 +46,7 @@ class MerchantAdmin extends Component
 
     public function editMerchant(string $uuid): void
     {
+        abort_unless(auth()->user()->can('merchants.manage'), 403);
         $merchant = Merchant::query()->with('cashiers:id')->where('uuid', $uuid)->firstOrFail();
 
         $this->editingMerchant = $merchant->id;
@@ -83,6 +66,7 @@ class MerchantAdmin extends Component
 
     public function saveMerchant(): void
     {
+        abort_unless(auth()->user()->can('merchants.manage'), 403);
         $this->resetErrorBag();
         $this->validate([
             'name' => 'required|string|max:100',
@@ -109,69 +93,25 @@ class MerchantAdmin extends Component
             : Merchant::create($data + ['payment_modes' => ['card', 'qr']]);
 
         $merchant->cashiers()->sync($this->cashiers);
-        $this->selected = $merchant->uuid;
 
         $this->dispatch('close-modal', 'form-merchant');
         $this->dispatch('toast', message: 'Merchant tersimpan.', tone: 'success');
     }
 
-    private function selectedMerchant(): ?Merchant
-    {
-        return ! Str::isUuid($this->selected) ? null : Merchant::query()->where('uuid', $this->selected)->first();
-    }
-
-    public function createProduct(): void
-    {
-        $this->reset('editingProduct', 'product_name', 'product_price', 'product_barcode', 'product_active');
-        $this->resetErrorBag();
-        $this->dispatch('open-modal', 'form-produk');
-    }
-
-    public function editProduct(string $uuid): void
-    {
-        $product = MerchantProduct::query()->where('merchant_id', $this->selectedMerchant()?->id)->where('uuid', $uuid)->firstOrFail();
-
-        $this->editingProduct = $product->id;
-        $this->fill(['product_name' => $product->name, 'product_price' => (string) $product->price, 'product_barcode' => (string) $product->barcode, 'product_active' => $product->is_active]);
-        $this->resetErrorBag();
-        $this->dispatch('open-modal', 'form-produk');
-    }
-
-    public function saveProduct(): void
-    {
-        $merchant = $this->selectedMerchant();
-        abort_if($merchant === null, 404);
-        $this->resetErrorBag();
-
-        $this->product_price = (string) preg_replace('/\D/', '', $this->product_price);
-
-        $this->validate([
-            'product_name' => 'required|string|max:120',
-            'product_price' => 'required|integer|min:1',
-            'product_barcode' => ['nullable', 'string', 'max:50', Rule::unique('merchant_products', 'barcode')->where('merchant_id', $merchant->id)->ignore($this->editingProduct)],
-        ], ['product_barcode.unique' => 'Barcode ini sudah dipakai produk lain di merchant ini.'], ['product_name' => 'nama', 'product_price' => 'harga', 'product_barcode' => 'barcode']);
-
-        $data = ['name' => $this->product_name, 'price' => (int) $this->product_price, 'barcode' => $this->product_barcode ?: null, 'is_active' => $this->product_active];
-
-        if ($this->editingProduct) {
-            MerchantProduct::query()->where('merchant_id', $merchant->id)->findOrFail($this->editingProduct)->update($data);
-        } else {
-            MerchantProduct::create($data + ['merchant_id' => $merchant->id]);
-        }
-
-        $this->dispatch('close-modal', 'form-produk');
-        $this->dispatch('toast', message: 'Produk tersimpan.', tone: 'success');
-    }
-
     public function render(): View
     {
-        $selected = $this->selectedMerchant();
+        $today = now(config('sanad.display_timezone'))->toDateString();
+        $merchants = Merchant::query()->accessibleBy(auth()->user())->orderBy('name')->get();
+        $ids = $merchants->pluck('id')->all();
+        $summary = SalesStats::summary($ids, $today, $today);
+        $perMerchant = collect($ids)->mapWithKeys(fn (int $id) => [$id => SalesStats::summary([$id], $today, $today)]);
 
         return view('pos.merchants', [
-            'merchants' => Merchant::query()->withCount('products')->orderBy('name')->get(),
-            'selectedMerchant' => $selected,
-            'balance' => $selected?->balance() ?? 0,
-            'products' => $selected ? MerchantProduct::query()->where('merchant_id', $selected->id)->orderBy('name')->paginate(25) : null,
+            'merchants' => $merchants,
+            'perMerchant' => $perMerchant,
+            'lowStock' => MerchantProduct::query()->whereIn('merchant_id', $ids)->where('is_active', true)->whereColumn('stock', '<=', 'min_stock')->selectRaw('merchant_id, COUNT(*) AS total')->groupBy('merchant_id')->pluck('total', 'merchant_id'),
+            'summary' => $summary,
+            'canManageAll' => auth()->user()->can('merchants.manage'),
             'staffUsers' => User::query()->where('type', 'staff')->where('is_active', true)->whereHas('roles', fn ($roles) => $roles->whereIn('name', ['kasir', 'pengelola_merchant']))->orderBy('name')->get(['id', 'name']),
         ]);
     }

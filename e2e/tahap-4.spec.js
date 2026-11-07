@@ -130,8 +130,8 @@ test('kasir: keranjang, tap kartu, berhasil, PIN salah lalu benar, kartu tak dik
     await pageReady(page);
     if (shots) await page.screenshot({ path: `${shots}/kasir-1024.png`, fullPage: true });
 
-    await page.getByLabel('Barcode').fill('8990001');
-    await page.getByLabel('Barcode').press('Enter');
+    await page.getByLabel('Barcode', { exact: true }).fill('8990001');
+    await page.getByLabel('Barcode', { exact: true }).press('Enter');
     await expect(page.getByRole('button', { name: 'Kurangi Roti Uji' })).toBeVisible();
     await page.getByRole('button', { name: 'Tambah Roti Uji' }).click();
     await expect(page.getByText('Rp 10.000').first()).toBeVisible();
@@ -252,8 +252,8 @@ test('admin: perangkat, log pindai, merchant, layar HP aman', async ({ page }) =
 
     await page.getByRole('link', { name: 'Mart & Warung' }).click();
     await pageReady(page);
-    await page.getByRole('button', { name: /Warung Uji/ }).click();
-    await expect(page.getByRole('cell', { name: 'Roti Uji', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Katalog Warung Uji' }).click();
+    await expect(page.getByRole('cell', { name: /^Roti Uji/ }).first()).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/merchant-1280.png`, fullPage: true });
 
     await page.setViewportSize({ width: 360, height: 640 });

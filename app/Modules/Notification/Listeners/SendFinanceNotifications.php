@@ -12,6 +12,10 @@ use App\Modules\Finance\Events\ProofSubmitted;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Support\Rupiah;
 use App\Modules\Notification\Actions\QueueNotification;
+use App\Modules\Pos\Events\PayoutUpdated;
+use App\Modules\Pos\Events\StockLow;
+use App\Modules\Pos\Models\Merchant;
+use App\Modules\Pos\Models\MerchantPayout;
 use App\Modules\Wallet\Events\CardBlocked;
 use App\Modules\Wallet\Events\WalletSpent;
 use App\Modules\Wallet\Support\WalletSettings;
@@ -132,6 +136,44 @@ class SendFinanceNotifications
         }
     }
 
+    public function stockLow(StockLow $event): void
+    {
+        $merchant = $event->product->merchant;
+        $link = route('staff.merchants.stock', $merchant);
+
+        foreach ($this->merchantManagers($merchant) as $user) {
+            $this->notifications->toStaff('stock_low', $user, [
+                'merchant' => $merchant->name,
+                'produk' => $event->product->name,
+                'sisa' => $event->stock,
+                'link' => $link,
+            ], 'Stok '.$event->product->name.' menipis', $link);
+        }
+    }
+
+    public function payoutUpdated(PayoutUpdated $event): void
+    {
+        $payout = $event->payout->load('merchant');
+        $link = route('staff.merchants.report', $payout->merchant);
+
+        foreach ($this->merchantManagers($payout->merchant) as $user) {
+            $this->notifications->toStaff('payout_status', $user, [
+                'merchant' => $payout->merchant->name,
+                'nominal' => Rupiah::format($payout->amount),
+                'status' => MerchantPayout::LABELS[$payout->status],
+                'link' => $link,
+            ], 'Pencairan: '.MerchantPayout::LABELS[$payout->status], $link);
+        }
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    private function merchantManagers(Merchant $merchant): Collection
+    {
+        return collect([$merchant->pic])->merge($merchant->cashiers()->permission('merchants.own')->get())->filter()->unique('id')->values();
+    }
+
     public function paymentClosed(PaymentClosed $event): void
     {
         $payment = $event->payment;
@@ -198,6 +240,8 @@ class SendFinanceNotifications
             ProofRejected::class => 'proofRejected',
             WalletSpent::class => 'walletSpent',
             CardBlocked::class => 'cardBlocked',
+            StockLow::class => 'stockLow',
+            PayoutUpdated::class => 'payoutUpdated',
         ] as $event => $method) {
             // Berjalan setelah commit: kegagalan notifikasi tidak boleh menampilkan galat pada pembayaran yang sudah tercatat.
             $events->listen($event, function ($payload) use ($method): void {

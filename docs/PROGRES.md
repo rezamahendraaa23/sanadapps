@@ -7,8 +7,8 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 2:** keuangan, tagihan, pembayaran tunai dan transfer manual, kwitansi PDF, tunggakan
 - [x] **Tahap 3:** Midtrans dan notifikasi WhatsApp Fonnte (diuji dengan gateway tiruan, kunci sungguhan belum ada)
 - [x] **Tahap 4:** kartu santri, dompet, kasir POS
-- [ ] **Tahap 5:** Mart & Warung (berikutnya)
-- [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF
+- [x] **Tahap 5:** Mart & Warung
+- [ ] **Tahap 6:** akademik, jadwal, absensi, nilai dan rapor PDF (berikutnya)
 - [ ] **Tahap 7:** perizinan dan pos gerbang
 - [ ] **Tahap 8:** tahfidz dan mutabaah
 - [ ] **Tahap 9:** ujian online dan PWA
@@ -16,6 +16,19 @@ Diperbarui setiap ada langkah selesai.
 - [ ] **Tahap 11:** PPDB
 - [ ] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+
+## Rincian Tahap 5
+
+- [x] Beranda Mart & Warung: penjualan hari ini, kartu per merchant, stok menipis (F-10)
+- [x] Hak akses: pengelola hanya merchant miliknya, kasir hanya berjualan, bendahara hanya melihat (POS-01)
+- [x] Katalog: kategori, foto, barcode, ubah harga massal, impor xlsx, daftar harga PDF (POS-05, F-11)
+- [x] Stok: masuk, keluar, opname; otomatis berkurang saat terjual, kembali saat void; tidak bisa minus (POS-06, F-12)
+- [x] Aturan wali: batas per merchant dan kategori, larang merchant atau kategori (POS-08, W-15)
+- [x] Laporan: omzet, komisi, margin, produk terlaris, jam ramai, per merchant dan gabungan, ekspor (POS-03, POS-11, F-13)
+- [x] Pencairan: ajukan, setujui, bayar; saldo dan kas berubah saat dibayar (POS-04, POS-10)
+- [x] Rekonsiliasi belanja dompet dengan penjualan merchant
+- [x] Notifikasi stok menipis dan status pencairan
+- [x] Test policy, Delivery Gate, commit
 
 ## Rincian Tahap 4
 

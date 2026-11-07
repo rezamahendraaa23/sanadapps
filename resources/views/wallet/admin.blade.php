@@ -54,7 +54,7 @@
                         <x-ui.empty-state icon="wallet" message="Belum ada transaksi." class="py-2" />
                     @else
                         <x-ui.table caption="Mutasi dompet">
-                            <thead><tr><x-ui.th>Waktu</x-ui.th><x-ui.th>Jenis</x-ui.th><x-ui.th>Keterangan</x-ui.th><x-ui.th class="text-right">Nominal</x-ui.th><x-ui.th class="text-right">Saldo</x-ui.th></tr></thead>
+                            <thead><tr><x-ui.th>Waktu</x-ui.th><x-ui.th>Jenis</x-ui.th><x-ui.th>Keterangan</x-ui.th><x-ui.th numeric>Nominal</x-ui.th><x-ui.th numeric>Saldo</x-ui.th></tr></thead>
                             <tbody>
                                 @foreach ($transactions as $transaction)
                                     <tr wire:key="trx-{{ $transaction->uuid }}">

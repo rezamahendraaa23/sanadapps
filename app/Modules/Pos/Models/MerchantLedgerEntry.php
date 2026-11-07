@@ -38,6 +38,27 @@ class MerchantLedgerEntry extends Model
     }
 
     /**
+     * @return list<int> Merchant yang penjualan bersihnya di buku besar tidak sama dengan belanja dompet (PRD Sistem 8.7b).
+     */
+    public static function salesMismatchedMerchants(): array
+    {
+        $wallet = DB::table('wallet_transactions')
+            ->whereNotNull('merchant_id')
+            ->where(fn ($query) => $query->where('type', 'spend')->orWhere(fn ($refund) => $refund->where('type', 'refund')->where('direction', 'credit')))
+            ->selectRaw("merchant_id, SUM(CASE WHEN type = 'spend' THEN amount ELSE -amount END) AS total")
+            ->groupBy('merchant_id');
+
+        $ledger = DB::table('merchant_ledger')->whereIn('type', ['sale', 'refund'])->selectRaw('merchant_id, SUM(amount) AS total')->groupBy('merchant_id');
+
+        return DB::query()->fromSub($ledger, 'ledger')
+            ->leftJoinSub($wallet, 'wallet', 'wallet.merchant_id', '=', 'ledger.merchant_id')
+            ->whereRaw('ledger.total <> COALESCE(wallet.total, 0)')
+            ->pluck('ledger.merchant_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
      * @return list<int> Merchant yang saldo terakhirnya tidak sama dengan jumlah buku besarnya.
      */
     public static function mismatchedMerchants(): array

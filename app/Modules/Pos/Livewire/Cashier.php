@@ -85,7 +85,13 @@ class Cashier extends Component
     {
         $product = MerchantProduct::query()->where('merchant_id', $this->merchant()?->id)->where('is_active', true)->where('uuid', $uuid)->first();
 
-        if ($product === null) {
+        if ($product === null || $product->isOutOfStock()) {
+            return;
+        }
+
+        if ($product->stock !== null && ($this->cart[$uuid] ?? 0) >= $product->stock) {
+            $this->dispatch('toast', message: "Stok {$product->name} tinggal {$product->stock}.", tone: 'warning');
+
             return;
         }
 

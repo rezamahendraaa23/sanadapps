@@ -16,6 +16,7 @@ class FinanceSeeder extends Seeder
             [CashCategory::REFUND, 'out'],
             [CashCategory::WALLET_TOPUP, 'in'],
             [CashCategory::WALLET_WITHDRAW, 'out'],
+            [CashCategory::MERCHANT_PAYOUT, 'out'],
             ['Penyaluran merchant', 'out'],
             ['Operasional', 'out'],
             ['Gaji dan honor', 'out'],

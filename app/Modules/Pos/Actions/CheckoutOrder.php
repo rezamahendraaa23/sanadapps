@@ -14,10 +14,12 @@ use App\Modules\Wallet\Actions\WalletLedger;
 use App\Modules\Wallet\Events\WalletSpent;
 use App\Modules\Wallet\Models\StudentCard;
 use App\Modules\Wallet\Models\Wallet;
+use App\Modules\Wallet\Models\WalletMerchantLimit;
 use App\Modules\Wallet\Support\CardResolver;
 use App\Modules\Wallet\Support\ChargeResult;
 use App\Modules\Wallet\Support\QrToken;
 use App\Modules\Wallet\Support\WalletSettings;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -27,7 +29,7 @@ class CheckoutOrder
 
     private const LOCK_MINUTES = 15;
 
-    public function __construct(private WalletLedger $ledger, private RecordScan $scan) {}
+    public function __construct(private WalletLedger $ledger, private RecordScan $scan, private StockLedger $stock) {}
 
     /**
      * Satu transaksi: potong saldo, buat struk, kredit merchant (PRD Sistem 8.7b). Penolakan dikembalikan
@@ -81,9 +83,15 @@ class CheckoutOrder
                 return ChargeResult::denied('invalid_cart', 'Keranjang tidak valid. Muat ulang daftar produk.');
             }
 
-            [$items, $total] = $priced;
+            if (is_string($priced)) {
+                $this->scan->handle($card, $deviceId, 'canteen', 'denied', $priced);
 
-            if (($denial = $this->evaluate($card, $wallet, $total, $pin, $merchant)) !== null) {
+                return ChargeResult::denied('out_of_stock', $priced);
+            }
+
+            [$items, $total, $products] = $priced;
+
+            if (($denial = $this->evaluate($card, $wallet, $total, $pin, $merchant, $items, $products)) !== null) {
                 if ($denial->code !== 'pin_required') {
                     $this->scan->handle($card, $deviceId, 'canteen', in_array($denial->code, ['card_blocked', 'wallet_blocked'], true) ? 'blocked' : 'denied', $denial->message);
                 }
@@ -97,14 +105,14 @@ class CheckoutOrder
                 return ChargeResult::denied('qr_invalid', 'QR ini sudah dipakai. Tunggu QR berikutnya.');
             }
 
-            return $this->record($merchant, $items, $total, $card, $wallet, $resolved['method'], $key, $cashierId, $deviceId);
+            return $this->record($merchant, $items, $total, $products, $card, $wallet, $resolved['method'], $key, $cashierId, $deviceId);
         });
     }
 
     /**
      * Urutan pemeriksaan mengikuti PRD Sistem 8.7.
      */
-    private function evaluate(StudentCard $card, Wallet $wallet, int $total, ?string $pin, Merchant $merchant): ?ChargeResult
+    private function evaluate(StudentCard $card, Wallet $wallet, int $total, ?string $pin, Merchant $merchant, array $items, Collection $products): ?ChargeResult
     {
         if ($card->status !== 'active') {
             return ChargeResult::denied('card_blocked', 'Kartu diblokir.');
@@ -144,8 +152,72 @@ class CheckoutOrder
             }
         }
 
+        if (($denial = $this->guardianRules($wallet, $total, $merchant, $items, $products)) !== null) {
+            return $denial;
+        }
+
         if ($wallet->balance < $total) {
             return ChargeResult::denied('insufficient', 'Saldo kurang (sisa '.Rupiah::format($wallet->balance).').');
+        }
+
+        return null;
+    }
+
+    /**
+     * Aturan wali per merchant dan kategori (POS-08). Pesannya netral: nama kategori tidak disebut,
+     * kasir hanya melihat item penyebabnya.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @param  Collection<int, MerchantProduct>  $products
+     */
+    private function guardianRules(Wallet $wallet, int $total, Merchant $merchant, array $items, Collection $products): ?ChargeResult
+    {
+        $rules = WalletMerchantLimit::query()->where('wallet_id', $wallet->id)->get();
+
+        if ($rules->isEmpty()) {
+            return null;
+        }
+
+        $start = now(config('sanad.display_timezone'))->startOfDay()->utc();
+        $merchantRule = $rules->firstWhere('merchant_id', $merchant->id);
+
+        if ($merchantRule?->is_blocked) {
+            return ChargeResult::denied('merchant_blocked', 'Dompet santri ini tidak bisa dipakai di merchant ini.');
+        }
+
+        if ($merchantRule?->daily_limit !== null) {
+            $spent = (int) $wallet->transactions()->where('merchant_id', $merchant->id)->where('type', 'spend')->where('created_at', '>=', $start)->sum('amount')
+                - (int) $wallet->transactions()->where('merchant_id', $merchant->id)->where('type', 'refund')->where('direction', 'credit')->where('created_at', '>=', $start)->sum('amount');
+            $remaining = max(0, $merchantRule->daily_limit - $spent);
+
+            if ($total > $remaining) {
+                return ChargeResult::denied('merchant_limit', "Limit {$merchant->type} ini terlampaui (sisa ".Rupiah::format($remaining).').');
+            }
+        }
+
+        foreach ($rules->whereNotNull('category_id')->groupBy('category_id') as $categoryId => $categoryRules) {
+            $rule = $categoryRules->first();
+            $matching = array_filter($items, fn (array $item) => $item['category_id'] === (int) $categoryId);
+
+            if ($matching === []) {
+                continue;
+            }
+
+            if ($rule->is_blocked) {
+                return ChargeResult::denied('category_blocked', 'Produk ini tidak bisa dibeli dengan dompet ini: '.implode(', ', array_column($matching, 'name')).'.');
+            }
+
+            if ($rule->daily_limit !== null) {
+                $spent = (int) DB::table('pos_order_items')
+                    ->join('pos_orders', 'pos_orders.id', '=', 'pos_order_items.pos_order_id')
+                    ->where('pos_orders.student_id', $wallet->student_id)->where('pos_orders.status', 'paid')->where('pos_orders.created_at', '>=', $start)
+                    ->where('pos_order_items.category_id', (int) $categoryId)->sum('pos_order_items.amount');
+                $remaining = max(0, $rule->daily_limit - $spent);
+
+                if (array_sum(array_column($matching, 'amount')) > $remaining) {
+                    return ChargeResult::denied('category_limit', 'Batas harian untuk '.implode(', ', array_column($matching, 'name')).' terlampaui (sisa '.Rupiah::format($remaining).').');
+                }
+            }
         }
 
         return null;
@@ -167,20 +239,20 @@ class CheckoutOrder
     }
 
     /**
-     * Harga selalu dari server, bukan dari layar kasir.
+     * Harga dan stok selalu dari server. Baris produk dikunci agar dua kasir tidak menjual stok terakhir yang sama.
      *
      * @param  array<int, int>  $lines
-     * @return array{0: list<array<string, mixed>>, 1: int}|null
+     * @return array{0: list<array<string, mixed>>, 1: int, 2: Collection<int, MerchantProduct>}|string|null
      */
-    private function price(Merchant $merchant, array $lines, ?int $amount): ?array
+    private function price(Merchant $merchant, array $lines, ?int $amount): array|string|null
     {
         if ($lines === []) {
             return $amount !== null && $amount > 0
-                ? [[['product_id' => null, 'name' => 'Belanja', 'qty' => 1, 'unit_price' => $amount, 'amount' => $amount]], $amount]
+                ? [[['product_id' => null, 'category_id' => null, 'cost_price' => null, 'name' => 'Belanja', 'qty' => 1, 'unit_price' => $amount, 'amount' => $amount]], $amount, collect()]
                 : null;
         }
 
-        $products = MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)->whereIn('id', array_keys($lines))->orderBy('id')->get()->keyBy('id');
+        $products = MerchantProduct::query()->where('merchant_id', $merchant->id)->where('is_active', true)->whereIn('id', array_keys($lines))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         $items = [];
 
         foreach ($lines as $productId => $qty) {
@@ -190,18 +262,31 @@ class CheckoutOrder
                 return null;
             }
 
-            $items[] = ['product_id' => $product->id, 'name' => $product->name, 'qty' => $qty, 'unit_price' => $product->price, 'amount' => $product->price * $qty];
+            if ($product->stock !== null && $product->stock < $qty) {
+                return "Stok {$product->name} tinggal {$product->stock}.";
+            }
+
+            $items[] = [
+                'product_id' => $product->id,
+                'category_id' => $product->category_id,
+                'cost_price' => $product->cost_price,
+                'name' => $product->name,
+                'qty' => $qty,
+                'unit_price' => $product->price,
+                'amount' => $product->price * $qty,
+            ];
         }
 
         $total = array_sum(array_column($items, 'amount'));
 
-        return $total > 0 ? [$items, $total] : null;
+        return $total > 0 ? [$items, $total, $products] : null;
     }
 
     /**
      * @param  list<array<string, mixed>>  $items
+     * @param  Collection<int, MerchantProduct>  $products
      */
-    private function record(Merchant $merchant, array $items, int $total, StudentCard $card, Wallet $wallet, string $method, string $key, ?int $cashierId, ?int $deviceId): ChargeResult
+    private function record(Merchant $merchant, array $items, int $total, Collection $products, StudentCard $card, Wallet $wallet, string $method, string $key, ?int $cashierId, ?int $deviceId): ChargeResult
     {
         $lockedMerchant = Merchant::query()->whereKey($merchant->id)->lockForUpdate()->firstOrFail();
         $commission = $lockedMerchant->commissionFor($total);
@@ -220,6 +305,12 @@ class CheckoutOrder
 
         foreach ($items as $item) {
             PosOrderItem::create([...$item, 'pos_order_id' => $order->id]);
+
+            $product = $products[$item['product_id']] ?? null;
+
+            if ($product?->stock !== null) {
+                $this->stock->move($product, 'sale', -$item['qty'], null, $cashierId, 'pos_order', $order->id);
+            }
         }
 
         $scan = $this->scan->handle($card, $deviceId, 'canteen', 'ok', null, 'pos_order', $order->id);

@@ -115,3 +115,13 @@ it('tap ganda bersamaan dengan kunci yang sama hanya memotong sekali dan semua m
     expect((int) $report['tap_balance'])->toBe(80000)->and($report['tap_orders'])->toBe(1)
         ->and((int) $report['merchant_balance'])->toBe(10000)->and($report['ledger_differences'])->toBe(0);
 });
+
+it('enam kasir berebut stok terakhir: stok 3, tepat 3 terjual dan stok tidak minus', function () {
+    $results = race('stock', (string) $this->ids['product']);
+
+    expect(array_count_values($results)['paid'])->toBe(3)
+        ->and(array_count_values($results)['out_of_stock'])->toBe(3);
+
+    $report = json_decode(runWorker('report', '0', (string) $this->ids['payment']), true);
+    expect((int) $report['product_stock'])->toBe(0)->and($report['stock_sales'])->toBe(3)->and($report['ledger_differences'])->toBe(0);
+});

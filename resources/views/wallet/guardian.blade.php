@@ -40,6 +40,13 @@
             </a>
         @endforeach
 
+        @if ($posEnabled)
+            <a href="{{ route('wali.wallet.rules', ['anak' => $child->uuid]) }}" wire:navigate class="flex min-h-11 items-center justify-between gap-2 rounded-card border border-border bg-surface p-4">
+                <span class="min-w-0"><span class="block text-base font-semibold">Aturan belanja</span><span class="block text-sm text-text-muted">Batas per warung, larang merchant atau kategori</span></span>
+                <x-ui.icon name="chevron-right" class="shrink-0" />
+            </a>
+        @endif
+
         <x-ui.card title="Kartu">
             @if ($card)
                 <div class="flex flex-wrap items-center justify-between gap-2">

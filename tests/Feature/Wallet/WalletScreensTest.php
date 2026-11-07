@@ -74,7 +74,7 @@ it('hak akses layar mengikuti matriks PRD', function (string $route, array $allo
     'kartu' => ['staff.cards.index', ['admin', 'bendahara'], ['kasir']],
     'perangkat' => ['staff.cards.devices', ['admin'], ['bendahara', 'kasir']],
     'kasir' => ['staff.pos.index', ['admin', 'kasir'], ['bendahara']],
-    'merchant' => ['staff.merchants.index', ['admin'], ['bendahara', 'kasir']],
+    'merchant' => ['staff.merchants.index', ['admin', 'bendahara'], ['kasir']],
 ]);
 
 it('modul mati menutup layarnya', function () {
@@ -288,10 +288,10 @@ it('log pindai terbuka dan bisa diekspor', function () {
     $this->actingAs($this->kasir)->get(route('staff.cards.scans'))->assertForbidden();
 });
 
-it('merchant: tambah, kasir terhubung, barcode ganda ditolak', function () {
+it('merchant: tambah, kasir terhubung; hanya pengelola pusat', function () {
     $this->actingAs($this->admin);
 
-    $component = Livewire::test(MerchantAdmin::class)
+    Livewire::test(MerchantAdmin::class)
         ->call('createMerchant')
         ->set('name', 'Mart Pesantren')->set('type', 'mart')->set('commission_percent', '2.5')->set('cashiers', [(string) $this->kasir->id])
         ->call('saveMerchant')->assertHasNoErrors();
@@ -299,8 +299,8 @@ it('merchant: tambah, kasir terhubung, barcode ganda ditolak', function () {
     $merchant = Merchant::where('name', 'Mart Pesantren')->first();
     expect($merchant->cashiers()->count())->toBe(1)->and((float) $merchant->commission_percent)->toBe(2.5)->and($merchant->payment_modes)->toBe(['card', 'qr']);
 
-    $component->call('createProduct')->set('product_name', 'Air')->set('product_price', '3000')->set('product_barcode', '111')->call('saveProduct')->assertHasNoErrors();
-    $component->call('createProduct')->set('product_name', 'Teh')->set('product_price', '3000')->set('product_barcode', '111')->call('saveProduct')->assertHasErrors('product_barcode');
+    $this->actingAs($this->bendahara);
+    Livewire::test(MerchantAdmin::class)->assertDontSee('Tambah Merchant')->call('createMerchant')->assertForbidden();
 });
 
 describe('wali', function () {
@@ -415,14 +415,13 @@ it('menu mengikuti modul dan izin', function () {
     expect($keys($this->kasir))->toContain('pos')->not->toContain('wallets')->not->toContain('invoices');
 
     $this->actingAs($this->bendahara);
-    expect($keys($this->bendahara))->toContain('wallets', 'cards')->not->toContain('pos', 'merchants');
+    expect($keys($this->bendahara))->toContain('wallets', 'cards')->toContain('merchants', 'payouts')->not->toContain('pos');
 });
 
 it('parameter URL rusak tidak membuat galat', function () {
     $this->actingAs($this->admin);
 
     $this->get(route('staff.wallets.index', ['santri' => 'bukan-uuid']))->assertOk();
-    $this->get(route('staff.merchants.index', ['merchant' => 'bukan-uuid']))->assertOk();
     $this->get(route('staff.pos.index', ['merchant' => 'bukan-uuid']))->assertOk();
 });
 
