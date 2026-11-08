@@ -42,6 +42,39 @@ class PhaseDocuments
     }
 
     /**
+     * Rapor fase dari portal: wali hanya untuk anaknya, santri hanya miliknya sendiri, dan hanya yang sudah diputuskan.
+     */
+    public function ownReport(PhaseResult $result, Request $request): Response
+    {
+        $this->authorizeOwn($result, $request);
+        abort_if($result->status === 'pending', 404);
+        $result->load(['student', 'classroom', 'phase.curriculum']);
+
+        return $this->download($this->pdf->render(view('academic.pdf.phase-report', [...$this->common(), 'results' => collect([$result])])->render()), 'rapor-'.Str::slug($result->phase->name.' '.$result->student->name));
+    }
+
+    public function ownCertificate(PhaseResult $result, Request $request): Response
+    {
+        $this->authorizeOwn($result, $request);
+        abort_if($result->certificate_no === null, 404);
+        $result->load(['student', 'classroom', 'phase.curriculum']);
+        $design = CertificateDesigns::key($result->phase->certificate_design ?: CertificateDesigns::settings()['default_design']);
+
+        return $this->download($this->pdf->render(view('academic.certificates.layout', [...$this->common(), 'results' => collect([$result]), 'design' => $design])->render(), 'A4'), 'syahadah-'.Str::slug($result->phase->name.' '.$result->student->name));
+    }
+
+    private function authorizeOwn(PhaseResult $result, Request $request): void
+    {
+        $user = $request->user();
+        $allowed = match ($user->type) {
+            'guardian' => $user->guardian?->students()->whereKey($result->student_id)->exists() ?? false,
+            'student' => $user->student?->id === $result->student_id,
+            default => false,
+        };
+        abort_unless($allowed, 403);
+    }
+
+    /**
      * Contoh berisi data rekaan untuk galeri desain; tidak menyentuh database.
      */
     public function preview(string $design): View

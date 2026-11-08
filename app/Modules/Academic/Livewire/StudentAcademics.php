@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Livewire;
 
 use App\Modules\Academic\Models\AttendanceRecord;
+use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Models\ReportCard;
 use App\Modules\Academic\Models\Schedule;
 use App\Modules\Academic\Support\AttendanceStats;
@@ -65,6 +66,7 @@ class StudentAcademics extends Component
                 'jadwal' => $modules->enabled('academic') ? 'Jadwal' : null,
                 'absensi' => $modules->enabled('attendance') ? 'Absensi' : null,
                 'nilai' => $modules->enabled('grading') ? 'Nilai' : null,
+                'fase' => $modules->enabled('curriculum') ? 'Rapor Fase' : null,
             ]),
             'schedules' => $child ? StudentSchedule::forStudent($child, $selected) : collect(),
             'days' => Schedule::DAYS,
@@ -73,6 +75,8 @@ class StudentAcademics extends Component
             'time' => now($zone)->format('H:i:s'),
             'attendance' => $child ? AttendanceStats::perStudent(null, null, $start, $end, [$child->id])->first() : null,
             'recent' => $child ? AttendanceRecord::query()->with('session:id,title,session_date,closed_at')->where('student_id', $child->id)->whereHas('session', fn ($query) => $query->whereNotNull('closed_at'))->latest('id')->limit(15)->get() : collect(),
+            // Hanya fase yang sudah diputuskan lulus atau belum; yang masih berjalan belum punya rapor.
+            'phaseResults' => $child && $modules->enabled('curriculum') ? PhaseResult::query()->with('phase.curriculum')->where('student_id', $child->id)->where('status', '!=', 'pending')->orderByDesc('started_on')->get() : collect(),
             'cards' => $child ? ReportCard::query()->with(['term:id,name', 'items.subject:id,name,kkm'])->where('student_id', $child->id)->where('status', 'published')->latest('id')->get() : collect(),
         ])->layout('components.layouts.portal', $isGuardian ? ['role' => 'wali', 'active' => 'progress', 'title' => 'Perkembangan'] : ['role' => 'santri', 'active' => 'schedule', 'title' => 'Jadwal & Nilai']);
     }

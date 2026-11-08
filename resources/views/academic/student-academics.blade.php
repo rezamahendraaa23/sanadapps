@@ -57,6 +57,44 @@
                     </ul>
                 </x-ui.card>
             @endif
+        @elseif ($segment === 'fase')
+            @forelse ($phaseResults as $result)
+                <x-ui.card wire:key="fase-{{ $result->uuid }}">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="text-sm text-text-muted">{{ $result->phase->curriculum->name }}</p>
+                            <h3 class="font-display text-lg font-semibold break-words">{{ $result->phase->name }}</h3>
+                            <p class="text-sm text-text-muted">{{ $result->started_on->translatedFormat('j M Y') }} sampai {{ $result->ended_on->translatedFormat('j M Y') }}</p>
+                        </div>
+                        <span @class(['inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold', 'bg-success-soft text-success' => $result->status === 'passed', 'bg-warning-soft text-warning' => $result->status === 'failed'])>
+                            <x-ui.icon :name="$result->status === 'passed' ? 'circle-check' : 'rotate-ccw'" size="sm" />{{ $result->status === 'passed' ? 'Lulus' : 'Mengulang' }}
+                        </span>
+                    </div>
+                    @if ($result->scores)
+                        <ul class="mt-3 flex flex-col">
+                            @foreach ($result->scores as $score)
+                                <li class="flex items-center justify-between gap-2 border-b border-border py-2 last:border-b-0">
+                                    <span class="min-w-0 text-base break-words">{{ $score['name'] ?? '' }}</span>
+                                    <span class="font-tabular shrink-0 font-semibold">{{ isset($score['score']) ? rtrim(rtrim(number_format((float) $score['score'], 2, ',', ''), '0'), ',') : '-' }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                    <p class="mt-3 flex items-baseline justify-between gap-2 rounded-control bg-bg px-3 py-2">
+                        <span class="text-sm">Nilai akhir</span>
+                        <span class="font-display font-tabular text-2xl font-semibold">{{ $result->final_score !== null ? rtrim(rtrim(number_format((float) $result->final_score, 2, ',', ''), '0'), ',') : '-' }}</span>
+                    </p>
+                    @if ($result->note)<p class="mt-2 text-sm"><strong>Catatan:</strong> {{ $result->note }}</p>@endif
+                    <div class="mt-3 grid gap-2 md:grid-cols-2">
+                        <x-ui.button variant="secondary" icon="file-down" :href="route('phase-docs.report', $result)">Unduh Rapor</x-ui.button>
+                        @if ($result->certificate_no)
+                            <x-ui.button icon="award" :href="route('phase-docs.certificate', $result)">Unduh Syahadah</x-ui.button>
+                        @endif
+                    </div>
+                </x-ui.card>
+            @empty
+                <x-ui.card><x-ui.empty-state icon="milestone" message="Belum ada fase yang selesai dinilai." class="py-2" /></x-ui.card>
+            @endforelse
         @elseif ($segment === 'nilai')
             @forelse ($cards as $card)
                 <x-ui.card wire:key="rapor-{{ $card->uuid }}" :title="'Rapor '.$card->term->name">

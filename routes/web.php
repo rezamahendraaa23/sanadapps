@@ -647,6 +647,11 @@ Route::middleware(['auth', 'user.type:student', 'module:portal_santri'])->prefix
     Route::get('/izin', GuardianLeaves::class)->middleware('module:leave')->name('leaves');
 });
 
+Route::middleware(['auth', 'module:curriculum'])->prefix('dokumen-fase')->name('phase-docs.')->group(function (): void {
+    Route::get('/{result}/rapor', [PhaseDocuments::class, 'ownReport'])->name('report');
+    Route::get('/{result}/syahadah', [PhaseDocuments::class, 'ownCertificate'])->name('certificate');
+});
+
 Route::get('/kwitansi/{payment}', function (Payment $payment, BuildReceiptPdf $pdf) {
     try {
         $content = $pdf->handle($payment);

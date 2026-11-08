@@ -13,6 +13,7 @@ use App\Modules\Academic\Support\AcademicException;
 use App\Modules\Academic\Support\CertificateDesigns;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
+use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
@@ -236,4 +237,40 @@ it('sertifikat dua sisi: belakangnya hasil ujian bila dipilih di fase', function
     Livewire::test(CurriculumBoard::class)->call('editPhase', $this->intro->uuid)->set('p_back', true)->call('savePhase')->assertHasNoErrors();
     $this->get(route('staff.curriculum.certificate', $this->room))->assertOk();
     expect($captured->html)->toContain('كَشْفُ الدَّرَجَاتِ')->toContain('Fiqih')->and(substr_count($captured->html, 'class="sheet back"'))->toBe(2);
+});
+
+it('portal: wali dan santri melihat rapor fase dan mengunduh syahadah miliknya sendiri saja', function () {
+    Module::whereIn('module_key', ['portal_wali', 'portal_santri'])->update(['is_enabled' => true]);
+    app(ModuleRegistry::class)->forget();
+    $this->app->instance(PdfRenderer::class, new class implements PdfRenderer
+    {
+        public function render(string $html, string $format = 'A4'): string
+        {
+            return '%PDF'.$html;
+        }
+    });
+    $passed = PhaseResult::create(['student_id' => $this->ahmad->id, 'phase_id' => $this->intro->id, 'classroom_id' => $this->room->id, 'started_on' => '2026-08-01', 'ended_on' => '2026-10-23',
+        'scores' => [$this->fiqih->id => ['name' => 'Fiqih', 'score' => 88]], 'final_score' => 88, 'status' => 'passed', 'certificate_no' => '001/SRT/PRK/2026', 'certified_at' => now()]);
+    $running = PhaseResult::create(['student_id' => $this->ahmad->id, 'phase_id' => $this->basic->id, 'started_on' => '2026-11-01', 'ended_on' => '2027-04-17', 'status' => 'pending']);
+    $other = PhaseResult::create(['student_id' => $this->budi->id, 'phase_id' => $this->intro->id, 'started_on' => '2026-08-01', 'ended_on' => '2026-10-23', 'final_score' => 55, 'status' => 'failed']);
+
+    $guardianUser = tap(User::create(['name' => 'Wali Ahmad', 'email' => 'wali@uji.test', 'type' => 'guardian']))->assignRole('wali');
+    $guardian = Guardian::create(['user_id' => $guardianUser->id, 'name' => 'Wali Ahmad', 'phone_wa' => '6281200000009']);
+    $guardian->students()->attach($this->ahmad->id, ['relation' => 'ayah', 'is_primary' => true, 'is_payer' => true, 'can_receive_wa' => true]);
+
+    $this->actingAs($guardianUser)->get(route('wali.progress', ['segment' => 'fase']))->assertOk()
+        ->assertSee('Rapor Fase')->assertSee('Masa Perkenalan')->assertSee('Lulus')->assertSee('Unduh Syahadah')->assertDontSee('Fase Dasar');
+    $this->get(route('phase-docs.report', $passed))->assertOk()->assertSee('Ahmad');
+    $this->get(route('phase-docs.certificate', $passed))->assertOk()->assertSee('001/SRT/PRK/2026');
+    $this->get(route('phase-docs.report', $running))->assertNotFound();
+    $this->get(route('phase-docs.report', $other))->assertForbidden();
+    $this->get(route('phase-docs.certificate', $other))->assertForbidden();
+
+    $studentUser = tap(User::create(['name' => 'Budi', 'username' => 'B1', 'type' => 'student']))->assignRole('santri');
+    $this->budi->update(['user_id' => $studentUser->id]);
+    $this->actingAs($studentUser)->get(route('phase-docs.report', $other))->assertOk()->assertSee('Belum lulus');
+    $this->get(route('phase-docs.certificate', $other))->assertNotFound();
+    $this->get(route('phase-docs.report', $passed))->assertForbidden();
+
+    $this->actingAs($this->admin)->get(route('phase-docs.report', $passed))->assertForbidden();
 });
