@@ -36,6 +36,7 @@ use App\Modules\Masjid\Support\HijriDate;
 use App\Modules\Masjid\Support\MasjidException;
 use App\Modules\Masjid\Support\QuoteTemplates;
 use App\Modules\Masjid\Support\YoutubeLink;
+use App\Support\Pdf\PdfRenderer;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
@@ -291,6 +292,27 @@ describe('layar', function () {
         expect(app(DisplayManifest::class)->build($screen)['quotes'])->toHaveCount(1);
         Livewire::test(DisplayContents::class)->call('deleteQuote', $verified->uuid);
         expect(Quote::count())->toBe(0)->and(app(DisplayManifest::class)->build($screen)['quotes'])->toBe([]);
+    });
+
+    it('PDF jadwal bulanan selalu sebulan penuh, Jumat ditandai, sudut tercetak benar', function () {
+        $this->app->instance(PdfRenderer::class, new class implements PdfRenderer
+        {
+            public function render(string $html, string $format = 'A4'): string
+            {
+                return '%PDF'.$html;
+            }
+        });
+        // Hanya tiga hari yang tersimpan; sisanya dihitung saat dicetak tanpa disimpan.
+        app(ComputePrayerTimes::class)->handle(now()->toDateString(), 3);
+        PrayerTime::query()->whereNotIn('id', PrayerTime::query()->orderBy('date')->limit(3)->pluck('id'))->delete();
+        $month = now(config('sanad.display_timezone'))->format('Y-m');
+        $html = $this->get(route('masjid.public.month', ['month' => $month]))->assertOk()->getContent();
+        $days = CarbonImmutable::parse($month.'-01')->daysInMonth;
+
+        expect(substr_count($html, '<td class="date'))->toBe($days)
+            ->and(substr_count($html, 'class="friday"'))->toBeGreaterThanOrEqual(4)
+            ->and($html)->toContain('Sudut Subuh 20°')->not->toContain('Hari ini')
+            ->and(PrayerTime::count())->toBe(3);
     });
 
     it('pratinjau mengambil isi terbaru tanpa muat ulang', function () {
