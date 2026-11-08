@@ -3,7 +3,6 @@
 namespace App\Modules\Masjid\Livewire;
 
 use App\Modules\Core\Models\Student;
-use App\Modules\Finance\Actions\CompressProofImage;
 use App\Modules\Masjid\Actions\ManageContent;
 use App\Modules\Masjid\Models\DisplayContent;
 use App\Modules\Masjid\Models\DisplayScreen;
@@ -11,6 +10,7 @@ use App\Modules\Masjid\Models\KajianSchedule;
 use App\Modules\Masjid\Models\KhutbahSchedule;
 use App\Modules\Masjid\Models\Quote;
 use App\Modules\Masjid\Support\MasjidException;
+use App\Modules\Masjid\Support\YoutubeLink;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -45,6 +45,12 @@ class DisplayContents extends Component
     public string $title = '';
 
     public string $text = '';
+
+    public string $layout = 'panel';
+
+    public string $youtube_url = '';
+
+    public bool $youtube_sound = false;
 
     public $media = null;
 
@@ -117,7 +123,7 @@ class DisplayContents extends Component
 
     public function create(): void
     {
-        $this->reset('editing', 'type', 'title', 'text', 'media', 'quote_id', 'starts_at', 'ends_at', 'days', 'before_prayer', 'priority', 'duration', 'screens', 'is_public', 'is_ticker', 'studentUuid', 'student_search');
+        $this->reset('editing', 'type', 'layout', 'youtube_url', 'youtube_sound', 'title', 'text', 'media', 'quote_id', 'starts_at', 'ends_at', 'days', 'before_prayer', 'priority', 'duration', 'screens', 'is_public', 'is_ticker', 'studentUuid', 'student_search');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-konten');
     }
@@ -129,6 +135,9 @@ class DisplayContents extends Component
         $this->editing = $content->id;
         $this->fill([
             'type' => $content->type,
+            'layout' => $content->layout,
+            'youtube_url' => (string) ($content->body['url'] ?? ''),
+            'youtube_sound' => (bool) ($content->body['sound'] ?? false),
             'title' => $content->title,
             'text' => (string) ($content->body['text'] ?? ''),
             'quote_id' => (string) ($content->body['quote_id'] ?? ''),
@@ -154,14 +163,20 @@ class DisplayContents extends Component
         $this->reset('student_search');
     }
 
-    public function save(CompressProofImage $images): void
+    /**
+     * @param  bool  $publish  Langsung tayang, untuk pengguna yang berhak menyetujui.
+     */
+    public function save(bool $publish = false): void
     {
         $this->resetErrorBag();
+        $isLong = in_array($this->type, ['video', 'youtube'], true);
         $needsMedia = in_array($this->type, ['poster', 'qr_donation', 'video'], true);
         $this->validate([
             'type' => 'required|in:'.implode(',', array_keys(DisplayContent::TYPES)),
             'title' => 'required|string|max:120',
-            'text' => in_array($this->type, ['text', 'agenda', 'obituary'], true) ? 'required|string|max:400' : 'nullable|string|max:400',
+            'layout' => 'required|in:panel,full',
+            'text' => in_array($this->type, ['text', 'agenda', 'obituary'], true) ? 'required|string|max:'.($this->layout === 'full' ? 800 : 400) : 'nullable|string|max:400',
+            'youtube_url' => $this->type === 'youtube' ? 'required|string|max:300' : 'nullable',
             'quote_id' => $this->type === 'quote' ? 'required|exists:quotes,id' : 'nullable',
             'media' => $needsMedia && ! $this->editing ? ($this->type === 'video' ? 'required|file|mimes:mp4,webm|max:20480' : 'required|image|max:8192') : 'nullable|file|max:20480',
             'starts_at' => 'nullable|date',
@@ -170,15 +185,28 @@ class DisplayContents extends Component
             'days.*' => 'integer|between:1,7',
             'before_prayer' => 'nullable|in:fajr,dhuhr,asr,maghrib,isha',
             'priority' => 'required|integer|between:0,10',
-            'duration' => 'required|integer|between:6,60',
-        ], ['text.max' => 'Teks terlalu panjang untuk dibaca dari jauh. Maksimal 400 karakter, sekitar 40 kata.', 'quote_id.required' => 'Pilih ayat atau hadis yang sudah terverifikasi.'], ['title' => 'judul', 'text' => 'isi', 'media' => 'berkas', 'ends_at' => 'akhir tayang', 'duration' => 'durasi']);
+            'duration' => 'required|integer|between:6,'.($isLong ? 3600 : 120),
+        ], ['text.max' => 'Teks terlalu panjang untuk dibaca dari jauh.', 'youtube_url.required' => 'Tempel tautan video YouTube.', 'quote_id.required' => 'Pilih ayat atau hadis yang sudah terverifikasi.'], ['title' => 'judul', 'text' => 'isi', 'media' => 'berkas', 'ends_at' => 'akhir tayang', 'duration' => 'durasi']);
+
+        $youtubeId = $this->type === 'youtube' ? YoutubeLink::id($this->youtube_url) : null;
+
+        if ($this->type === 'youtube' && $youtubeId === null) {
+            $this->addError('youtube_url', 'Tautan YouTube tidak dikenali. Salin tautan dari tombol Bagikan di YouTube.');
+
+            return;
+        }
 
         $zone = config('sanad.display_timezone');
         $student = Str::isUuid($this->studentUuid) ? Student::query()->where('uuid', $this->studentUuid)->first() : null;
         $values = [
             'type' => $this->type,
             'title' => $this->title,
-            'body' => $this->type === 'quote' ? ['quote_id' => (int) $this->quote_id] : ['text' => trim($this->text)],
+            'layout' => $this->layout,
+            'body' => match ($this->type) {
+                'quote' => ['quote_id' => (int) $this->quote_id],
+                'youtube' => ['text' => trim($this->text), 'url' => trim($this->youtube_url), 'youtube_id' => $youtubeId, 'sound' => $this->youtube_sound],
+                default => ['text' => trim($this->text)],
+            },
             'starts_at' => $this->starts_at ? CarbonImmutable::parse($this->starts_at, $zone)->utc() : null,
             'ends_at' => $this->ends_at ? CarbonImmutable::parse($this->ends_at, $zone)->utc() : null,
             'schedule_rule' => array_filter(['days' => array_map('intval', $this->days), 'before_prayer' => $this->before_prayer ?: null]),
@@ -190,7 +218,8 @@ class DisplayContents extends Component
         ];
 
         if ($this->media) {
-            $values['media_path'] = $this->type === 'video' ? $this->media->store('display-media', 'local') : $images->store($this->media, 'display-media');
+            // Gambar sudah dipotong di browser sesuai ukuran layar, jadi disimpan apa adanya agar tetap tajam di TV.
+            $values['media_path'] = $this->media->store('display-media', 'local');
         }
 
         $content = $this->editing ? DisplayContent::query()->findOrFail($this->editing) : new DisplayContent(['created_by' => auth()->id()]);
@@ -200,6 +229,15 @@ class DisplayContents extends Component
         $content->screens()->sync(DisplayScreen::query()->whereIn('uuid', $this->screens)->pluck('id'));
 
         $this->dispatch('close-modal', 'form-konten');
+
+        // Duka cita tetap harus disetujui orang lain, jadi tidak bisa langsung tayang.
+        if ($publish && auth()->user()->can('masjid.approve') && ! in_array($content->type, DisplayContent::SENSITIVE, true)) {
+            $content->update(['status' => 'approved', 'approved_by' => auth()->id(), 'approved_at' => now()]);
+            $this->dispatch('toast', message: 'Konten tayang di layar dalam beberapa detik.', tone: 'success');
+
+            return;
+        }
+
         $this->dispatch('toast', message: 'Konten tersimpan sebagai '.mb_strtolower(DisplayContent::STATUSES[$content->status]).'.', tone: 'success');
     }
 

@@ -1,0 +1,16 @@
+{
+    "id": "/display",
+    "name": "SANAD Layar Masjid",
+    "short_name": "Layar Masjid",
+    "description": "Jadwal sholat dan pengumuman di layar masjid, tetap jalan saat internet putus.",
+    "start_url": "/display",
+    "scope": "/display",
+    "display": "fullscreen",
+    "orientation": "landscape",
+    "background_color": "#071F18",
+    "theme_color": "#071F18",
+    "icons": [
+        { "src": "/tv/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+        { "src": "/tv/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ]
+}

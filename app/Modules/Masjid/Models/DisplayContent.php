@@ -15,7 +15,7 @@ class DisplayContent extends Model
 {
     use Audited, HasPublicUuid, SoftDeletes;
 
-    public const TYPES = ['text' => 'Pengumuman', 'poster' => 'Poster', 'video' => 'Video pendek', 'agenda' => 'Agenda', 'qr_donation' => 'QR infaq', 'quote' => 'Ayat atau hadis', 'obituary' => 'Duka cita'];
+    public const TYPES = ['text' => 'Pengumuman', 'poster' => 'Poster', 'video' => 'Video pendek', 'youtube' => 'Video YouTube', 'agenda' => 'Agenda', 'qr_donation' => 'QR infaq', 'quote' => 'Ayat atau hadis', 'obituary' => 'Duka cita'];
 
     public const STATUSES = ['draft' => 'Draf', 'pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak', 'archived' => 'Diarsipkan'];
 

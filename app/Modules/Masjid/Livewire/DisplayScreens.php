@@ -3,6 +3,7 @@
 namespace App\Modules\Masjid\Livewire;
 
 use App\Modules\Masjid\Actions\ManageScreens;
+use App\Modules\Masjid\Models\DisplayCommand;
 use App\Modules\Masjid\Models\DisplayScreen;
 use App\Modules\Masjid\Support\MasjidException;
 use Illuminate\Contracts\View\View;
@@ -68,8 +69,11 @@ class DisplayScreens extends Component
 
     public function command(string $uuid, string $command, ManageScreens $screens): void
     {
-        $screens->command(DisplayScreen::query()->where('uuid', $uuid)->firstOrFail(), $command, auth()->id());
-        $this->dispatch('toast', message: 'Perintah terkirim.', tone: 'success');
+        $screen = DisplayScreen::query()->where('uuid', $uuid)->firstOrFail();
+        $screens->command($screen, $command, auth()->id());
+        $this->dispatch('toast', ...($screen->isOnline()
+            ? ['message' => 'Perintah terkirim. Layar menjalankannya dalam 8 detik.', 'tone' => 'success']
+            : ['message' => 'Layar sedang offline. Perintah dijalankan saat layar tersambung lagi.', 'tone' => 'warning']));
     }
 
     public function revoke(string $uuid, ManageScreens $screens): void
@@ -82,7 +86,10 @@ class DisplayScreens extends Component
     public function render(): View
     {
         return view('masjid.screens', [
-            'screens' => DisplayScreen::query()->where('is_active', true)->orderBy('name')->get(),
+            'screens' => $list = DisplayScreen::query()->where('is_active', true)->orderBy('name')->get(),
+            // Perintah terakhir per layar, agar terlihat sudah diterima TV atau belum.
+            'lastCommands' => DisplayCommand::query()->whereIn('screen_id', $list->pluck('id'))->orderBy('id')->get()->keyBy('screen_id'),
+            'dimmed' => DisplayCommand::query()->whereIn('screen_id', $list->pluck('id'))->whereIn('command', ['dim', 'undim'])->orderBy('id')->get()->keyBy('screen_id')->map(fn (DisplayCommand $row) => $row->command === 'dim'),
             'profiles' => DisplayScreen::PROFILES,
         ]);
     }

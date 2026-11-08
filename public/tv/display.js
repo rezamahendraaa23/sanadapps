@@ -8,6 +8,7 @@
     var KEY_MANIFEST = 'sanad-display-manifest';
     var KEY_OFFSET = 'sanad-display-offset';
     var KEY_SYNC = 'sanad-display-synced';
+    var KEY_DIM = 'sanad-display-dimmed';
     var APP_VERSION = 'web-1';
     var POLL_MS = 8000;
     var HEARTBEAT_MS = 60000;
@@ -25,6 +26,9 @@
     var slide = { index: -1, until: 0, id: null };
     var renderedKey = '';
     var pairing = null;
+    var installEvent = null;
+    var pointerUntil = 0;
+    var wantsInstall = location.search.indexOf('pasang=1') >= 0;
 
     function pad(n) { return (n < 10 ? '0' : '') + n; }
     function escapeHtml(text) {
@@ -127,6 +131,7 @@
         var now = nowMs();
         return manifest.contents.filter(function (item) {
             if (item.ticker) { return false; }
+            if (item.type === 'youtube' && !online) { return false; }
             if (item.starts_at && item.starts_at > now) { return false; }
             if (item.ends_at && item.ends_at <= now) { return false; }
             var rule = item.rule || {};
@@ -186,7 +191,11 @@
             return { media: true, html: '<img src="' + escapeHtml(item.media) + '" alt="' + escapeHtml(item.title) + '">' };
         }
         if (item.type === 'video') {
-            return { media: true, html: '<video src="' + escapeHtml(item.media) + '" autoplay muted playsinline></video>' };
+            return { media: true, html: '<video src="' + escapeHtml(item.media) + '" autoplay muted loop playsinline></video>' };
+        }
+        if (item.type === 'youtube') {
+            var video = encodeURIComponent(body.youtube_id);
+            return { media: true, html: '<iframe src="https://www.youtube-nocookie.com/embed/' + video + '?autoplay=1&mute=' + (body.sound ? '0' : '1') + '&controls=0&rel=0&playsinline=1&loop=1&playlist=' + video + '" title="' + escapeHtml(item.title) + '" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>' };
         }
         if (item.type === 'today') {
             var t = localNow();
@@ -209,7 +218,7 @@
         if (!items.length) { return { key: 'empty', cls: '', html: '<p class="empty">Selamat datang di ' + escapeHtml(manifest.identity.name) + '.</p>' }; }
 
         if (manifest.screen.pattern === 'list') {
-            var list = items.slice(0, 3);
+            var list = items.filter(function (x) { return ['poster', 'video', 'youtube', 'qr_donation', 'today'].indexOf(x.type) < 0; }).slice(0, 3);
             var html = '';
             for (var i = 0; i < list.length; i++) { html += '<div class="item"><h2>' + escapeHtml(list[i].title) + '</h2><p>' + escapeHtml(list[i].body ? list[i].body.text : '') + '</p></div>'; }
             return { key: 'list:' + list.map(function (x) { return x.id; }).join(','), cls: ' list', html: html };
@@ -225,7 +234,7 @@
             }
         }
         var current = contentHtml(items[slide.index]);
-        return { key: 'slide:' + slide.id, cls: current.media ? ' media' : '', html: current.html };
+        return { key: 'slide:' + slide.id, cls: current.media ? ' media' : '', html: current.html, media: current.media, item: items[slide.index] };
     }
 
     /* Ikon garis satu keluarga untuk tiap waktu: bulan, fajar, terbit, matahari, sore, terbenam, malam. */
@@ -340,9 +349,19 @@
         var showTimes = manifest.screen.profile !== 'announcement_only';
         var next = showTimes ? nextPrayer(t, row) : null;
         var slot = slotHtml(t, row);
+
+        if (slot.item && slot.item.layout === 'full') {
+            var long = slot.item.body && slot.item.body.text && slot.item.body.text.length > 280;
+            paint('whole:' + theme + ':' + slot.key, theme + ' whole', '<div class="stage' + (slot.media ? ' media' : '') + (long ? ' long' : '') + '">' + slot.html + '</div>'
+                + '<div class="chip"><span id="clock">' + clock + '</span>' + (next ? '<b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span>' : '') + '</div>');
+            setText('clock', clock);
+            if (next) { setText('left', clockLeft(next.left)); }
+            return;
+        }
+
         var iq = next ? iqamahFor(next.prayer, t.date, t.weekday) : null;
         var ramadanLine = isRamadan(t.date) && row ? 'Imsak ' + row.imsak.replace(':', '.') + ', berbuka ' + row.maghrib.replace(':', '.') : '';
-        var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online + ':' + t.minutes;
+        var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online + ':' + (slot.media ? '' : t.minutes);
         var hero = showTimes
             ? '<div class="hero">' + KHATAM + '<div class="clock"><span id="clock">' + clock + '</span><small>.<span id="sec">' + seconds + '</span></small></div>'
                 + (next ? '<div class="next">' + icon(next.prayer) + '<b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span></div><div class="note">Iqamah ' + iq.minutes + ' menit setelah adzan' + (ramadanLine ? '. ' + ramadanLine : '') + '</div>' : '')
@@ -402,13 +421,17 @@
             if (command.command === 'reload') { location.reload(); }
         });
         if (command.command === 'test') { testUntil = Date.now() + 15000; renderedKey = ''; }
-        if (command.command === 'dim') { dimmedByCommand = true; }
-        if (command.command === 'undim') { dimmedByCommand = false; }
+        if (command.command === 'dim') { dimmedByCommand = true; store(KEY_DIM, '1'); }
+        if (command.command === 'undim') { dimmedByCommand = false; clear(KEY_DIM); }
+        if (manifest) { applyDim(localNow()); }
     }
 
     function backToPairing() {
         clear(KEY_TOKEN);
         clear(KEY_MANIFEST);
+        clear(KEY_DIM);
+        dimmedByCommand = false;
+        if (dimEl) { dimEl.style.opacity = '0'; }
         manifest = null;
         renderedKey = '';
         startPairing();
@@ -459,6 +482,51 @@
         });
     }
 
+    /* Tombol pasang aplikasi: tampil di layar kode pasang, atau sebentar saat mouse bergerak. TV tanpa mouse tidak melihatnya. */
+    function isInstalled() {
+        return (window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) || navigator.standalone === true;
+    }
+    function installBar() {
+        var bar = document.getElementById('pasang');
+        var show = !isInstalled() && (wantsInstall || !manifest || Date.now() < pointerUntil) && (installEvent || wantsInstall);
+        document.body.className = Date.now() < pointerUntil || !manifest ? 'pointer' : '';
+        if (!show) {
+            if (bar) { bar.parentNode.removeChild(bar); }
+            return;
+        }
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'pasang';
+            document.body.appendChild(bar);
+        }
+        var state = installEvent ? 'ready' : 'manual';
+        if (bar.getAttribute('data-state') === state) { return; }
+        bar.setAttribute('data-state', state);
+        if (installEvent) {
+            bar.innerHTML = '<button type="button">Pasang Aplikasi Layar</button>';
+            bar.firstChild.onclick = function () {
+                var event = installEvent;
+                installEvent = null;
+                wantsInstall = false;
+                event.prompt();
+                installBar();
+            };
+        } else {
+            bar.innerHTML = '<p>Browser belum menawarkan pemasangan. Buka menu browser lalu pilih Instal aplikasi. Di server, pemasangan butuh HTTPS.</p>';
+        }
+    }
+    window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+        installEvent = event;
+        installBar();
+    });
+    window.addEventListener('appinstalled', function () {
+        installEvent = null;
+        wantsInstall = false;
+        installBar();
+    });
+    document.addEventListener('mousemove', function () { pointerUntil = Date.now() + 5000; });
+
     function boot() {
         if (config.preview) {
             manifest = config.preview;
@@ -473,16 +541,20 @@
         if (saved) { try { manifest = JSON.parse(saved); } catch (e) { manifest = null; } }
         offset = parseInt(read(KEY_OFFSET) || '0', 10) || 0;
         lastSync = parseInt(read(KEY_SYNC) || '0', 10) || 0;
+        dimmedByCommand = read(KEY_DIM) === '1';
 
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/display-sw.js').catch(function () {}); }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/display-sw.js', { scope: '/display' }).catch(function () {}); }
 
         if (read(KEY_TOKEN)) { online = navigator.onLine !== false; poll(); heartbeat(); } else { startPairing(); }
 
-        setInterval(function () { try { render(); if (manifest) { applyDim(localNow()); } } catch (e) { if (window.console) { console.error(e); } } }, 1000);
+        setInterval(function () { try { render(); installBar(); if (manifest) { applyDim(localNow()); } } catch (e) { if (window.console) { console.error(e); } } }, 1000);
         setInterval(poll, POLL_MS);
         setInterval(pollPairing, 3000);
         setInterval(heartbeat, HEARTBEAT_MS);
         setInterval(nudge, 300000);
+        // Tab di belakang diperlambat browser: begitu terlihat lagi, langsung tanya server.
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { poll(); } });
+        window.addEventListener('online', poll);
         render();
     }
 

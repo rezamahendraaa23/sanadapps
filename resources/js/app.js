@@ -1,9 +1,11 @@
 import { registerAdmission } from './admission';
 import { registerAttendanceCamera } from './attendance';
 import { registerExam } from './exam';
+import { registerImageCropper } from './image-cropper';
 
 document.addEventListener('alpine:init', () => {
     registerExam(window.Alpine);
+    registerImageCropper(window.Alpine);
     registerAdmission(window.Alpine);
     registerAttendanceCamera(window.Alpine);
 

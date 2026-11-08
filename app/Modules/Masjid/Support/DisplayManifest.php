@@ -100,6 +100,7 @@ class DisplayManifest
                 return [
                     'id' => $content->uuid,
                     'type' => $content->type,
+                    'layout' => $content->layout,
                     'title' => $content->title,
                     'body' => $body,
                     'media' => $content->media_path ? route('display.media', $content) : null,

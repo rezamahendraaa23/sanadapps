@@ -4,13 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Layar Masjid</title>
-    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=5">
+    <link rel="manifest" href="{{ asset('tv/manifest.webmanifest') }}">
+    <meta name="theme-color" content="#071F18">
+    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=6">
     @if ($brandCss = app(\App\Support\SchoolIdentity::class)->brandCss())
         <style>{!! $brandCss !!}</style>
     @endif
 </head>
 <body>
     <div id="layar"></div>
+    @if ($preview)
+        <div class="preview-tag">Pratinjau. Perintah dan pencabutan hanya berlaku di layar yang dipasangkan.</div>
+    @endif
     <script>
         window.SANAD_DISPLAY = {
             api: {!! json_encode(url('/api/v1/display')) !!},
@@ -18,6 +23,6 @@
             preview: {!! json_encode($preview) !!}
         };
     </script>
-    <script src="{{ asset('tv/display.js') }}?v=5"></script>
+    <script src="{{ asset('tv/display.js') }}?v=6"></script>
 </body>
 </html>

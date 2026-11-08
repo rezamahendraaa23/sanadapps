@@ -101,6 +101,7 @@ return [
                 ['key' => 'fee-types', 'permission' => 'finance.manage', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
                 ['key' => 'notifications', 'permission' => 'settings.manage', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'core'],
                 ['key' => 'users', 'permission' => 'users.manage', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
+                ['key' => 'devices', 'permission' => 'devices.manage', 'label' => 'Perangkat', 'icon' => 'scan-line', 'route' => 'staff.cards.devices', 'module' => 'card'],
                 ['key' => 'system', 'permission' => 'settings.manage', 'label' => 'Kesehatan Sistem', 'icon' => 'activity', 'route' => 'staff.settings.system', 'module' => 'core'],
                 ['key' => 'audit', 'permission' => 'audit.view', 'label' => 'Audit Log', 'icon' => 'scroll-text', 'route' => 'staff.settings.audit', 'module' => 'core'],
             ]],

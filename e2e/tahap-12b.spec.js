@@ -83,3 +83,51 @@ test('admin mengatur masjid, memasang TV dengan kode, TV tetap jalan saat offlin
     await admin.getByRole('button', { name: 'Cabut Pesan Darurat' }).click();
     await expect(tv.getByText('Hujan deras, santri berkumpul di aula')).toBeHidden({ timeout: 15_000 });
 });
+
+test('perintah redup dan terang sampai ke TV; poster layar penuh lewat pemotong; cabut mengembalikan TV ke kode pasang', async ({ browser }) => {
+    test.setTimeout(300_000);
+    const admin = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    await loginAdmin(admin);
+    const tv = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();
+    await tv.goto('/display');
+    const code = (await tv.locator('.code').innerText({ timeout: 15_000 })).trim();
+    await admin.goto('/panel/masjid/layar');
+    await pageReady(admin);
+    await admin.getByLabel('Kode di layar').fill(code);
+    await admin.getByLabel('Nama layar').fill('TV Perintah');
+    await admin.getByRole('button', { name: 'Pasangkan' }).click();
+    await expect(tv.locator('.code')).toBeHidden({ timeout: 20_000 });
+
+    await admin.getByRole('button', { name: 'Redupkan TV Perintah' }).click();
+    await expect(tv.locator('.dim')).toHaveCSS('opacity', '0.6', { timeout: 20_000 });
+    await expect(admin.getByText('Perintah terakhir: redupkan, sudah diterima layar.')).toBeVisible({ timeout: 20_000 });
+    await tv.reload();
+    await expect(tv.locator('.dim')).toHaveCSS('opacity', '0.6', { timeout: 10_000 });
+    await admin.getByRole('button', { name: 'Terangkan TV Perintah' }).click();
+    await expect(tv.locator('.dim')).toHaveCSS('opacity', '0', { timeout: 20_000 });
+
+    // Poster layar penuh: gambar langsung masuk pemotong 16:9, lalu tayang tanpa langkah persetujuan.
+    await admin.goto('/panel/masjid/konten');
+    await pageReady(admin);
+    await admin.getByRole('button', { name: 'Buat Konten' }).click();
+    const form = admin.getByRole('dialog', { name: 'Buat konten' });
+    await form.getByLabel('Layar penuh').check();
+    await form.getByLabel('Jenis').selectOption('poster');
+    await form.getByLabel('Judul').fill('Poster Maulid');
+    await form.getByLabel('Gambar (JPG atau PNG)').setInputFiles('public/tv/icon-512.png');
+    await expect(form.getByTestId('crop-stage')).toBeVisible();
+    await expect(form.getByText('Ukuran layar 1920 x 1080', { exact: false })).toBeVisible();
+    await expect(form.getByText('Gambar siap.')).toBeVisible({ timeout: 20_000 });
+    if (shots) await admin.screenshot({ path: `${shots}/konten-potong-1280.png` });
+    await form.getByLabel('Durasi per tampil (detik)').fill('60');
+    await form.getByRole('button', { name: 'Simpan dan Tayangkan' }).click();
+    await expect(admin.getByText('Konten tayang di layar', { exact: false })).toBeVisible();
+    await expect(tv.locator('#layar.whole .stage img')).toBeVisible({ timeout: 90_000 });
+    if (shots) await tv.screenshot({ path: `${shots}/tv-penuh-1920.png` });
+
+    await admin.goto('/panel/masjid/layar');
+    await pageReady(admin);
+    admin.once('dialog', (dialog) => dialog.accept());
+    await admin.getByRole('button', { name: 'Cabut TV Perintah' }).click();
+    await expect(tv.locator('.code')).toBeVisible({ timeout: 20_000 });
+});

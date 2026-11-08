@@ -46,6 +46,7 @@ class SecurityHeaders
             "font-src 'self' data:",
             trim("connect-src 'self' {$dev} {$devWs}"),
             "worker-src 'self' blob:",
+            "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self' {$midtrans}",

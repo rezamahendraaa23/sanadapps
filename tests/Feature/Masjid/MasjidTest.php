@@ -34,11 +34,14 @@ use App\Modules\Masjid\Models\Quote;
 use App\Modules\Masjid\Support\DisplayManifest;
 use App\Modules\Masjid\Support\HijriDate;
 use App\Modules\Masjid\Support\MasjidException;
+use App\Modules\Masjid\Support\YoutubeLink;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -378,5 +381,60 @@ describe('akses dan publik', function () {
         $user = tap(User::create(['name' => 'Santri', 'username' => 'S9', 'type' => 'student']))->assignRole('santri');
         Student::create(['nis' => 'S9', 'name' => 'Santri', 'gender' => 'L', 'user_id' => $user->id]);
         $this->actingAs($user)->get(route('santri.home'))->assertOk()->assertSee('Sholat berikutnya')->assertSee('Dzuhur');
+    });
+});
+
+describe('konten fleksibel', function () {
+    it('tautan YouTube dikenali dari berbagai bentuk', function () {
+        expect(YoutubeLink::id('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10'))->toBe('dQw4w9WgXcQ')
+            ->and(YoutubeLink::id('https://youtu.be/dQw4w9WgXcQ?si=abc'))->toBe('dQw4w9WgXcQ')
+            ->and(YoutubeLink::id('https://youtube.com/shorts/dQw4w9WgXcQ'))->toBe('dQw4w9WgXcQ')
+            ->and(YoutubeLink::id('https://www.youtube.com/live/dQw4w9WgXcQ'))->toBe('dQw4w9WgXcQ')
+            ->and(YoutubeLink::id('https://m.youtube.com/watch?v=dQw4w9WgXcQ'))->toBe('dQw4w9WgXcQ')
+            ->and(YoutubeLink::id('https://evil.test/watch?v=dQw4w9WgXcQ'))->toBeNull()
+            ->and(YoutubeLink::id('bukan tautan'))->toBeNull();
+    });
+
+    it('YouTube layar penuh langsung tayang oleh takmir dan sampai ke manifest; tautan salah ditolak', function () {
+        [$screen] = pairScreen();
+        $this->actingAs($this->takmir);
+        Livewire::test(DisplayContents::class)->call('create')->set('type', 'youtube')->set('layout', 'full')->set('title', 'Kajian')
+            ->set('youtube_url', 'https://example.com/video')->call('save', true)->assertHasErrors('youtube_url')
+            ->set('youtube_url', 'https://youtu.be/dQw4w9WgXcQ')->set('duration', '1800')->call('save', true)->assertHasNoErrors();
+
+        $content = DisplayContent::firstOrFail();
+        expect($content->status)->toBe('approved')->and($content->layout)->toBe('full')->and($content->body['youtube_id'])->toBe('dQw4w9WgXcQ');
+
+        $item = collect(app(DisplayManifest::class)->build($screen)['contents'])->firstWhere('id', $content->uuid);
+        expect($item['layout'])->toBe('full')->and($item['type'])->toBe('youtube')->and($item['duration'])->toBe(1800);
+    });
+
+    it('humas tidak bisa langsung tayang; teks panjang hanya untuk layar penuh; gambar hasil potongan tersimpan utuh', function () {
+        Storage::fake('local');
+        $this->actingAs($this->humas);
+        $long = str_repeat('Kalimat panjang untuk layar penuh. ', 15);
+        Livewire::test(DisplayContents::class)->call('create')->set('title', 'Info')->set('text', $long)->call('save', true)->assertHasErrors('text')
+            ->set('layout', 'full')->call('save', true)->assertHasNoErrors();
+        expect(DisplayContent::firstOrFail()->status)->toBe('draft');
+
+        Livewire::test(DisplayContents::class)->call('create')->set('type', 'poster')->set('title', 'Poster')
+            ->set('media', UploadedFile::fake()->image('konten.jpg', 1920, 1080))->call('save')->assertHasNoErrors();
+        [$width] = getimagesize(Storage::disk('local')->path(DisplayContent::where('type', 'poster')->first()->media_path));
+        expect($width)->toBe(1920);
+    });
+
+    it('perintah ke layar offline memberi tahu; panel menampilkan perintah terakhir', function () {
+        [$screen] = pairScreen();
+        $this->actingAs($this->admin);
+        Livewire::test(DisplayScreens::class)->call('command', $screen->uuid, 'dim')
+            ->assertDispatched('toast', message: 'Layar sedang offline. Perintah dijalankan saat layar tersambung lagi.', tone: 'warning')
+            ->assertSee('Perintah terakhir: redupkan, menunggu layar.');
+    });
+
+    it('layar TV tidak muncul di daftar perangkat pemindai', function () {
+        pairScreen(['name' => 'TV Rahasia']);
+        Module::where('module_key', 'card')->update(['is_enabled' => true]);
+        app(ModuleRegistry::class)->forget();
+        $this->actingAs($this->admin)->get(route('staff.cards.devices'))->assertOk()->assertDontSee('TV Rahasia');
     });
 });

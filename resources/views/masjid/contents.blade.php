@@ -19,7 +19,7 @@
                 <div wire:key="c-{{ $content->uuid }}" class="flex flex-wrap items-start justify-between gap-2 border-b border-border py-3 last:border-b-0">
                     <div class="min-w-0 flex-1">
                         <p class="font-semibold break-words">{{ $content->title }}</p>
-                        <p class="text-sm text-text-muted">{{ $types[$content->type] ?? $content->type }}, {{ $statuses[$content->status] }}{{ $content->announcement_id ? ', dari pengumuman' : '' }}{{ $content->ends_at ? ', sampai '.$content->ends_at->setTimezone($tz)->translatedFormat('j M H.i') : '' }}</p>
+                        <p class="text-sm text-text-muted">{{ $types[$content->type] ?? $content->type }}, {{ $content->layout === 'full' ? 'layar penuh' : 'bagian pengumuman' }}, {{ $statuses[$content->status] }}{{ $content->announcement_id ? ', dari pengumuman' : '' }}{{ $content->ends_at ? ', sampai '.$content->ends_at->setTimezone($tz)->translatedFormat('j M H.i') : '' }}</p>
                         @if ($content->status === 'rejected' && $content->rejected_reason)<p class="text-sm text-danger break-words">Ditolak: {{ $content->rejected_reason }}</p>@endif
                     </div>
                     <div class="flex shrink-0 flex-wrap gap-1">
@@ -139,24 +139,44 @@
 
     <x-ui.modal name="form-konten" :title="$editing ? 'Ubah konten' : 'Buat konten'" class="md:max-w-2xl">
         <div class="flex flex-col gap-3">
+            <fieldset>
+                <legend class="text-sm font-semibold">Tampil di mana</legend>
+                <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                    @foreach (['panel' => ['Bagian pengumuman', 'Jam dan jadwal sholat tetap terlihat.'], 'full' => ['Layar penuh', 'Memenuhi layar saat gilirannya, jam kecil di pojok.']] as $value => [$heading, $hint])
+                        <label wire:key="layout-{{ $value }}" @class(['flex cursor-pointer gap-3 rounded-control border p-3', 'border-primary bg-primary-soft' => $layout === $value, 'border-border' => $layout !== $value])>
+                            <input type="radio" value="{{ $value }}" wire:model.live="layout" class="mt-1 size-5 accent-primary">
+                            <span class="min-w-0">
+                                <span class="block font-semibold">{{ $heading }}</span>
+                                <span class="block text-sm text-text-muted">{{ $hint }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
             <x-ui.select label="Jenis" name="type" :options="$types" wire:model.live="type" />
-            <x-ui.input label="Judul" name="title" required wire:model="title" />
+            <x-ui.input label="Judul" name="title" required :help="in_array($type, ['poster', 'video', 'youtube', 'qr_donation'], true) ? 'Untuk daftar konten, tidak tampil di layar.' : null" wire:model="title" />
             @if ($type === 'quote')
                 <x-ui.select label="Ayat atau hadis" name="quote_id" placeholder="Pilih" :options="$verifiedQuotes" wire:model="quote_id" />
-            @else
-                <x-ui.textarea label="Isi" name="text" help="Singkat saja, maksimal sekitar 40 kata agar terbaca dari jauh." wire:model="text" />
+            @elseif (in_array($type, ['text', 'agenda', 'obituary'], true))
+                <x-ui.textarea label="Isi" name="text" :rows="$layout === 'full' ? 6 : 3" :help="$layout === 'full' ? 'Paling banyak 800 karakter. Hurufnya menyesuaikan panjang teks.' : 'Singkat saja, maksimal sekitar 40 kata agar terbaca dari jauh.'" wire:model="text" />
             @endif
-            @if (in_array($type, ['poster', 'qr_donation', 'video'], true))
+            @if ($type === 'youtube')
+                <x-ui.input label="Tautan YouTube" name="youtube_url" inputmode="url" required help="Tempel tautan video atau siaran langsung. Butuh internet; saat TV offline video ini dilewati." wire:model="youtube_url" />
+                <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="youtube_sound" class="size-5 accent-primary">Nyalakan suara</label>
+                <p class="text-sm text-text-muted">Browser di laptop biasanya menolak memutar otomatis dengan suara. Tanpa centang ini video berputar otomatis tanpa suara.</p>
+            @elseif ($type === 'video')
                 <div class="flex flex-col gap-1">
-                    <label for="field-media" class="text-sm font-semibold">{{ $type === 'video' ? 'Video (mp4, maksimal 60 detik)' : 'Gambar' }}</label>
-                    <input id="field-media" type="file" accept="{{ $type === 'video' ? 'video/mp4,video/webm' : 'image/jpeg,image/png' }}" wire:model="media" class="min-h-11 w-full text-base">
+                    <label for="field-media" class="text-sm font-semibold">Video (mp4 atau webm, paling besar 20 MB)</label>
+                    <input id="field-media" type="file" accept="video/mp4,video/webm" wire:model="media" class="min-h-11 w-full text-base">
                     @error('media')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
                 </div>
+            @elseif (in_array($type, ['poster', 'qr_donation'], true))
+                @include('masjid.partials.image-cropper')
             @endif
             <div class="grid gap-3 md:grid-cols-2">
                 <x-ui.input label="Mulai tayang" name="starts_at" type="datetime-local" wire:model="starts_at" />
                 <x-ui.input label="Akhir tayang" name="ends_at" type="datetime-local" wire:model="ends_at" />
-                <x-ui.input label="Durasi per tampil (detik)" name="duration" inputmode="numeric" wire:model="duration" />
+                <x-ui.input label="Durasi per tampil (detik)" name="duration" inputmode="numeric" :help="in_array($type, ['video', 'youtube'], true) ? 'Paling lama 3600 detik (1 jam).' : 'Paling lama 120 detik.'" wire:model="duration" />
                 <x-ui.input label="Prioritas (0 sampai 10)" name="priority" inputmode="numeric" wire:model="priority" />
             </div>
             <fieldset><legend class="text-sm font-semibold">Hanya pada hari (kosongkan untuk setiap hari)</legend>
@@ -187,7 +207,12 @@
         </div>
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
-            <x-ui.button wire:click="save" wire:loading.attr="disabled" wire:target="save,media">Simpan</x-ui.button>
+            @if ($canApprove)
+                <x-ui.button variant="secondary" wire:click="save" wire:loading.attr="disabled" wire:target="save,media">Simpan Draf</x-ui.button>
+                <x-ui.button wire:click="save(true)" wire:loading.attr="disabled" wire:target="save,media">Simpan dan Tayangkan</x-ui.button>
+            @else
+                <x-ui.button wire:click="save" wire:loading.attr="disabled" wire:target="save,media">Simpan</x-ui.button>
+            @endif
         </x-slot:footer>
     </x-ui.modal>
 

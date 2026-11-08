@@ -31,6 +31,7 @@ html { font-size: 0.5208vw; }
 @media (orientation: portrait) { html { font-size: 0.5208vh; } }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
 body { font-family: 'Nunito', sans-serif; cursor: none; }
+body.pointer { cursor: auto; }
 
 /* Pola khatam samar di seluruh latar. */
 #layar { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: var(--pattern) center / 12rem 12rem, var(--bg); color: var(--ink); }
@@ -73,6 +74,8 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 .slot p { margin: 0; font-size: 4.4rem; line-height: 1.32; white-space: pre-line; }
 .slot .arab { margin-bottom: 1.2rem; font-family: 'Amiri', serif; font-size: 6.4rem; line-height: 2; direction: rtl; text-align: right; }
 .slot .ref { margin-top: 1.2rem; font-size: 3rem; font-weight: 700; color: var(--muted); }
+.slot iframe { display: block; width: 100%; height: 100%; border: 0; }
+.slot.media { align-items: stretch; }
 .slot img, .slot video { display: block; max-width: 100%; max-height: 100%; margin: 0 auto; object-fit: contain; }
 .slot.media { padding: 0; align-items: center; background: #000; }
 .slot.media:before { display: none; }
@@ -116,6 +119,23 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 .count .words h1 { margin: 1rem 0 2rem; font-family: 'Fredoka', sans-serif; font-size: 13rem; font-weight: 600; line-height: 1; }
 .count .words span { display: block; font-size: 4.4rem; font-weight: 700; color: var(--muted); }
 
+/* Konten layar penuh: memenuhi layar saat gilirannya, jam kecil tetap terlihat. */
+.whole .stage { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; padding: 8rem 12rem; text-align: center; }
+.whole .stage.media { padding: 0; background: #000; align-items: stretch; }
+.whole .stage img, .whole .stage video, .whole .stage iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: contain; }
+.whole .stage .kind { display: inline-flex; align-items: center; align-self: center; margin: 0 0 3rem; padding: 0.8rem 2.6rem; border-radius: 99rem; background: var(--accent); color: #13201B; font-size: 3.2rem; font-weight: 800; }
+.whole .stage .kind i { width: 2.8rem; height: 2.8rem; margin-right: 1rem; background: currentColor; border-radius: 0.4rem; transform: rotate(45deg) scale(0.6); }
+.whole .stage h2 { margin: 0 0 3rem; font-family: 'Fredoka', sans-serif; font-size: 11rem; font-weight: 600; line-height: 1.05; }
+.whole .stage p { margin: 0; font-size: 6.4rem; font-weight: 600; line-height: 1.32; white-space: pre-line; }
+.whole .stage.long h2 { font-size: 7rem; }
+.whole .stage.long p { font-size: 4.6rem; }
+.whole .stage .arab { margin-bottom: 3rem; font-family: 'Amiri', serif; font-size: 10rem; line-height: 2; direction: rtl; }
+.whole .stage .ref { margin-top: 2rem; font-size: 3.6rem; font-weight: 700; color: var(--muted); }
+.chip { position: absolute; right: 3rem; bottom: 3rem; display: flex; align-items: baseline; padding: 1.2rem 3rem; border-radius: 99rem; background: rgba(7,31,24,0.86); color: #fff; font-family: 'Fredoka', sans-serif; font-variant-numeric: tabular-nums; }
+.chip span:first-child { font-size: 5rem; font-weight: 600; }
+.chip b { margin-left: 2.4rem; font-family: 'Nunito', sans-serif; font-size: 3rem; font-weight: 800; color: #F2CF7E; }
+.chip span:last-child:not(:first-child) { margin-left: 1.2rem; font-size: 3.6rem; font-weight: 600; color: #F2CF7E; }
+
 /* Sholat berlangsung: hitam total, tanpa tulisan, agar khusyuk. */
 .praying { background: #000; }
 
@@ -130,4 +150,9 @@ body { font-family: 'Nunito', sans-serif; cursor: none; }
 .test { background: repeating-linear-gradient(45deg, #0B5D45, #0B5D45 8rem, #F4F1E8 8rem, #F4F1E8 16rem); }
 .test .box { background: #fff; color: #000; padding: 4rem; font-size: 6rem; font-weight: 800; }
 
+#pasang { position: fixed; left: 50%; bottom: 4rem; z-index: 50; transform: translateX(-50%); max-width: 90%; text-align: center; font-family: 'Nunito', sans-serif; }
+#pasang button { min-height: 44px; padding: 1.4rem 3.6rem; border: 0; border-radius: 99rem; background: #F2CF7E; color: #13201B; font: inherit; font-size: max(16px, 2.8rem); font-weight: 800; cursor: pointer; }
+#pasang button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+#pasang p { margin: 0; padding: 1.4rem 3rem; border-radius: 2rem; background: rgba(7,31,24,0.92); color: #fff; font-size: max(14px, 2.2rem); font-weight: 700; }
+.preview-tag { position: fixed; left: 50%; top: 1rem; z-index: 50; transform: translateX(-50%); padding: 0.6rem 2rem; border-radius: 99rem; background: rgba(7,31,24,0.9); color: #fff; font-family: 'Nunito', sans-serif; font-size: max(13px, 1.8rem); font-weight: 700; white-space: nowrap; }
 .dim { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; pointer-events: none; }

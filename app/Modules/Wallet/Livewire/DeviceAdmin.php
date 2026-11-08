@@ -10,7 +10,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('components.layouts.staff', ['active' => 'cards'])]
+#[Layout('components.layouts.staff', ['active' => 'devices'])]
 #[Title('Perangkat')]
 class DeviceAdmin extends Component
 {
@@ -50,12 +50,12 @@ class DeviceAdmin extends Component
     {
         $this->newKey = 'dev_'.Str::random(48);
 
-        Device::query()->where('uuid', $uuid)->firstOrFail()->update(['api_key_hash' => hash('sha256', $this->newKey)]);
+        Device::query()->where('type', '!=', 'tv_display')->where('uuid', $uuid)->firstOrFail()->update(['api_key_hash' => hash('sha256', $this->newKey)]);
     }
 
     public function toggle(string $uuid): void
     {
-        $device = Device::query()->where('uuid', $uuid)->firstOrFail();
+        $device = Device::query()->where('type', '!=', 'tv_display')->where('uuid', $uuid)->firstOrFail();
         $device->update(['is_active' => ! $device->is_active]);
     }
 
@@ -66,6 +66,6 @@ class DeviceAdmin extends Component
 
     public function render(): View
     {
-        return view('wallet.devices', ['devices' => Device::query()->orderBy('name')->get(), 'scopeLabels' => Device::SCOPES]);
+        return view('wallet.devices', ['devices' => Device::query()->where('type', '!=', 'tv_display')->orderBy('name')->get(), 'scopeLabels' => Device::SCOPES]);
     }
 }

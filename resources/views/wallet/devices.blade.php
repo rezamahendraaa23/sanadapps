@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-4">
-    @include('wallet.partials.card-nav')
+    <p class="text-base text-text-muted">Pembaca kartu dan kamera di kasir, gerbang, dan absensi. Layar TV masjid diatur di menu Masjid, Layar.</p>
 
     @if ($newKey)
         <x-ui.banner tone="warning" x-data="{ copied: false }">
