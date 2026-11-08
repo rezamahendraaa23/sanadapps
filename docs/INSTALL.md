@@ -6,7 +6,6 @@ Pilih satu cara:
 |---|---|---|
 | **A. Skrip otomatis** | Server Ubuntu 22.04 atau 24.04 yang masih kosong (VPS) | 15 menit |
 | **B. Docker** | Laptop atau server yang sudah ada Docker | 15 menit |
-| **C. Manual** | Ingin tahu dan mengatur tiap langkah sendiri | 45 menit |
 
 Sebelum mulai, siapkan **token GitHub** karena repo ini privat:
 GitHub > foto profil > **Settings > Developer settings > Personal access tokens > Fine-grained tokens > Generate new token**. Pilih repo `sanadapps`, izin `Contents: Read-only`, lalu salin tokennya. Saat `git clone` meminta password, tempel token ini (bukan sandi GitHub).
@@ -108,12 +107,6 @@ Admin admin@almukhtar.sch.id dibuat. Sandi awal: Xk29fLm0Qa7pZr4T
 - Kotak surat uji: http://localhost:8025
 
 Mematikan: `docker compose down`. Menyalakan lagi: `docker compose up -d`.
-
----
-
-## C. Manual
-
-Langkah lengkap satu per satu, beserta penjelasannya, ada di [INSTALL-VPS.md](INSTALL-VPS.md).
 
 ---
 
