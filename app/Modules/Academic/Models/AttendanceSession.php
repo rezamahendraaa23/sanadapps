@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Models;
 
+use App\Modules\Academic\Support\AcademicSettings;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\User;
@@ -23,6 +24,22 @@ class AttendanceSession extends Model
     protected function casts(): array
     {
         return ['session_date' => 'date', 'allowed_modes' => 'array', 'closed_at' => 'immutable_datetime'];
+    }
+
+    /**
+     * Cara absen yang bisa dipakai sekarang. Selama sesi terbuka, cara yang baru diaktifkan pesantren
+     * (misalnya wajah) langsung ikut, jadi tidak perlu membuka sesi ulang.
+     *
+     * @return list<string>
+     */
+    public function modes(): array
+    {
+        $stored = $this->allowed_modes ?? [$this->source];
+        if ($this->isClosed()) {
+            return $stored;
+        }
+
+        return array_values(array_unique([...$stored, ...array_keys(AcademicSettings::modeOptions())]));
     }
 
     public function records(): HasMany

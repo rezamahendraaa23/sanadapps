@@ -13,6 +13,7 @@ use App\Modules\Academic\Face\FaceQualityException;
 use App\Modules\Academic\Face\FakeFaceMatcher;
 use App\Modules\Academic\Livewire\AcademicMasters;
 use App\Modules\Academic\Livewire\AttendanceReview;
+use App\Modules\Academic\Livewire\AttendanceSheet;
 use App\Modules\Academic\Livewire\AttendanceToday;
 use App\Modules\Academic\Livewire\FaceEnrollments;
 use App\Modules\Academic\Livewire\GuardianFaceConsent;
@@ -142,6 +143,16 @@ describe('sesi dan mode', function () {
 
         $this->actingAs($this->admin);
         Livewire::test(AcademicMasters::class)->set('tab', 'aturan')->assertDontSee('Selfie')->set('verification_modes', ['selfie'])->call('saveRules')->assertHasErrors('verification_modes.0');
+    });
+
+    it('sesi yang dibuka sebelum wajah dicentang langsung bisa pakai kamera setelah dicentang', function () {
+        setAttendanceRules(['verification_modes' => ['manual', 'card']]);
+        $session = app(OpenAttendanceSession::class)->forDormitory($this->dormitory->id, 'asrama', 'Apel', '2026-11-02', '19:00', 'card', $this->musyrif->id);
+        $this->actingAs($this->admin);
+        Livewire::test(AttendanceSheet::class, ['session' => $session])->assertDontSee('Buka Kamera Wajah')->assertSee('tinggal centang Wajah di pos');
+
+        setAttendanceRules(['verification_modes' => ['manual', 'card', 'face']]);
+        Livewire::test(AttendanceSheet::class, ['session' => $session->fresh()])->assertSee('Buka Kamera Wajah')->assertDontSee('tinggal centang');
     });
 
     it('wajah hanya jadi pilihan bila modul aktif', function () {
@@ -362,7 +373,11 @@ describe('wajah', function () {
 
         $this->actingAs($this->musyrif)->get(route('attendance.face', $this->faceSession))->assertOk()->assertSee('Mulai Pindai');
         $manual = app(OpenAttendanceSession::class)->forDormitory($this->dormitory->id, 'asrama', 'Manual', '2026-11-02', '19:00', 'manual', $this->musyrif->id);
-        $this->actingAs($this->musyrif)->get(route('attendance.face', $manual))->assertNotFound();
+        // Sesi terbuka mengikuti aturan pesantren saat ini: wajah boleh selama Wajah di pos dicentang.
+        $this->actingAs($this->musyrif)->get(route('attendance.face', $manual))->assertOk();
+        setAttendanceRules(['verification_modes' => ['manual', 'card', 'qr']]);
+        $this->get(route('attendance.face', $manual))->assertNotFound();
+        setAttendanceRules(['verification_modes' => ['manual', 'card', 'qr', 'face']]);
         $token = $this->postJson(route('attendance.face.challenge', $this->faceSession))->assertOk()->json('token');
         FakeFaceMatcher::$forcedScore = 0.9;
         $this->post(route('attendance.face.scan', $this->faceSession), ['photo' => faceUpload(1), 'liveness_frame' => faceUpload(2), 'liveness_token' => $token], ['Accept' => 'application/json'])

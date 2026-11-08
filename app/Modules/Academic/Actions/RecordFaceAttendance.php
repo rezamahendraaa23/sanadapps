@@ -46,7 +46,7 @@ class RecordFaceAttendance
      */
     public function scan(AttendanceSession $session, FaceInput $input, ?UploadedFile $evidence, string $token, string $subject): array
     {
-        if (! $this->modules->enabled('face_attendance') || ! $this->matcher->available() || ! in_array('face', $session->allowed_modes ?? [], true)) {
+        if (! $this->modules->enabled('face_attendance') || ! $this->matcher->available() || ! in_array('face', $session->modes(), true)) {
             return $this->result(false, 'unavailable', 'Absen wajah tidak tersedia untuk sesi ini. Pakai kartu atau manual.', fallback: true);
         }
 

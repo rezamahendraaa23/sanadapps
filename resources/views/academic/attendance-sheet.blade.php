@@ -1,6 +1,6 @@
 @php
     $badges = ['hadir' => ['check', 'bg-success-soft text-success border-success'], 'izin' => ['door-open', 'bg-info-soft text-info border-info'], 'sakit' => ['thermometer', 'bg-warning-soft text-warning border-warning'], 'alpa' => ['x', 'bg-danger-soft text-danger border-danger'], 'terlambat' => ['clock', 'bg-warning-soft text-warning border-warning']];
-    $letters = ['hadir' => 'H', 'izin' => 'I', 'sakit' => 'S', 'alpa' => 'A', 'terlambat' => 'T'];
+    $letters = ['hadir' => 'H', 'izin' => 'I', 'sakit' => 'S', 'alpa' => 'A'] + ($withLate ? ['terlambat' => 'T'] : []);
 @endphp
 
 <div class="flex flex-col gap-4"
@@ -23,7 +23,7 @@
 >
     <x-ui.card>
         <h2 class="text-lg font-semibold break-words">{{ $session->title }}</h2>
-        <p class="text-sm text-text-muted">{{ $session->session_date->translatedFormat('l, j F Y') }}, mulai {{ str_replace(':', '.', substr((string) $session->start_time, 0, 5)) }}{{ $session->classroom ? ', '.$session->classroom->name : '' }}{{ $session->dormitory ? ', '.$session->dormitory->name : '' }}</p>
+        <p class="text-sm text-text-muted">{{ $session->session_date->translatedFormat('l, j F Y') }}, {{ $session->schedule_id ? 'mulai' : 'dibuka' }} {{ str_replace(':', '.', substr((string) $session->start_time, 0, 5)) }}{{ $session->classroom ? ', '.$session->classroom->name : '' }}{{ $session->dormitory ? ', '.$session->dormitory->name : '' }}</p>
         @if ($session->isClosed())
             <p class="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-success"><x-ui.icon name="circle-check" size="sm" />Tersimpan. Masih bisa dikoreksi.</p>
         @endif
@@ -38,6 +38,13 @@
             <x-ui.button icon="scan-face" :href="route('attendance.face', $session)">Buka Kamera Wajah</x-ui.button>
             <p class="mt-2 text-sm text-text-muted">Santri tanpa data wajah atau yang gagal dikenali: tandai manual di bawah atau tap kartu.</p>
         </x-ui.card>
+    @elseif ($faceHint)
+        <div class="flex flex-col gap-2 rounded-control bg-info-soft p-3 text-sm md:flex-row md:items-center md:justify-between">
+            <p class="flex items-start gap-2"><x-ui.icon name="scan-face" size="sm" class="mt-0.5 shrink-0 text-info" />{{ $faceHint['message'] }}</p>
+            @foreach ($faceHint['links'] as $label => $url)
+                <x-ui.button variant="secondary" :href="$url" class="shrink-0">{{ $label }}</x-ui.button>
+            @endforeach
+        </div>
     @endif
 
     @if ($reviewCount > 0)
@@ -98,7 +105,9 @@
                 <span class="ml-2">I <strong x-text="count('izin')"></strong></span>
                 <span class="ml-2">S <strong x-text="count('sakit')"></strong></span>
                 <span class="ml-2">A <strong x-text="count('alpa')"></strong></span>
-                <span class="ml-2">T <strong x-text="count('terlambat')"></strong></span>
+                @if ($withLate)
+                    <span class="ml-2">T <strong x-text="count('terlambat')"></strong></span>
+                @endif
             </p>
             <x-ui.button wire:click="save" wire:loading.attr="disabled" wire:target="save" x-bind:disabled="offline">Simpan</x-ui.button>
         </div>

@@ -35,7 +35,7 @@ class AttendanceCameraController
     public function kiosk(Request $request, AttendanceSession $session, FaceMatcher $matcher): View
     {
         abort_unless($session->canBeTakenBy($request->user()), 403);
-        abort_unless(in_array('face', $session->allowed_modes ?? [], true), 404);
+        abort_unless(in_array('face', $session->modes(), true), 404);
 
         return view('academic.face-kiosk', [
             'session' => $session,

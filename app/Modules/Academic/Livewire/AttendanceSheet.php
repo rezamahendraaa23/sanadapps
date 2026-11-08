@@ -6,6 +6,7 @@ use App\Modules\Academic\Actions\RecordAttendance;
 use App\Modules\Academic\Models\AttendanceRecord;
 use App\Modules\Academic\Models\AttendanceSession;
 use App\Modules\Academic\Support\AcademicException;
+use App\Modules\Core\Support\ModuleRegistry;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -60,6 +61,26 @@ class AttendanceSheet extends Component
         $this->statuses = $this->session->records()->pluck('status', 'uuid')->all();
     }
 
+    /**
+     * Alasan kamera wajah belum muncul, supaya pengurus tahu langkah berikutnya.
+     *
+     * @return array{message: string, links: array<string, string>}|null
+     */
+    private function faceHint(): ?array
+    {
+        if ($this->session->isClosed() || in_array('face', $this->session->modes(), true)) {
+            return null;
+        }
+        $user = auth()->user();
+        if (! app(ModuleRegistry::class)->enabled('face_attendance')) {
+            return ['message' => 'Absen wajah belum aktif. Aktifkan modul Absensi Wajah di Pengaturan, lalu centang Wajah di pos di Aturan Absensi.',
+                'links' => array_filter(['Buka Pengaturan Modul' => $user->can('settings.manage') ? route('staff.settings.modules') : null])];
+        }
+
+        return ['message' => 'Modul wajah sudah aktif, tinggal centang Wajah di pos di Aturan Absensi. Sesi ini langsung ikut tanpa dibuka ulang.',
+            'links' => array_filter(['Buka Aturan Absensi' => $user->can('academic.manage') ? route('staff.subjects.index', ['tab' => 'aturan']) : null])];
+    }
+
     public function render(): View
     {
         $user = auth()->user();
@@ -68,8 +89,11 @@ class AttendanceSheet extends Component
         return view('academic.attendance-sheet', [
             'records' => $this->session->records()->with('student:id,name,nis')->get()->sortBy('student.name'),
             'labels' => AttendanceRecord::STATUSES,
-            'scanning' => array_intersect(['card', 'qr'], $this->session->allowed_modes ?? [$this->session->source]) !== [] && ! $this->session->isClosed(),
-            'faceAllowed' => in_array('face', $this->session->allowed_modes ?? [$this->session->source], true),
+            'scanning' => array_intersect(['card', 'qr'], $this->session->modes()) !== [] && ! $this->session->isClosed(),
+            'faceAllowed' => in_array('face', $this->session->modes(), true),
+            'faceHint' => $this->faceHint(),
+            // Terlambat hanya bermakna untuk pelajaran berjadwal; sesi tanpa jadwal tidak menghitung telat.
+            'withLate' => $this->session->schedule_id !== null || ($this->statuses !== [] && in_array('terlambat', $this->statuses, true)),
             'reviewCount' => $this->session->records()->awaitingReview()->count(),
             'reviewUrl' => route($role ? $role.'.attendance.review' : 'staff.attendance.review'),
         ])->layout($role ? 'components.layouts.portal' : 'components.layouts.staff', $role ? ['role' => $role, 'active' => 'attendance', 'title' => $this->session->title] : ['active' => 'attendance'])->title($this->session->title);

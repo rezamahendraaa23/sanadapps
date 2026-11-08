@@ -42,6 +42,13 @@ it('menolak mematikan modul yang masih dipakai modul aktif', function () {
     expect(fn () => app(ToggleModule::class)->handle('wallet', false))->toThrow(ModuleDependencyException::class, 'Mart & Warung');
 });
 
+it('mengaktifkan absensi wajah ikut mencentang Wajah di pos tanpa mengubah aturan lain', function () {
+    Module::where('module_key', 'attendance')->update(['is_enabled' => true, 'settings' => ['verification_modes' => ['manual', 'qr'], 'late_tolerance' => 7]]);
+    app(ToggleModule::class)->handle('face_attendance', true);
+
+    expect(Module::where('module_key', 'attendance')->first()->settings)->toEqual(['verification_modes' => ['manual', 'qr', 'face'], 'late_tolerance' => 7]);
+});
+
 it('tidak mengizinkan data inti dimatikan', function () {
     expect(fn () => app(ToggleModule::class)->handle('core', false))->toThrow(ModuleDependencyException::class);
     expect(app(ModuleRegistry::class)->enabled('core'))->toBeTrue();

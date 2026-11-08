@@ -42,6 +42,18 @@ class ToggleModule
         $module->settings ??= [];
         $module->save();
 
+        // Mengaktifkan absensi wajah berarti ingin memakainya: Wajah di pos ikut dicentang di Aturan Absensi.
+        if ($key === 'face_attendance' && $enabled) {
+            $attendance = Module::query()->where('module_key', 'attendance')->first();
+            if ($attendance) {
+                $settings = $attendance->settings ?? [];
+                $modes = $settings['verification_modes'] ?? ['manual', 'card', 'qr'];
+                if (! in_array('face', $modes, true)) {
+                    $attendance->update(['settings' => ['verification_modes' => [...$modes, 'face']] + $settings]);
+                }
+            }
+        }
+
         $this->registry->forget();
 
         return $module;

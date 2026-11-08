@@ -230,6 +230,9 @@ describe('absensi', function () {
             ->and($session->start_time)->not->toBeNull()
             ->and($session->records()->where('status', 'alpa')->count())->toBe($active);
         $this->get(route('staff.attendance.session', $session))->assertOk()->assertSee('Tap kartu atau pindai QR');
+        // Tanpa jadwal tidak ada telat; kamera wajah belum aktif diberi petunjuk.
+        Livewire::test(AttendanceSheet::class, ['session' => $session])->assertDontSee('aria-label="Terlambat"', false)
+            ->assertSee('Absen wajah belum aktif')->assertSee('dibuka');
     });
 
     it('musyrif membuka sesi asrama sendiri, bukan asrama lain', function () {
