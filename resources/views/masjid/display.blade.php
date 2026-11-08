@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Layar Masjid</title>
     <link rel="manifest" href="{{ asset('tv/manifest.webmanifest') }}">
-    <meta name="theme-color" content="#071F18">
     <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=6">
     @if ($brandCss = app(\App\Support\SchoolIdentity::class)->brandCss())
         <style>{!! $brandCss !!}</style>
