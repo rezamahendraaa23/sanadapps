@@ -103,6 +103,8 @@ setenv QUEUE_CONNECTION database
 setenv CACHE_STORE database
 setenv SESSION_DRIVER database
 setenv BROWSERSHOT_CHROME_PATH /usr/bin/google-chrome
+# Absen wajah memakai face-api di browser (A90); pencocok tiruan hanya untuk pengembangan.
+setenv FACE_DRIVER faceapi
 setenv SANAD_SCHOOL_NAME "\"$SCHOOL\""
 setenv SANAD_ADMIN_EMAIL "$ADMIN_EMAIL"
 

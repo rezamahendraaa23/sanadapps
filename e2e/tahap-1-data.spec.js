@@ -70,10 +70,12 @@ test('alur setup: profil, tahun ajaran, kelas, asrama, tambah santri, cari, deta
     await expect(addStudent.getByLabel('Nama lengkap')).toBeFocused();
 
     await addStudent.getByLabel('Nama lengkap').fill('Fulan Baru');
-    await addStudent.getByLabel('Jenis kelamin').selectOption('L');
+    await addStudent.getByText('Putra', { exact: true }).click();
+    await expect(addStudent.getByRole('radio', { name: 'Putra' })).toBeChecked();
     await addStudent.getByLabel('Kelas', { exact: true }).selectOption({ label: 'Kelas 7A' });
-    await addStudent.getByLabel('Nomor WhatsApp wali').fill('081299990001');
+    await addStudent.getByLabel('Nomor WhatsApp').fill('081299990001');
     await addStudent.getByLabel('Nama wali').fill('Ayah Fulan');
+    if (shots) await page.screenshot({ path: `${shots}/santri-popup-1440.png` });
     await addStudent.getByRole('button', { name: 'Simpan Santri' }).click();
 
     await expect(page.getByRole('heading', { name: 'Fulan Baru' })).toBeVisible();

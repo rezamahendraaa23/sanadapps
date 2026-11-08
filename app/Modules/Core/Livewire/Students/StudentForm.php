@@ -9,6 +9,7 @@ use App\Modules\Core\Models\CustomFieldDefinition;
 use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Support\PhoneNumber;
+use App\Support\SchoolDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,10 @@ class StudentForm extends Component
     /** Dipakai di dalam popup daftar santri; Batal menutup popup, bukan pindah halaman. */
     #[Locked]
     public bool $inModal = false;
+
+    /** Nama popup yang membungkus form ini, agar tombol Batal menutup popup yang tepat. */
+    #[Locked]
+    public string $modalName = 'tambah-santri';
 
     public string $nis = '';
 
@@ -66,6 +71,10 @@ class StudentForm extends Component
     public function mount(?Student $student = null): void
     {
         $this->authorize($student?->exists ? 'update' : 'create', $student?->exists ? $student : Student::class);
+
+        if (! $student?->exists) {
+            $this->entry_date = SchoolDate::today()->toDateString();
+        }
 
         if ($student?->exists) {
             $this->studentId = $student->id;
@@ -213,6 +222,7 @@ class StudentForm extends Component
             'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'fields' => $this->customFields(),
+            'currentPhoto' => $this->studentId && Student::query()->whereKey($this->studentId)->value('photo_path') ? route('staff.students.photo', Student::query()->findOrFail($this->studentId)) : null,
         ])->title($this->studentId ? 'Ubah Santri' : 'Tambah Santri');
     }
 }

@@ -24,7 +24,7 @@
                         @endcan
                     @endif
                     <x-ui.button variant="secondary" wire:click="issuePassword" wire:confirm="Buat sandi baru untuk {{ $student->name }}? Sandi lama langsung tidak berlaku.">Buat Sandi</x-ui.button>
-                    <x-ui.button variant="secondary" icon="pencil" :href="route('staff.students.edit', $student)" wire:navigate>Ubah Data</x-ui.button>
+                    <x-ui.button variant="secondary" icon="pencil" x-data x-on:click="$dispatch('open-modal', 'ubah-santri')">Ubah Data</x-ui.button>
                 </div>
             @endif
         </div>
@@ -107,5 +107,10 @@
             </dl>
         @endif
     </x-ui.card>
+    @endif
+    @if ($canManage)
+        <x-ui.modal name="ubah-santri" title="Ubah data santri" class="md:max-w-3xl">
+            @livewire(\App\Modules\Core\Livewire\Students\StudentForm::class, ['student' => $student, 'inModal' => true, 'modalName' => 'ubah-santri'], key('ubah-santri-'.$student->id))
+        </x-ui.modal>
     @endif
 </div>
