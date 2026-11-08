@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { bukaMenu } from './menu.js';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { LOG_FILE } from './global-setup.js';
@@ -7,6 +8,7 @@ const shots = process.env.E2E_SCREENSHOTS;
 
 async function loginStaff(page, email, password) {
     await page.goto('/masuk?sebagai=staf');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Sandi', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();
@@ -15,6 +17,7 @@ async function loginStaff(page, email, password) {
 
 async function loginGuardian(page) {
     await page.goto('/masuk');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByLabel('Nomor WhatsApp').fill('081234567891');
     await page.getByRole('button', { name: 'Kirim Kode' }).click();
     await expect(page).toHaveURL(/masuk\/otp$/);
@@ -39,9 +42,9 @@ test.describe.configure({ mode: 'serial' });
 test('bendahara: jenis, tarif, rekening, pratinjau, generate', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await loginStaff(page, 'bendahara@uji.test', 'sandi-uji-bendahara');
-    await expect(page.getByRole('heading', { name: 'Terbayar bulan ini' })).toBeVisible();
+    await expect(page.getByText('Tingkat penagihan bulan ini')).toBeVisible();
 
-    await page.getByRole('link', { name: 'Jenis Tagihan' }).click();
+    await bukaMenu(page, 'Jenis Tagihan');
     await page.getByRole('button', { name: 'Tambah', exact: true }).click();
     const form = page.getByRole('dialog', { name: 'Tambah jenis tagihan' });
     await form.getByLabel('Kode').fill('SPP');
@@ -60,7 +63,7 @@ test('bendahara: jenis, tarif, rekening, pratinjau, generate', async ({ page }) 
     await expect(page.getByText('Tarif umum')).toBeVisible();
     await noOverflow(page);
 
-    await page.getByRole('link', { name: 'Tagihan', exact: true }).click();
+    await bukaMenu(page, 'Tagihan');
     await page.getByRole('link', { name: 'Generate Tagihan' }).click();
     await page.getByRole('button', { name: 'Pratinjau' }).click();
     await expect(page.getByRole('heading', { name: 'Pratinjau' })).toBeVisible();
@@ -114,7 +117,7 @@ test('wali di HP: beranda, tagihan, transfer, salah berkas, kirim bukti', async 
 test('bendahara memverifikasi dengan pintasan; kwitansi PDF terunduh', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await loginStaff(page, 'bendahara@uji.test', 'sandi-uji-bendahara');
-    await page.getByRole('link', { name: 'Verifikasi Transfer' }).click();
+    await bukaMenu(page, 'Verifikasi Transfer');
     await expect(page.getByAltText(/Bukti transfer/)).toBeVisible();
     await expect(page.getByRole('main').getByText('Rp 350.000').first()).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/verifikasi-1280.png`, fullPage: true });
@@ -130,7 +133,7 @@ test('bendahara memverifikasi dengan pintasan; kwitansi PDF terunduh', async ({ 
     await expect(page.getByText(/terverifikasi. Tagihan lunas./)).toBeVisible();
     await expect(page.getByText('Tidak ada yang menunggu')).toBeVisible();
 
-    await page.getByRole('link', { name: 'Pembayaran', exact: true }).click();
+    await bukaMenu(page, 'Pembayaran');
     await page.getByRole('link', { name: /KW-/ }).first().click();
     const download = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Unduh Kwitansi' }).click();
@@ -188,7 +191,7 @@ test('tunai: kembalian terhitung di layar, lalu kas terisi', async ({ page }) =>
     await expect(page).toHaveURL(/panel\/pembayaran\/[0-9a-f-]{36}$/);
 
     await pageReady(page);
-    await page.getByRole('link', { name: 'Laporan Kas' }).click();
+    await bukaMenu(page, 'Laporan Kas');
     await expect(page).toHaveURL(new RegExp('panel.kas'));
     // Total kas ikut uji lain di database yang sama, jadi yang diperiksa baris pembayaran ini.
     await expect(page.getByRole('row', { name: /Pembayaran tagihan.*Rp 200\.000/ }).first()).toBeVisible();

@@ -1,6 +1,21 @@
 // Kamera absensi: pos wajah dan pendaftaran wajah (U-15).
+// Kamera yang baru dilepas halaman atau aplikasi lain sering menolak sesaat (NotReadableError/AbortError).
+// Itu dicoba lagi; izin yang ditolak (NotAllowedError) langsung dilaporkan.
+const CAMERA_BUSY = ['NotReadableError', 'AbortError', 'TrackStartError'];
+
+async function getCamera(attempt = 0) {
+    try {
+        return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 960 } }, audio: false });
+    } catch (error) {
+        if (attempt >= 3 || !CAMERA_BUSY.includes(error?.name)) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+
+        return getCamera(attempt + 1);
+    }
+}
+
 async function openCamera(video) {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 960 } }, audio: false });
+    const stream = await getCamera();
     video.srcObject = stream;
     await new Promise((resolve) => { if (video.videoWidth) resolve(); else video.onloadedmetadata = resolve; });
     return stream;

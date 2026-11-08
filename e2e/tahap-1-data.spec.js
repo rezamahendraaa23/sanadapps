@@ -7,6 +7,7 @@ const shots = process.env.E2E_SCREENSHOTS;
 
 async function login(page) {
     await page.goto('/masuk?sebagai=staf');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByLabel('Email').fill('admin@uji.test');
     await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-admin');
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();
@@ -157,6 +158,7 @@ test('pengumuman tayang di portal santri; menu kosong tidak ada link mati', asyn
 
     await page.context().clearCookies();
     await page.goto('/masuk?sebagai=santri');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByLabel('NIS').fill('2026001');
     await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-santri');
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();

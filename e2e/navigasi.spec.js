@@ -6,6 +6,7 @@ async function pageReady(page) {
 
 async function loginAdmin(page) {
     await page.goto('/masuk?sebagai=staf');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByLabel('Email').fill('admin@uji.test');
     await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-admin');
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();

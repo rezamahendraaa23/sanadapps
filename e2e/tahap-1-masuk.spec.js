@@ -16,6 +16,7 @@ async function noOverflow(page) {
 test('wali: nomor, OTP salah, OTP benar, beranda menampilkan anak, keluar', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto('/masuk');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await noOverflow(page);
     if (shots) await page.screenshot({ path: `${shots}/masuk-wali-360.png`, fullPage: true });
 
@@ -53,6 +54,7 @@ test('wali: nomor, OTP salah, OTP benar, beranda menampilkan anak, keluar', asyn
 test('santri masuk dengan NIS, sandi bisa ditampilkan', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto('/masuk');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByRole('tab', { name: 'Santri' }).click();
     await expect(page.getByRole('tab', { name: 'Santri' })).toHaveAttribute('aria-selected', 'true');
 
@@ -77,6 +79,7 @@ test('staf masuk dengan email, menu akun berfungsi, lalu keluar', async ({ page 
     for (const width of [360, 1280]) {
         await page.setViewportSize({ width, height: 800 });
         await page.goto('/masuk?sebagai=staf');
+        await page.waitForFunction(() => window.Livewire && window.Alpine);
         await page.getByLabel('Email').fill('admin@uji.test');
         await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-admin');
         await page.getByRole('button', { name: 'Masuk', exact: true }).click();
@@ -97,6 +100,7 @@ test('staf masuk dengan email, menu akun berfungsi, lalu keluar', async ({ page 
 
 test('lupa sandi tidak membedakan email terdaftar', async ({ page }) => {
     await page.goto('/masuk?sebagai=staf');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
     await page.getByRole('link', { name: 'Lupa sandi?' }).click();
     await expect(page).toHaveURL(/lupa-sandi$/);
     await page.getByLabel('Email akun').fill('tidak-ada@uji.test');

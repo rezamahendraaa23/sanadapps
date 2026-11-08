@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { bukaMenu, pintuRuangKerja } from './menu.js';
 import { readFileSync } from 'node:fs';
 import { LOG_FILE } from './global-setup.js';
 
@@ -39,9 +40,9 @@ test('admin mengaktifkan dompet, kartu, dan kasir; urutan dependensi dijaga', as
     }
 
     await page.goto('/panel');
-    await expect(page.getByRole('link', { name: 'Dompet' })).toBeVisible();
+    await expect(pintuRuangKerja(page, 'Keuangan')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Kartu Santri' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Kasir' })).toBeVisible();
+    await expect(pintuRuangKerja(page, 'Mart & Kasir')).toBeVisible();
 });
 
 test('bendahara menerbitkan kartu dan mencatat top-up tunai', async ({ page }) => {
@@ -63,7 +64,7 @@ test('bendahara menerbitkan kartu dan mencatat top-up tunai', async ({ page }) =
     await expect(page.getByRole('cell', { name: /^Santri Uji 2026001/ })).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/kartu-1280.png`, fullPage: true });
 
-    await page.getByRole('link', { name: 'Dompet' }).click();
+    await bukaMenu(page, 'Dompet');
     await expect(page).toHaveURL(/panel\/dompet$/);
     await pageReady(page);
     await page.getByLabel('Cari nama atau NIS').fill('2026001');
@@ -124,8 +125,8 @@ test('wali melihat saldo, mengatur limit dan PIN', async ({ page }) => {
 test('kasir: keranjang, tap kartu, berhasil, PIN salah lalu benar, kartu tak dikenal ditolak', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await loginStaff(page, 'kasir@uji.test', 'sandi-uji-kasir');
-    await expect(page.getByRole('link', { name: 'Tagihan' })).toHaveCount(0);
-    await page.getByRole('link', { name: 'Kasir' }).click();
+    await expect(pintuRuangKerja(page, 'Keuangan')).toHaveCount(0);
+    await bukaMenu(page, 'Kasir');
     await expect(page).toHaveURL(/panel\/kasir/);
     await pageReady(page);
     if (shots) await page.screenshot({ path: `${shots}/kasir-1024.png`, fullPage: true });
@@ -253,7 +254,7 @@ test('admin: perangkat, log pindai, merchant, layar HP aman', async ({ page }) =
     await page.getByRole('link', { name: 'Log Pindai' }).click();
     await expect(page.getByRole('cell', { name: /Tidak dikenal/ }).first()).toBeVisible();
 
-    await page.getByRole('link', { name: 'Mart & Warung' }).click();
+    await bukaMenu(page, 'Mart & Warung');
     await pageReady(page);
     await page.getByRole('link', { name: 'Katalog Warung Uji' }).click();
     await expect(page.getByRole('cell', { name: /^Roti Uji/ }).first()).toBeVisible();

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { bukaMenu, pintuRuangKerja } from './menu.js';
 import { readFileSync } from 'node:fs';
 import { LOG_FILE } from './global-setup.js';
 
@@ -76,9 +77,9 @@ test('persiapan: modul aktif, kartu dan saldo santri kedua', async ({ page }) =>
 test('pengelola: kategori, produk berstok, stok masuk, opname', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await loginStaff(page, 'pengelola@uji.test', 'sandi-uji-pengelola');
-    await expect(page.getByRole('link', { name: 'Tagihan' })).toHaveCount(0);
+    await expect(pintuRuangKerja(page, 'Keuangan')).toHaveCount(0);
 
-    await page.getByRole('link', { name: 'Mart & Warung' }).click();
+    await bukaMenu(page, 'Mart & Warung');
     await pageReady(page);
     await expect(page.getByRole('heading', { name: 'Warung Uji' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Tambah Merchant' })).toHaveCount(0);
@@ -213,7 +214,7 @@ test('pengelola mengajukan pencairan; bendahara menyetujui dan membayar; kas ter
 
     await page.context().clearCookies();
     await loginStaff(page, 'bendahara@uji.test', 'sandi-uji-bendahara');
-    await page.getByRole('link', { name: 'Pencairan' }).click();
+    await bukaMenu(page, 'Pencairan');
     await expect(page).toHaveURL(/pencairan$/);
     await pageReady(page);
     page.on('dialog', (dialog) => dialog.accept());
