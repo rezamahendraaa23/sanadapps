@@ -309,7 +309,8 @@
     var RING = 2 * Math.PI * 46;
     function countdownHtml(title, kicker, note) {
         return '<div class="full"><div class="count"><div class="ring"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"></circle><circle class="fg" id="ring" cx="50" cy="50" r="46" stroke-dasharray="' + RING.toFixed(2) + '" stroke-dashoffset="0"></circle></svg><div class="num" id="count"></div>' + KHATAM.replace('khatam', 'khatam ring-star') + '</div>'
-            + '<div class="words"><p>' + escapeHtml(kicker) + '</p><h1>' + escapeHtml(title) + '</h1>' + (note ? '<span>' + escapeHtml(note) + '</span>' : '') + '</div></div></div>';
+            + '<div class="words"><p>' + escapeHtml(kicker) + '</p><h1>' + escapeHtml(title) + '</h1>' + (note ? '<span>' + escapeHtml(note) + '</span>' : '') + '</div></div>'
+            + (online ? '' : '<div class="count-sync">' + escapeHtml(syncNote()) + '</div>') + '</div>';
     }
 
     function render() {
@@ -347,7 +348,7 @@
                 var fr = manifest.khutbah[0];
                 note = (fr.khatib ? 'Khatib ' + fr.khatib : '') + (fr.imam ? (fr.khatib ? ', imam ' : 'Imam ') + fr.imam : '');
             }
-            paint(mode.name + mode.prayer + theme, theme, countdownHtml(isAdhan ? label : 'Iqamah', isAdhan ? 'Menuju adzan' : 'Adzan ' + label + ' telah berkumandang', isAdhan ? note : 'Rapatkan dan luruskan shaf'));
+            paint(mode.name + mode.prayer + theme + online, theme, countdownHtml(isAdhan ? label : 'Iqamah', isAdhan ? 'Menuju adzan' : 'Adzan ' + label + ' telah berkumandang', isAdhan ? note : 'Rapatkan dan luruskan shaf'));
             setText('count', clockLeft(mode.left));
             var ring = document.getElementById('ring');
             if (ring) { ring.setAttribute('stroke-dashoffset', (RING * (1 - mode.left / mode.total)).toFixed(2)); }
@@ -371,12 +372,13 @@
         var ramadanLine = isRamadan(t.date) && row ? 'Imsak ' + row.imsak.replace(':', '.') + ', berbuka ' + row.maghrib.replace(':', '.') : '';
         var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online + ':' + (slot.media ? '' : t.minutes);
         var hero = showTimes
-            ? '<div class="hero">' + KHATAM + '<div class="clock"><span id="clock">' + clock + '</span></div>'
+            ? '<div class="hero">' + KHATAM + '<div class="clock"><span id="clock">' + clock + '</span><small>.<span id="sec">' + seconds + '</span></small></div>'
                 + (next ? '<div class="next">' + icon(next.prayer) + '<b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span></div><div class="note">Iqamah ' + iq.minutes + ' menit setelah adzan' + (ramadanLine ? '. ' + ramadanLine : '') + '</div>' : '')
                 + '</div>'
             : '';
         paint(key, theme, '<div class="safe nudge" id="safe">' + header(t, row) + '<div class="main">' + hero + '<div class="slot' + slot.cls + '">' + slot.html + '</div></div>' + (showTimes ? lineHtml(row, next, t) : '') + footer() + '</div>');
         setText('clock', clock);
+        setText('sec', seconds);
         if (next) { setText('left', leftWords(next.left)); }
     }
 

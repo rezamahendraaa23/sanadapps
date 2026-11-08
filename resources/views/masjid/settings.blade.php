@@ -39,53 +39,69 @@
             </x-ui.card>
         </div>
     @elseif ($tab === 'lokasi')
-        <x-ui.card title="Lokasi masjid">
-            <div class="flex flex-col gap-3">
+        <x-ui.card title="Masjid dan lokasi">
+            <div class="grid gap-3 md:grid-cols-2">
                 <x-ui.input label="Nama masjid" name="name" required wire:model="name" :disabled="! $canSettings" />
                 <x-ui.input label="Kota atau kabupaten" name="city" required help="Dipakai untuk mencari jadwal resmi pembanding." wire:model="city" :disabled="! $canSettings" />
-                @if ($canSettings)
-                    <div class="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
-                        <x-ui.input label="Cari lokasi" name="query" help="Nama masjid, alamat, atau kota. Hanya teks ini yang dikirim ke layanan peta." wire:model="query" />
-                        <x-ui.button variant="secondary" class="md:mt-6" wire:click="findLocation" wire:loading.attr="disabled" wire:target="findLocation">Cari Koordinat</x-ui.button>
-                    </div>
-                @endif
-                @if ($foundLabel)<p class="text-sm break-words">Ditemukan: {{ $foundLabel }}. Periksa titiknya di peta sebelum menyimpan.</p>@endif
-                <div class="grid gap-3 md:grid-cols-3">
-                    <x-ui.input label="Lintang" name="latitude" inputmode="decimal" required wire:model.blur="latitude" :disabled="! $canSettings" />
-                    <x-ui.input label="Bujur" name="longitude" inputmode="decimal" required wire:model.blur="longitude" :disabled="! $canSettings" />
-                    <x-ui.select label="Zona waktu" name="timezone" :options="['Asia/Jakarta' => 'WIB', 'Asia/Makassar' => 'WITA', 'Asia/Jayapura' => 'WIT']" wire:model="timezone" :disabled="! $canSettings" />
-                </div>
-                @if (is_numeric($latitude) && is_numeric($longitude))
-                    <a class="text-sm font-semibold text-primary underline" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ $latitude }}&mlon={{ $longitude }}#map=17/{{ $latitude }}/{{ $longitude }}">Lihat titik di peta</a>
-                @endif
             </div>
+            @if ($canSettings)
+                <div class="mt-4 rounded-control bg-bg p-4">
+                    <p class="flex items-center gap-2 text-base font-semibold"><x-ui.icon name="map-pin" size="sm" class="text-primary" />Cari koordinat otomatis</p>
+                    <div class="mt-2 flex flex-col gap-2 md:flex-row md:items-start">
+                        <div class="min-w-0 flex-1"><x-ui.input label="Cari lokasi" name="query" help="Nama masjid, alamat, atau kota. Hanya teks ini yang dikirim ke layanan peta." wire:model="query" /></div>
+                        <x-ui.button variant="secondary" icon="search" class="md:mt-6" wire:click="findLocation" wire:loading.attr="disabled" wire:target="findLocation">Cari Koordinat</x-ui.button>
+                    </div>
+                    @if ($foundLabel)<p class="mt-2 text-sm break-words">Ditemukan: {{ $foundLabel }}. Periksa titiknya di peta sebelum menyimpan.</p>@endif
+                </div>
+            @endif
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)]">
+                <x-ui.input label="Lintang" name="latitude" inputmode="decimal" required wire:model.blur="latitude" :disabled="! $canSettings" />
+                <x-ui.input label="Bujur" name="longitude" inputmode="decimal" required wire:model.blur="longitude" :disabled="! $canSettings" />
+                <x-ui.select label="Zona waktu" name="timezone" :options="['Asia/Jakarta' => 'WIB', 'Asia/Makassar' => 'WITA', 'Asia/Jayapura' => 'WIT']" wire:model="timezone" :disabled="! $canSettings" />
+            </div>
+            @if (is_numeric($latitude) && is_numeric($longitude))
+                <x-ui.button variant="tertiary" icon="map" class="mt-2" :href="'https://www.openstreetmap.org/?mlat='.$latitude.'&mlon='.$longitude.'#map=17/'.$latitude.'/'.$longitude" target="_blank" rel="noopener">Lihat titik di peta</x-ui.button>
+            @endif
         </x-ui.card>
-        <x-ui.card title="Metode dan mode">
-            <div class="grid gap-3 md:grid-cols-3">
+
+        <x-ui.card title="Cara menghitung">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <x-ui.input label="Sudut Subuh" name="fajr_angle" inputmode="decimal" help="Kemenag RI: 20" wire:model="fajr_angle" :disabled="! $canSettings" />
                 <x-ui.input label="Sudut Isya" name="isha_angle" inputmode="decimal" help="Kemenag RI: 18" wire:model="isha_angle" :disabled="! $canSettings" />
                 <x-ui.select label="Ashar" name="asr_method" :options="['standard' => 'Standar (1x bayangan)', 'hanafi' => 'Hanafi (2x bayangan)']" wire:model="asr_method" :disabled="! $canSettings" />
                 <x-ui.input label="Imsak sebelum Subuh (menit)" name="imsak_minutes" inputmode="numeric" wire:model="imsak_minutes" :disabled="! $canSettings" />
-                <x-ui.input label="Hitung mundur adzan (menit)" name="countdown_minutes" inputmode="numeric" wire:model="countdown_minutes" :disabled="! $canSettings" />
+            </div>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
                 <x-ui.select label="Sumber jadwal" name="schedule_source" :options="['computed' => 'Hitung sendiri', 'api' => 'Jadwal resmi bila ada, cadangan hitung sendiri']" wire:model="schedule_source" :disabled="! $canSettings" />
-                <x-ui.input label="Koreksi tanggal hijriah (hari)" name="hijri_offset_days" inputmode="numeric" wire:model="hijri_offset_days" :disabled="! $canSettings" />
+                <x-ui.input label="Hitung mundur adzan (menit)" name="countdown_minutes" inputmode="numeric" help="Layar TV berganti ke hitung mundur sebelum adzan." wire:model="countdown_minutes" :disabled="! $canSettings" />
+            </div>
+            <div class="mt-3 flex flex-col">
+                <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="friday_mode" @disabled(! $canSettings) class="size-5 accent-primary">Mode Jumat otomatis</label>
+                <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="auto_attendance" @disabled(! $canSettings) class="size-5 accent-primary">Buka sesi absensi sholat tiap asrama saat iqamah</label>
+            </div>
+        </x-ui.card>
+
+        <x-ui.card title="Kalender hijriah dan Ramadan">
+            <div class="grid gap-3 sm:grid-cols-3">
+                <x-ui.input label="Koreksi tanggal hijriah (hari)" name="hijri_offset_days" inputmode="numeric" help="Contoh: 1 atau -1." wire:model="hijri_offset_days" :disabled="! $canSettings" />
                 <x-ui.input label="Ramadan mulai" name="ramadan_start" type="date" help="Isi setelah keputusan resmi." wire:model="ramadan_start" :disabled="! $canSettings" />
                 <x-ui.input label="Ramadan selesai" name="ramadan_end" type="date" wire:model="ramadan_end" :disabled="! $canSettings" />
             </div>
-            <label class="mt-3 flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="friday_mode" @disabled(! $canSettings) class="size-5 accent-primary">Mode Jumat otomatis</label>
-            <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="auto_attendance" @disabled(! $canSettings) class="size-5 accent-primary">Buka sesi absensi sholat tiap asrama saat iqamah</label>
-            @if ($canSettings)
-                <x-ui.button class="mt-3" wire:click="saveProfile" wire:loading.attr="disabled" wire:target="saveProfile">Simpan dan Hitung Ulang</x-ui.button>
-            @endif
         </x-ui.card>
+
         @if ($canSettings)
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-4 shadow-sm">
+                <p class="text-sm text-text-muted">Menyimpan lokasi, cara menghitung, dan kalender, lalu jadwal 60 hari dihitung ulang.</p>
+                <x-ui.button icon="save" wire:click="saveProfile" wire:loading.attr="disabled" wire:target="saveProfile">Simpan dan Hitung Ulang</x-ui.button>
+            </div>
+
             <x-ui.card title="Awal bulan hijriah resmi">
                 <p class="text-base">Isi setelah ada keputusan resmi, misalnya awal Ramadan. Sistem tidak menetapkannya sendiri.</p>
-                <div class="mt-3 grid gap-3 md:grid-cols-[120px_1fr_1fr_auto] md:items-start">
+                <div class="mt-3 grid gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start">
                     <x-ui.input label="Tahun" name="hijri_year" inputmode="numeric" wire:model="hijri_year" />
                     <x-ui.select label="Bulan" name="hijri_month" :options="array_combine(range(1, 12), \App\Modules\Masjid\Support\HijriDate::MONTHS)" wire:model="hijri_month" />
                     <x-ui.input label="Tanggal 1 jatuh pada" name="hijri_start" type="date" wire:model="hijri_start" />
-                    <x-ui.button variant="secondary" class="md:mt-6" wire:click="setHijriMonth">Simpan</x-ui.button>
+                    <x-ui.button variant="secondary" class="sm:mt-6" wire:click="setHijriMonth">Simpan Awal Bulan</x-ui.button>
                 </div>
             </x-ui.card>
         @endif

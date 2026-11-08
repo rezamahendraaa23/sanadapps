@@ -53,6 +53,7 @@ test('admin mengatur masjid, memasang TV dengan kode, TV tetap jalan saat offlin
 
     await admin.goto('/panel/masjid/layar');
     await pageReady(admin);
+    await admin.getByRole('button', { name: 'Pasang Layar', exact: true }).click();
     await admin.getByLabel('Kode di layar').fill(code);
     await admin.getByLabel('Nama layar').fill('TV Masjid Utama');
     await admin.getByRole('button', { name: 'Pasangkan' }).click();
@@ -93,8 +94,11 @@ test('perintah redup dan terang sampai ke TV; poster layar penuh lewat pemotong;
     const code = (await tv.locator('.code').innerText({ timeout: 15_000 })).trim();
     await admin.goto('/panel/masjid/layar');
     await pageReady(admin);
+    await admin.getByRole('button', { name: 'Pasang Layar', exact: true }).click();
     await admin.getByLabel('Kode di layar').fill(code);
     await admin.getByLabel('Nama layar').fill('TV Perintah');
+    // Tanpa mode sholat, supaya hasil uji tidak bergantung pada jam saat uji berjalan.
+    await admin.getByLabel('Profil').selectOption('announcement_only');
     await admin.getByRole('button', { name: 'Pasangkan' }).click();
     await expect(tv.locator('.code')).toBeHidden({ timeout: 20_000 });
 

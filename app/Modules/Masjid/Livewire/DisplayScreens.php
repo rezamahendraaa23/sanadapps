@@ -64,6 +64,7 @@ class DisplayScreens extends Component
         }
 
         $this->reset('code', 'name', 'location', 'dim_from', 'dim_until');
+        $this->dispatch('close-modal', 'pasang-layar');
         $this->dispatch('toast', message: 'Layar terpasang. Tampilan muncul dalam beberapa detik.', tone: 'success');
     }
 

@@ -117,6 +117,7 @@ body.pointer { cursor: auto; }
 .count .words { margin-left: 8rem; max-width: 70rem; }
 .count .words p { margin: 0; font-size: 4.4rem; font-weight: 800; color: var(--accent); }
 .count .words h1 { margin: 1rem 0 2rem; font-family: 'Fredoka', sans-serif; font-size: 13rem; font-weight: 600; line-height: 1; }
+.count-sync { position: absolute; right: 0; bottom: 0; font-size: 2.6rem; font-weight: 700; color: var(--muted); }
 .count .words span { display: block; font-size: 4.4rem; font-weight: 700; color: var(--muted); }
 
 /* Konten layar penuh: memenuhi layar saat gilirannya, jam kecil tetap terlihat. */
