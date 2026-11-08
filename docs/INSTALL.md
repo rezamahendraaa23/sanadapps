@@ -7,6 +7,8 @@ Panduan singkat untuk memasang SANAD di laptop (untuk mencoba) atau di server (u
 
 Setelah terpasang, lanjut ke bagian **Setelah terpasang** di bawah.
 
+Untuk VPS kecil (RAM 1 GB, IPv4 bersama dengan port khusus), ikuti [INSTALL-VPS.md](INSTALL-VPS.md).
+
 ---
 
 ## Jalur A: Docker
