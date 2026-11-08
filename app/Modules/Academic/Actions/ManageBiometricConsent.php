@@ -16,10 +16,10 @@ class ManageBiometricConsent
 {
     public function __construct(private RecordAudit $audit) {}
 
-    public function grant(Student $student, ?Guardian $guardian, string $method, ?string $documentPath, ?string $ip, ?int $recordedBy): BiometricConsent
+    public function grant(Student $student, ?Guardian $guardian, string $method, ?string $documentPath, ?string $ip, ?int $recordedBy, ?string $note = null): BiometricConsent
     {
         try {
-            return DB::transaction(function () use ($student, $guardian, $method, $documentPath, $ip, $recordedBy): BiometricConsent {
+            return DB::transaction(function () use ($student, $guardian, $method, $documentPath, $ip, $recordedBy, $note): BiometricConsent {
                 $active = BiometricConsent::query()->active()->where('student_id', $student->id)->first();
 
                 if ($active !== null) {
@@ -34,6 +34,7 @@ class ManageBiometricConsent
                     'granted_at' => now(),
                     'ip' => $ip,
                     'recorded_by' => $recordedBy,
+                    'note' => $note,
                 ]);
 
                 $this->audit->handle('biometric.consent_granted', 'biometric_consent', $consent->id, null, ['student_id' => $student->id, 'method' => $method]);

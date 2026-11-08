@@ -11,6 +11,12 @@
             <div><dd class="font-display font-tabular text-2xl font-semibold">{{ $consentCount }}</dd><dt class="text-sm">Wali setuju</dt></div>
             <div><dd class="font-display font-tabular text-2xl font-semibold">{{ $enrolledCount }}</dd><dt class="text-sm">Terdaftar</dt></div>
         </dl>
+        @if ($consentCount < $activeCount)
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                <p class="text-sm text-text-muted">{{ $activeCount - $consentCount }} santri belum punya persetujuan wali.</p>
+                <x-ui.button variant="secondary" x-data x-on:click="$dispatch('open-modal', 'persetujuan-lisan-massal')">Catat Persetujuan Lisan Sekaligus</x-ui.button>
+            </div>
+        @endif
     </x-ui.card>
 
     <x-ui.card title="Pilih santri">
@@ -25,11 +31,15 @@
             @if (! $consent)
                 <x-ui.banner tone="warning" role="alert">Belum ada persetujuan wali, jadi wajah belum bisa didaftarkan. Santri tetap absen dengan kartu atau manual.</x-ui.banner>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <x-ui.button wire:click="requestConsent" wire:loading.attr="disabled" wire:target="requestConsent">Minta Persetujuan Wali</x-ui.button>
+                    <x-ui.button x-data x-on:click="$dispatch('open-modal', 'persetujuan-lisan')">Catat Persetujuan Lisan</x-ui.button>
+                    <x-ui.button variant="secondary" wire:click="requestConsent" wire:loading.attr="disabled" wire:target="requestConsent">Minta Lewat Aplikasi Wali</x-ui.button>
                     <x-ui.button variant="secondary" x-data x-on:click="$dispatch('open-modal', 'persetujuan-kertas')">Catat Surat Kertas</x-ui.button>
                 </div>
             @else
-                <p class="flex items-center gap-2 text-base font-semibold"><x-ui.icon name="circle-check" class="text-success" />Wali sudah setuju{{ $consent->method === 'paper' ? ' lewat surat' : '' }}</p>
+                <p class="flex items-center gap-2 text-base font-semibold"><x-ui.icon name="circle-check" class="text-success" />Wali sudah setuju{{ ['paper' => ' lewat surat', 'verbal' => ' secara lisan', 'digital' => ' lewat aplikasi'][$consent->method] ?? '' }}</p>
+                @if ($consent->method === 'verbal' && $consent->note)
+                    <p class="text-sm text-text-muted">Keterangan: {{ $consent->note }}. Dicatat {{ $consent->granted_at->setTimezone(config('sanad.display_timezone'))->translatedFormat('j M Y') }}.</p>
+                @endif
 
                 @if ($enrollment)
                     <p class="mt-2 text-base">Wajah sudah terdaftar. Ambil ulang di bawah untuk mengganti.</p>
@@ -64,6 +74,33 @@
             @endif
         </x-ui.card>
     @endif
+
+    <x-ui.modal name="persetujuan-lisan" title="Persetujuan lisan">
+        <div class="flex flex-col gap-3">
+            <x-ui.select label="Wali yang menyatakan setuju" name="verbal_guardian" placeholder="Tidak disebut" :options="$guardians" wire:model="verbal_guardian" />
+            <x-ui.textarea label="Keterangan" name="verbal_note" help="Contoh: disampaikan langsung oleh ayah saat pertemuan wali, 1 November 2026." wire:model="verbal_note" />
+            <label class="flex items-start gap-3 text-base"><input type="checkbox" wire:model="verbal_confirm" class="mt-1 size-5 accent-primary">Saya menyatakan wali santri ini sudah setuju secara lisan wajahnya dipakai untuk absensi, dan tahu bisa menarik persetujuan kapan saja.</label>
+            @error('verbal_confirm')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+        </div>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button wire:click="recordVerbal" wire:loading.attr="disabled" wire:target="recordVerbal">Simpan</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
+
+    <x-ui.modal name="persetujuan-lisan-massal" title="Persetujuan lisan sekaligus">
+        <div class="flex flex-col gap-3">
+            <p class="text-base">Untuk santri aktif yang belum punya persetujuan, misalnya bila wali sudah menyatakan setuju di pertemuan wali santri.</p>
+            <x-ui.select label="Kelas" name="bulk_classroom" placeholder="Semua kelas" :options="$classrooms" wire:model="bulk_classroom" />
+            <x-ui.textarea label="Keterangan" name="bulk_note" help="Contoh: disetujui seluruh wali pada pertemuan wali santri, 1 November 2026." wire:model="bulk_note" />
+            <label class="flex items-start gap-3 text-base"><input type="checkbox" wire:model="bulk_confirm" class="mt-1 size-5 accent-primary">Saya menyatakan wali santri yang dipilih sudah setuju secara lisan. Wali yang menolak akan dicabut persetujuannya.</label>
+            @error('bulk_confirm')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+        </div>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button wire:click="recordVerbalBulk" wire:loading.attr="disabled" wire:target="recordVerbalBulk">Catat</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
 
     <x-ui.modal name="persetujuan-kertas" title="Surat persetujuan">
         <div class="flex flex-col gap-3">

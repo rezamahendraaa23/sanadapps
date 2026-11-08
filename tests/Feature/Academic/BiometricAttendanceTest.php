@@ -444,4 +444,23 @@ describe('persetujuan wali', function () {
 
         $this->actingAs($this->musyrif)->get(route('staff.face'))->assertForbidden();
     });
+
+    it('persetujuan lisan: wajib keterangan dan pernyataan, bisa sekaligus untuk yang belum setuju, lalu wajah bisa didaftarkan', function () {
+        $this->actingAs($this->admin);
+
+        $page = Livewire::test(FaceEnrollments::class)->call('choose', $this->student->uuid)->assertSee('Catat Persetujuan Lisan')
+            ->call('recordVerbal')->assertHasErrors(['verbal_note', 'verbal_confirm'])
+            ->set('verbal_guardian', (string) $this->guardian->id)->set('verbal_note', 'Disampaikan ayah saat pertemuan wali, 1 November')->set('verbal_confirm', true)
+            ->call('recordVerbal')->assertHasNoErrors()->assertSee('Wali sudah setuju secara lisan')->assertSee('Disampaikan ayah saat pertemuan wali');
+        $consent = BiometricConsent::query()->active()->where('student_id', $this->student->id)->firstOrFail();
+        expect($consent->method)->toBe('verbal')->and($consent->guardian_id)->toBe($this->guardian->id)->and($consent->recorded_by)->toBe($this->admin->id);
+
+        $page->set('photos', [faceUpload(1), faceUpload(1), faceUpload(1)])->call('enroll')->assertHasNoErrors()->assertSee('Wajah sudah terdaftar');
+
+        // Sekaligus: hanya santri yang belum punya persetujuan yang dicatat.
+        Livewire::test(FaceEnrollments::class)->call('recordVerbalBulk')->assertHasErrors(['bulk_note', 'bulk_confirm'])
+            ->set('bulk_note', 'Disetujui seluruh wali pada pertemuan 1 November')->set('bulk_confirm', true)->call('recordVerbalBulk')->assertHasNoErrors();
+        expect(BiometricConsent::query()->active()->where('student_id', $this->secondStudent->id)->value('method'))->toBe('verbal')
+            ->and(BiometricConsent::query()->where('student_id', $this->student->id)->count())->toBe(1);
+    });
 });

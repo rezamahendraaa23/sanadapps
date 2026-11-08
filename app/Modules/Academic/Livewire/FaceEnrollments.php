@@ -9,6 +9,7 @@ use App\Modules\Academic\Face\FaceMatcher;
 use App\Modules\Academic\Models\BiometricConsent;
 use App\Modules\Academic\Models\FaceEnrollment;
 use App\Modules\Academic\Support\AcademicException;
+use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Student;
 use Illuminate\Contracts\View\View;
@@ -35,6 +36,18 @@ class FaceEnrollments extends Component
 
     /** @var array<int, mixed> */
     public array $photos = [];
+
+    public string $verbal_guardian = '';
+
+    public string $verbal_note = '';
+
+    public bool $verbal_confirm = false;
+
+    public string $bulk_classroom = '';
+
+    public string $bulk_note = '';
+
+    public bool $bulk_confirm = false;
 
     public string $paper_guardian = '';
 
@@ -137,6 +150,50 @@ class FaceEnrollments extends Component
         $this->dispatch('toast', message: 'Persetujuan kertas tercatat.', tone: 'success');
     }
 
+    /**
+     * Persetujuan lisan satu santri: petugas menyatakan wali sudah setuju dan menulis keterangannya.
+     */
+    public function recordVerbal(ManageBiometricConsent $consents): void
+    {
+        $student = $this->student();
+        abort_if($student === null, 403);
+        $this->resetErrorBag();
+        $this->validate(['verbal_note' => 'required|string|min:5|max:300', 'verbal_confirm' => 'accepted'], [
+            'verbal_note.required' => 'Tulis kapan dan di mana wali menyatakan setuju.',
+            'verbal_confirm.accepted' => 'Centang pernyataan bahwa wali sudah setuju.',
+        ]);
+        $guardian = $this->verbal_guardian !== '' ? $student->guardians()->where('guardians.id', (int) $this->verbal_guardian)->first() : null;
+
+        $consents->grant($student, $guardian, 'verbal', null, request()->ip(), auth()->id(), trim($this->verbal_note));
+        $this->reset('verbal_guardian', 'verbal_note', 'verbal_confirm');
+        $this->dispatch('close-modal', 'persetujuan-lisan');
+        $this->dispatch('toast', message: 'Persetujuan lisan tercatat.', tone: 'success');
+    }
+
+    /**
+     * Persetujuan lisan sekaligus, misalnya disepakati di pertemuan wali santri. Hanya santri yang belum punya persetujuan.
+     */
+    public function recordVerbalBulk(ManageBiometricConsent $consents): void
+    {
+        $this->resetErrorBag();
+        $this->validate(['bulk_note' => 'required|string|min:5|max:300', 'bulk_confirm' => 'accepted', 'bulk_classroom' => 'nullable|integer'], [
+            'bulk_note.required' => 'Tulis kapan dan di mana wali menyatakan setuju.',
+            'bulk_confirm.accepted' => 'Centang pernyataan bahwa wali sudah setuju.',
+        ]);
+
+        $students = Student::query()->visibleTo(auth()->user())->where('status', 'active')
+            ->when($this->bulk_classroom !== '', fn ($query) => $query->where('classroom_id', (int) $this->bulk_classroom))
+            ->whereNotIn('id', BiometricConsent::query()->active()->select('student_id'))->get();
+
+        foreach ($students as $student) {
+            $consents->grant($student, null, 'verbal', null, request()->ip(), auth()->id(), trim($this->bulk_note));
+        }
+
+        $this->reset('bulk_classroom', 'bulk_note', 'bulk_confirm');
+        $this->dispatch('close-modal', 'persetujuan-lisan-massal');
+        $this->dispatch('toast', message: $students->isEmpty() ? 'Semua santri yang dipilih sudah punya persetujuan.' : 'Persetujuan lisan tercatat untuk '.$students->count().' santri.', tone: $students->isEmpty() ? 'info' : 'success');
+    }
+
     public function render(FaceMatcher $matcher): View
     {
         $student = $this->student();
@@ -148,6 +205,7 @@ class FaceEnrollments extends Component
             'results' => mb_strlen($term) >= 2 ? Student::query()->visibleTo(auth()->user())->where('status', 'active')->where(fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%')->orWhere('nis', 'like', addcslashes($term, '%_').'%'))->orderBy('name')->limit(8)->get() : collect(),
             'consent' => $student ? BiometricConsent::query()->active()->where('student_id', $student->id)->first() : null,
             'enrollment' => $student ? FaceEnrollment::query()->where('student_id', $student->id)->where('status', 'active')->first() : null,
+            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
             'guardians' => $student ? $student->guardians()->get()->mapWithKeys(fn (Guardian $guardian) => [$guardian->id => $guardian->name])->all() : [],
             'activeCount' => (clone $active)->count(),
             'consentCount' => BiometricConsent::query()->active()->whereIn('student_id', (clone $active)->select('id'))->count(),
