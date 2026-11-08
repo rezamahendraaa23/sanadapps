@@ -8,6 +8,7 @@ use App\Modules\Academic\Models\GradeComponent;
 use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Support\AcademicException;
+use App\Modules\Academic\Support\PhaseCalendar;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\User;
@@ -66,10 +67,44 @@ class ManagePhases
         $classroom->update([
             'phase_id' => $phase->id,
             'phase_started_on' => $start->toDateString(),
-            'phase_ends_on' => $start->addWeeks($phase->duration_weeks)->subDay()->toDateString(),
+            'phase_ends_on' => PhaseCalendar::end($start, $phase->duration_weeks)['ends_on']->toDateString(),
         ]);
 
         return $classroom;
+    }
+
+    /**
+     * Banyak kelas mulai fase pada tanggal yang sama, agar irama fase seluruh pesantren seragam.
+     *
+     * @param  array<int, CurriculumPhase>  $plan  id kelas => fase
+     */
+    public function startTogether(array $plan, string $startedOn): int
+    {
+        return DB::transaction(function () use ($plan, $startedOn): int {
+            foreach ($plan as $classroomId => $phase) {
+                $this->assign(Classroom::query()->lockForUpdate()->findOrFail($classroomId), $phase, $startedOn);
+            }
+
+            return count($plan);
+        });
+    }
+
+    /**
+     * Setelah kalender libur berubah, tanggal selesai fase yang sedang berjalan dihitung ulang.
+     */
+    public function recalculateEnds(): int
+    {
+        $count = 0;
+        Classroom::query()->with('phase')->whereNotNull('phase_id')->whereNotNull('phase_started_on')->get()
+            ->each(function (Classroom $classroom) use (&$count): void {
+                $end = PhaseCalendar::end(CarbonImmutable::parse($classroom->phase_started_on), $classroom->phase->duration_weeks)['ends_on']->toDateString();
+                if ($classroom->phase_ends_on?->toDateString() !== $end) {
+                    $classroom->update(['phase_ends_on' => $end]);
+                    $count++;
+                }
+            });
+
+        return $count;
     }
 
     /**
@@ -84,6 +119,9 @@ class ManagePhases
             ->join('assessments', 'assessments.id', '=', 'grades.assessment_id')
             ->where('grades.student_id', $student->id)->where('assessments.classroom_id', $classroom->id)
             ->whereRaw('COALESCE(assessments.assessed_on, assessments.created_at::date) BETWEEN ? AND ?', [$classroom->phase_started_on, $classroom->phase_ends_on])
+            // Penilaian selama jeda (misalnya Program Ramadan) milik program itu, bukan fase reguler.
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('academic_breaks')
+                ->whereRaw('COALESCE(assessments.assessed_on, assessments.created_at::date) BETWEEN academic_breaks.starts_on AND academic_breaks.ends_on'))
             ->selectRaw('assessments.subject_id, assessments.component_id, AVG(grades.score * 100.0 / assessments.max_score) AS average')
             ->groupBy('assessments.subject_id', 'assessments.component_id')
             ->get()->groupBy('subject_id');
@@ -201,25 +239,45 @@ class ManagePhases
     }
 
     /**
-     * Santri yang lulus pindah ke rombongan fase berikutnya; yang belum lulus tetap di tempatnya.
+     * Semua santri yang lulus pindah ke satu kelas tujuan; yang belum lulus tetap di tempatnya.
      */
     public function promote(Classroom $from, Classroom $to): int
     {
-        $next = $from->phase?->next();
-        if ($next === null) {
-            throw new AcademicException('Ini fase terakhir. Santri yang lulus bisa dicatat sebagai tamat.');
-        }
-        if ($to->phase_id !== $next->id) {
-            throw new AcademicException('Kelas tujuan harus berada di fase '.$next->name.'.');
+        $passed = PhaseResult::query()->where('classroom_id', $from->id)->where('phase_id', $from->phase_id)->where('status', 'passed')->whereNull('promoted_at')->pluck('id');
+
+        return $this->promoteMapped($from, $passed->mapWithKeys(fn (int $id) => [$id => $to->id])->all());
+    }
+
+    /**
+     * Pemetaan per santri: tiap santri yang lulus bisa ke kelas berbeda, misalnya jalur kitab atau tahfidz.
+     * Kelas tujuan harus sudah ditempatkan di fase; santri tanpa tujuan tetap di kelasnya.
+     *
+     * @param  array<int, int>  $map  id hasil fase => id kelas tujuan
+     */
+    public function promoteMapped(Classroom $from, array $map): int
+    {
+        $targets = Classroom::query()->whereIn('id', array_unique(array_values($map)))->get()->keyBy('id');
+        foreach ($targets as $target) {
+            if ($target->id === $from->id) {
+                throw new AcademicException('Kelas tujuan tidak boleh kelas ini sendiri.');
+            }
+            if ($target->phase_id === null) {
+                throw new AcademicException($target->name.' belum ditempatkan di fase. Tempatkan dulu di tab Rombongan.');
+            }
         }
 
         $count = 0;
-        DB::transaction(function () use ($from, $to, &$count): void {
-            $results = PhaseResult::query()->where('classroom_id', $from->id)->where('phase_id', $from->phase_id)->where('status', 'passed')->whereNull('promoted_at')->lockForUpdate()->get();
+        DB::transaction(function () use ($from, $map, $targets, &$count): void {
+            $results = PhaseResult::query()->whereIn('id', array_keys($map))->where('classroom_id', $from->id)->where('phase_id', $from->phase_id)
+                ->where('status', 'passed')->whereNull('promoted_at')->lockForUpdate()->get();
 
             foreach ($results as $result) {
-                Student::query()->whereKey($result->student_id)->where('classroom_id', $from->id)->update(['classroom_id' => $to->id]);
-                $result->update(['promoted_to_classroom_id' => $to->id, 'promoted_at' => now()]);
+                $target = $targets[$map[$result->id]] ?? null;
+                if ($target === null) {
+                    continue;
+                }
+                Student::query()->whereKey($result->student_id)->where('classroom_id', $from->id)->update(['classroom_id' => $target->id]);
+                $result->update(['promoted_to_classroom_id' => $target->id, 'promoted_at' => now()]);
                 $count++;
             }
         });

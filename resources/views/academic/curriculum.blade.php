@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-4">
     <div role="tablist" aria-label="Bagian kurikulum" class="flex flex-wrap gap-1">
-        @foreach (['kurikulum' => 'Kurikulum & Fase', 'rombongan' => 'Rombongan', 'evaluasi' => 'Evaluasi & Sertifikat', 'desain' => 'Desain Sertifikat'] as $key => $label)
+        @foreach (['kurikulum' => 'Kurikulum & Fase', 'rombongan' => 'Rombongan', 'jeda' => 'Jeda Fase', 'evaluasi' => 'Evaluasi & Sertifikat', 'desain' => 'Desain Sertifikat'] as $key => $label)
             <x-ui.tab :selected="$tab === $key" wire:key="tab-{{ $key }}" wire:click="selectTab('{{ $key }}')">{{ $label }}</x-ui.tab>
         @endforeach
     </div>
@@ -47,14 +47,33 @@
             <x-ui.card><x-ui.empty-state icon="milestone" message="Belum ada kurikulum." class="py-2" /></x-ui.card>
         @endforelse
     @elseif ($tab === 'rombongan')
-        <x-ui.card title="Tempatkan kelas di fase">
-            <form wire:submit="assign" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_12rem_auto] md:items-end">
-                <x-ui.select label="Kelas" name="a_classroom" placeholder="Pilih kelas" :options="$classrooms->pluck('name', 'uuid')->all()" wire:model="a_classroom" />
-                <x-ui.select label="Fase" name="a_phase" placeholder="Pilih fase" :options="$phaseOptions" wire:model="a_phase" />
-                <x-ui.input label="Mulai" name="a_start" type="date" required wire:model="a_start" />
-                <x-ui.button type="submit">Tempatkan</x-ui.button>
+        <x-ui.card title="Mulai fase serentak">
+            <p class="mb-3 text-sm text-text-muted">Semua kelas memakai satu tanggal mulai agar irama fase sama. Pilih fase tiap kelas; kelas yang dikosongkan tidak diubah. Tanggal selesai dihitung dari durasi fase, melompati jeda fase.</p>
+            <form wire:submit="startTogether" wire:confirm="Mulai fase untuk kelas yang dipilih? Tanggal mulai dan selesai fase kelas itu akan diganti." class="flex flex-col gap-3">
+                <div class="max-w-60"><x-ui.input label="Mulai" name="a_start" type="date" required wire:model="a_start" /></div>
+                <x-ui.table caption="Rencana fase tiap kelas">
+                    <thead><tr><x-ui.th>Kelas</x-ui.th><x-ui.th>Sekarang</x-ui.th><x-ui.th>Fase berikutnya</x-ui.th></tr></thead>
+                    <tbody>
+                        @foreach ($classrooms as $room)
+                            <tr wire:key="plan-{{ $room->uuid }}">
+                                <x-ui.td label="Kelas"><span class="font-semibold">{{ $room->name }}</span> <span class="text-sm text-text-muted">{{ $room->students_count }} santri</span></x-ui.td>
+                                <x-ui.td label="Sekarang">{{ $room->phase ? $room->phase->curriculum->name.', '.$room->phase->name.' sampai '.$room->phase_ends_on->translatedFormat('j M Y') : 'Belum di fase' }}</x-ui.td>
+                                <x-ui.td label="Fase berikutnya">
+                                    <label for="plan-{{ $room->uuid }}" class="sr-only">Fase berikutnya untuk {{ $room->name }}</label>
+                                    <select id="plan-{{ $room->uuid }}" wire:model="together.{{ $room->uuid }}" class="min-h-11 w-full rounded-control border border-text-muted bg-surface px-3 text-base">
+                                        <option value="">Tidak diubah</option>
+                                        @foreach ($phaseOptions as $uuid => $label)
+                                            <option value="{{ $uuid }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-ui.td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </x-ui.table>
+                @error('together')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                <x-ui.button type="submit" class="self-start" icon="play" wire:loading.attr="disabled" wire:target="startTogether">Mulai Fase</x-ui.button>
             </form>
-            <p class="mt-2 text-sm text-text-muted">Tanggal selesai dihitung dari durasi fase. Nilai yang dipakai adalah penilaian kelas ini selama masa fase.</p>
         </x-ui.card>
         <x-ui.card title="Rombongan berjalan">
             @php($running = $classrooms->whereNotNull('phase_id'))
@@ -78,6 +97,36 @@
                     @endforeach
                 </ul>
             @endif
+        </x-ui.card>
+    @elseif ($tab === 'jeda')
+        <x-ui.card title="Jeda fase">
+            <p class="text-base">Masa ketika pelajaran reguler berhenti. Hitungan fase ikut berhenti, jadi fase tiga bulan tetap tiga bulan pelajaran reguler, dan nilai selama jeda tidak masuk nilai fase.</p>
+            <ul class="mt-2 flex flex-col gap-1 text-sm text-text-muted">
+                <li><strong class="text-text">Program khusus:</strong> tetap belajar, tapi pelajarannya lain. Contoh: Program Ramadan.</li>
+                <li><strong class="text-text">Libur:</strong> tidak ada pelajaran. Contoh: libur Idul Fitri.</li>
+            </ul>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <x-ui.button icon="moon" wire:click="suggestRamadan">Isi Program Ramadan</x-ui.button>
+                <x-ui.button variant="secondary" icon="plus" wire:click="newBreak">Tambah Jeda</x-ui.button>
+            </div>
+        </x-ui.card>
+        <x-ui.card title="Daftar jeda">
+            @forelse ($breaks as $break)
+                <div wire:key="jeda-{{ $break->uuid }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-border py-3 last:border-b-0">
+                    <div class="min-w-0">
+                        <p class="flex flex-wrap items-center gap-2 font-semibold">{{ $break->name }}
+                            <span @class(['rounded-full px-2 py-0.5 text-xs font-semibold', 'bg-primary-soft text-primary' => $break->kind === 'special', 'bg-accent-soft text-accent' => $break->kind === 'holiday'])>{{ \App\Modules\Academic\Models\AcademicBreak::KINDS[$break->kind] }}</span>
+                        </p>
+                        <p class="text-sm text-text-muted">{{ $break->starts_on->translatedFormat('j M Y') }} sampai {{ $break->ends_on->translatedFormat('j M Y') }}, {{ $break->days() }} hari</p>
+                    </div>
+                    <span class="inline-flex gap-1">
+                        <x-ui.button variant="tertiary" wire:click="editBreak('{{ $break->uuid }}')">Ubah<span class="sr-only"> {{ $break->name }}</span></x-ui.button>
+                        <x-ui.button variant="tertiary" class="!text-danger hover:!bg-danger-soft" wire:click="deleteBreak('{{ $break->uuid }}')" wire:confirm="Hapus {{ $break->name }}? Tanggal selesai fase akan dihitung ulang.">Hapus<span class="sr-only"> {{ $break->name }}</span></x-ui.button>
+                    </span>
+                </div>
+            @empty
+                <x-ui.empty-state icon="calendar-off" message="Belum ada jeda fase." class="py-2" />
+            @endforelse
         </x-ui.card>
     @elseif ($tab === 'desain')
         <x-ui.card title="Tulisan Arab di sertifikat">
@@ -219,24 +268,56 @@
             </x-ui.card>
 
             @if ($results->where('status', 'passed')->whereNull('promoted_at')->isNotEmpty())
-                <x-ui.card title="Naik ke fase berikutnya">
-                    @if ($next)
-                        <p class="text-base">Santri yang lulus pindah ke kelas di fase <strong>{{ $next->name }}</strong>. Yang belum lulus tetap di kelas ini.</p>
-                        @if ($targets === [])
-                            <p class="mt-2 text-sm text-text-muted">Belum ada kelas di fase {{ $next->name }}. Tempatkan kelas tujuan di tab Rombongan dulu.</p>
-                        @else
-                            <div class="mt-3 flex flex-wrap items-end gap-3">
-                                <div class="min-w-60"><x-ui.select label="Kelas tujuan" name="promoteTo" placeholder="Pilih kelas" :options="$targets" wire:model="promoteTo" /></div>
-                                <x-ui.button icon="arrow-up-right" wire:click="promote" wire:confirm="Pindahkan santri yang lulus ke kelas tujuan?">Naikkan</x-ui.button>
-                            </div>
-                        @endif
+                <x-ui.card title="Pindah ke kelas berikutnya">
+                    <p class="text-base">Pilih kelas tujuan tiap santri yang lulus, misalnya ada yang ke jalur kitab dan ada yang ke jalur tahfidz. Yang dikosongkan tetap di kelas ini.</p>
+                    @if ($mapTargets === [])
+                        <p class="mt-2 text-sm text-text-muted">Belum ada kelas lain yang ditempatkan di fase. Mulai fasenya dulu di tab Rombongan.</p>
                     @else
-                        <p class="text-base">Ini fase terakhir. Santri yang lulus sudah menamatkan kurikulum ini.</p>
+                        <div class="mt-3 flex flex-wrap items-end gap-2">
+                            <div class="min-w-64"><x-ui.select label="Isi semua dengan" name="mapAll" placeholder="Pilih kelas" :options="$mapTargets" wire:model="mapAll" /></div>
+                            <x-ui.button variant="secondary" wire:click="applyMapAll">Isi Semua</x-ui.button>
+                        </div>
+                        <x-ui.table caption="Kelas tujuan tiap santri" class="mt-3">
+                            <thead><tr><x-ui.th>Santri</x-ui.th><x-ui.th>Kelas tujuan</x-ui.th></tr></thead>
+                            <tbody>
+                                @foreach ($results->where('status', 'passed')->whereNull('promoted_at') as $result)
+                                    <tr wire:key="map-{{ $result->uuid }}">
+                                        <x-ui.td label="Santri">{{ $result->student->name }} <span class="text-sm text-text-muted">{{ $result->student->nis }}</span></x-ui.td>
+                                        <x-ui.td label="Kelas tujuan">
+                                            <label for="map-{{ $result->uuid }}" class="sr-only">Kelas tujuan {{ $result->student->name }}</label>
+                                            <select id="map-{{ $result->uuid }}" wire:model="mapping.{{ $result->uuid }}" class="min-h-11 w-full rounded-control border border-text-muted bg-surface px-3 text-base">
+                                                <option value="">Tetap di kelas ini</option>
+                                                @foreach ($mapTargets as $uuid => $label)
+                                                    <option value="{{ $uuid }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </x-ui.td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </x-ui.table>
+                        @error('promoteTo')<p role="alert" class="mt-2 text-sm text-danger">{{ $message }}</p>@enderror
+                        <x-ui.button icon="arrow-up-right" class="mt-3" wire:click="promote" wire:confirm="Pindahkan santri ke kelas tujuannya masing-masing?">Pindahkan</x-ui.button>
                     @endif
                 </x-ui.card>
             @endif
         @endif
     @endif
+
+    <x-ui.modal name="form-libur" :title="$editingBreak ? 'Ubah jeda fase' : 'Tambah jeda fase'">
+        <form id="form-libur" wire:submit="saveBreak" class="flex flex-col gap-3">
+            <x-ui.input label="Nama" name="b_name" required help="Contoh: Program Ramadan 2027, atau Libur Idul Fitri." wire:model="b_name" />
+            <x-ui.select label="Jenis" name="b_kind" :options="\App\Modules\Academic\Models\AcademicBreak::KINDS" wire:model="b_kind" />
+            <div class="grid gap-3 md:grid-cols-2">
+                <x-ui.input label="Mulai" name="b_start" type="date" required wire:model="b_start" />
+                <x-ui.input label="Selesai" name="b_end" type="date" required wire:model="b_end" />
+            </div>
+        </form>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button type="submit" form="form-libur" wire:loading.attr="disabled" wire:target="saveBreak">Simpan</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
 
     <x-ui.modal name="form-fase" :title="$editingPhase ? 'Ubah fase' : 'Tambah fase'">
         <div class="flex flex-col gap-3">

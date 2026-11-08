@@ -3,12 +3,15 @@
 namespace App\Modules\Academic\Livewire;
 
 use App\Modules\Academic\Actions\ManagePhases;
+use App\Modules\Academic\Models\AcademicBreak;
 use App\Modules\Academic\Models\Curriculum;
 use App\Modules\Academic\Models\CurriculumPhase;
 use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Support\AcademicException;
 use App\Modules\Academic\Support\CertificateDesigns;
+use App\Modules\Academic\Support\PhaseCalendar;
 use App\Modules\Core\Models\Classroom;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,7 +37,7 @@ class CurriculumBoard extends Component
     /** @var TemporaryUploadedFile|null */
     public $newLogo = null;
 
-    private const TABS = ['kurikulum', 'rombongan', 'evaluasi', 'desain'];
+    private const TABS = ['kurikulum', 'rombongan', 'jeda', 'evaluasi', 'desain'];
 
     #[Url(as: 'tab', except: 'kurikulum')]
     public string $tab = 'kurikulum';
@@ -83,16 +86,37 @@ class CurriculumBoard extends Component
 
     public string $a_start = '';
 
+    /** @var array<string, string> uuid kelas => uuid fase; kosong berarti tidak diubah */
+    public array $together = [];
+
+    // Kalender libur
+    #[Locked]
+    public ?string $editingBreak = null;
+
+    public string $b_name = '';
+
+    public string $b_kind = 'special';
+
+    public string $b_start = '';
+
+    public string $b_end = '';
+
     // Evaluasi
     /** @var array<string, string> */
     public array $decisions = [];
 
     public string $promoteTo = '';
 
+    /** @var array<string, string> uuid hasil fase => uuid kelas tujuan */
+    public array $mapping = [];
+
+    public string $mapAll = '';
+
     public function mount(): void
     {
         abort_unless(in_array($this->tab, self::TABS, true), 404);
-        $this->a_start = now(config('sanad.display_timezone'))->toDateString();
+        $this->a_start = $this->nextStart();
+        $this->together = $this->suggestedPlan();
         $settings = CertificateDesigns::settings();
         $this->school_name_ar = $settings['school_name_ar'];
         $this->default_design = $settings['default_design'];
@@ -102,6 +126,114 @@ class CurriculumBoard extends Component
     {
         abort_unless(in_array($tab, self::TABS, true), 404);
         $this->tab = $tab;
+        if ($tab === 'rombongan') {
+            $this->a_start = $this->nextStart();
+            $this->together = $this->suggestedPlan();
+        }
+    }
+
+    /**
+     * Saran tanggal mulai serentak: sehari setelah fase berjalan terakhir selesai, atau hari ini.
+     */
+    private function nextStart(): string
+    {
+        $last = Classroom::query()->whereNotNull('phase_ends_on')->max('phase_ends_on');
+        $today = now(config('sanad.display_timezone'))->toDateString();
+        $next = $last ? CarbonImmutable::parse($last)->addDay()->toDateString() : $today;
+
+        return max($next, $today);
+    }
+
+    /**
+     * Saran rencana: kelas yang sedang di sebuah fase disarankan ke fase berikutnya di kurikulumnya.
+     *
+     * @return array<string, string>
+     */
+    private function suggestedPlan(): array
+    {
+        return Classroom::query()->with('phase')->orderBy('name')->get()
+            ->mapWithKeys(fn (Classroom $room) => [$room->uuid => (string) $room->phase?->next()?->uuid])->all();
+    }
+
+    /**
+     * Mulai fase serentak untuk kelas yang dipilih, dengan satu tanggal mulai.
+     */
+    public function startTogether(ManagePhases $phases): void
+    {
+        $this->resetErrorBag();
+        $this->validate(['a_start' => 'required|date', 'together' => 'array', 'together.*' => 'nullable|uuid'], [], ['a_start' => 'tanggal mulai']);
+        $chosen = array_filter($this->together);
+        if ($chosen === []) {
+            $this->addError('together', 'Pilih fase untuk minimal satu kelas.');
+
+            return;
+        }
+
+        $rooms = Classroom::query()->whereIn('uuid', array_keys($chosen))->pluck('id', 'uuid');
+        $phaseModels = CurriculumPhase::query()->whereIn('uuid', array_values($chosen))->get()->keyBy('uuid');
+        $plan = [];
+        foreach ($chosen as $roomUuid => $phaseUuid) {
+            if (isset($rooms[$roomUuid], $phaseModels[$phaseUuid])) {
+                $plan[$rooms[$roomUuid]] = $phaseModels[$phaseUuid];
+            }
+        }
+
+        $count = $phases->startTogether($plan, $this->a_start);
+        $this->together = $this->suggestedPlan();
+        $this->dispatch('toast', message: "{$count} kelas mulai fase pada ".CarbonImmutable::parse($this->a_start)->translatedFormat('j F Y').'.', tone: 'success');
+    }
+
+    public function newBreak(): void
+    {
+        $this->reset('editingBreak', 'b_name', 'b_kind', 'b_start', 'b_end');
+        $this->resetErrorBag();
+        $this->dispatch('open-modal', 'form-libur');
+    }
+
+    /**
+     * Mengisi form libur dengan tanggal Ramadan dari pengaturan Masjid atau perkiraan hijriah.
+     */
+    public function suggestRamadan(): void
+    {
+        $suggestion = PhaseCalendar::ramadanSuggestion(CarbonImmutable::parse(now(config('sanad.display_timezone'))->toDateString()));
+        $this->reset('editingBreak');
+        $this->resetErrorBag();
+        if ($suggestion === null) {
+            $this->dispatch('toast', message: 'Tanggal Ramadan belum bisa diperkirakan. Isi manual.', tone: 'warning');
+            $this->reset('b_name', 'b_kind', 'b_start', 'b_end');
+        } else {
+            [$this->b_name, $this->b_kind, $this->b_start, $this->b_end] = [$suggestion['name'], $suggestion['kind'], $suggestion['starts_on'], $suggestion['ends_on']];
+            $this->dispatch('toast', message: 'Tanggal diambil dari '.$suggestion['source'].'. Periksa lalu simpan.', tone: 'info');
+        }
+        $this->dispatch('open-modal', 'form-libur');
+    }
+
+    public function editBreak(string $uuid): void
+    {
+        $break = AcademicBreak::query()->where('uuid', $uuid)->firstOrFail();
+        $this->editingBreak = $break->uuid;
+        [$this->b_name, $this->b_kind, $this->b_start, $this->b_end] = [$break->name, $break->kind, $break->starts_on->toDateString(), $break->ends_on->toDateString()];
+        $this->resetErrorBag();
+        $this->dispatch('open-modal', 'form-libur');
+    }
+
+    public function saveBreak(ManagePhases $phases): void
+    {
+        $this->validate(['b_name' => 'required|string|max:100', 'b_kind' => 'required|in:'.implode(',', array_keys(AcademicBreak::KINDS)), 'b_start' => 'required|date', 'b_end' => 'required|date|after_or_equal:b_start'], [], ['b_name' => 'nama', 'b_kind' => 'jenis', 'b_start' => 'tanggal mulai', 'b_end' => 'tanggal selesai']);
+        $data = ['name' => trim($this->b_name), 'kind' => $this->b_kind, 'starts_on' => $this->b_start, 'ends_on' => $this->b_end];
+        $this->editingBreak ? AcademicBreak::query()->where('uuid', $this->editingBreak)->firstOrFail()->update($data) : AcademicBreak::create($data);
+
+        $moved = $phases->recalculateEnds();
+        $this->dispatch('close-modal', 'form-libur');
+        $this->dispatch('toast', message: 'Jeda fase tersimpan.'.($moved > 0 ? " Tanggal selesai fase {$moved} kelas disesuaikan." : ''), tone: 'success');
+        $this->reset('editingBreak', 'b_name', 'b_kind', 'b_start', 'b_end');
+    }
+
+    public function deleteBreak(string $uuid, ManagePhases $phases): void
+    {
+        AcademicBreak::query()->where('uuid', $uuid)->firstOrFail()->delete();
+        $moved = $phases->recalculateEnds();
+        $this->dispatch('toast', message: 'Jeda fase dihapus.'.($moved > 0 ? " Tanggal selesai fase {$moved} kelas disesuaikan." : ''), tone: 'success');
     }
 
     public function saveCurriculum(): void
@@ -235,7 +367,27 @@ class CurriculumBoard extends Component
     {
         $this->classroomUuid = Classroom::query()->where('uuid', $uuid)->whereNotNull('phase_id')->firstOrFail()->uuid;
         $this->tab = 'evaluasi';
-        $this->reset('decisions', 'promoteTo');
+        $this->reset('decisions', 'promoteTo', 'mapAll');
+        $this->prefillMapping();
+    }
+
+    /**
+     * Bila fase berikutnya hanya punya satu kelas, semua santri lulus langsung diarahkan ke sana; admin tinggal mengubah yang berbeda jalur.
+     */
+    private function prefillMapping(): void
+    {
+        $classroom = $this->classroom();
+        $next = $classroom?->phase?->next();
+        $only = $next ? Classroom::query()->where('phase_id', $next->id)->pluck('uuid') : collect();
+        $this->mapping = $classroom ? $this->results($classroom)->where('status', 'passed')->whereNull('promoted_at')
+            ->mapWithKeys(fn (PhaseResult $result) => [$result->uuid => $this->mapping[$result->uuid] ?? ($only->count() === 1 ? $only->first() : '')])->all() : [];
+    }
+
+    public function applyMapAll(): void
+    {
+        foreach (array_keys($this->mapping) as $resultUuid) {
+            $this->mapping[$resultUuid] = $this->mapAll;
+        }
     }
 
     private function classroom(): ?Classroom
@@ -275,6 +427,7 @@ class CurriculumBoard extends Component
         abort_if($classroom === null, 404);
         $count = $phases->decide($classroom, $this->decisions, auth()->user());
         $this->reset('decisions');
+        $this->prefillMapping();
         $this->dispatch('toast', message: "{$count} keputusan tersimpan.", tone: 'success');
     }
 
@@ -294,28 +447,42 @@ class CurriculumBoard extends Component
         $this->dispatch('toast', message: "{$count} sertifikat diberi nomor.", tone: 'success');
     }
 
+    /**
+     * Menaikkan santri lulus sesuai pemetaan per santri (atau satu kelas tujuan untuk semua lewat promoteTo).
+     */
     public function promote(ManagePhases $phases): void
     {
         $this->resetErrorBag();
         $classroom = $this->classroom();
         abort_if($classroom === null, 404);
-        $target = Classroom::query()->where('uuid', $this->promoteTo)->first();
 
-        if ($target === null) {
-            $this->addError('promoteTo', 'Pilih kelas tujuan.');
+        $chosen = $this->promoteTo !== '' ? array_fill_keys(array_keys($this->mapping) ?: $this->results($classroom)->where('status', 'passed')->whereNull('promoted_at')->pluck('uuid')->all(), $this->promoteTo) : array_filter($this->mapping);
+        if ($chosen === []) {
+            $this->addError('promoteTo', 'Pilih kelas tujuan untuk minimal satu santri.');
 
             return;
         }
 
+        $resultIds = PhaseResult::query()->whereIn('uuid', array_keys($chosen))->pluck('id', 'uuid');
+        $roomIds = Classroom::query()->whereIn('uuid', array_unique(array_values($chosen)))->pluck('id', 'uuid');
+        $map = [];
+        foreach ($chosen as $resultUuid => $roomUuid) {
+            if (isset($resultIds[$resultUuid], $roomIds[$roomUuid])) {
+                $map[$resultIds[$resultUuid]] = $roomIds[$roomUuid];
+            }
+        }
+
         try {
-            $count = $phases->promote($classroom, $target);
+            $count = $phases->promoteMapped($classroom, $map);
         } catch (AcademicException $exception) {
             $this->addError('promoteTo', $exception->getMessage());
 
             return;
         }
 
-        $this->dispatch('toast', message: "{$count} santri naik ke {$target->name}.", tone: 'success');
+        $this->reset('promoteTo', 'mapAll');
+        $this->prefillMapping();
+        $this->dispatch('toast', message: "{$count} santri dipindahkan ke kelas tujuannya.", tone: 'success');
     }
 
     private function results(Classroom $classroom)
@@ -337,6 +504,10 @@ class CurriculumBoard extends Component
             'results' => $classroom ? $this->results($classroom) : collect(),
             'next' => $next,
             'targets' => $next ? Classroom::query()->where('phase_id', $next->id)->orderBy('name')->pluck('name', 'uuid')->all() : [],
+            // Semua kelas yang sudah ditempatkan di fase bisa jadi tujuan, termasuk jalur di kurikulum lain (kitab, tahfidz).
+            'mapTargets' => $classroom ? Classroom::query()->with('phase.curriculum')->whereNotNull('phase_id')->whereKeyNot($classroom->id)->orderBy('name')->get()
+                ->mapWithKeys(fn (Classroom $room) => [$room->uuid => $room->name.' ('.$room->phase->curriculum->name.', '.$room->phase->name.')'])->all() : [],
+            'breaks' => AcademicBreak::query()->orderBy('starts_on')->get(),
             'today' => now(config('sanad.display_timezone'))->toDateString(),
             'designs' => CertificateDesigns::ALL,
             'logoCount' => count(CertificateDesigns::settings()['logos']),

@@ -3,6 +3,7 @@
 use App\Modules\Academic\Actions\ManagePhases;
 use App\Modules\Academic\Actions\SaveGrades;
 use App\Modules\Academic\Livewire\CurriculumBoard;
+use App\Modules\Academic\Models\AcademicBreak;
 use App\Modules\Academic\Models\Assessment;
 use App\Modules\Academic\Models\Curriculum;
 use App\Modules\Academic\Models\CurriculumPhase;
@@ -20,6 +21,7 @@ use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Term;
 use App\Modules\Core\Models\User;
 use App\Modules\Core\Support\ModuleRegistry;
+use App\Modules\Masjid\Models\MasjidProfile;
 use App\Support\Pdf\PdfRenderer;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
@@ -273,4 +275,74 @@ it('portal: wali dan santri melihat rapor fase dan mengunduh syahadah miliknya s
     $this->get(route('phase-docs.report', $passed))->assertForbidden();
 
     $this->actingAs($this->admin)->get(route('phase-docs.report', $passed))->assertForbidden();
+});
+
+it('jeda fase: Program Ramadan memperpanjang fase dan nilainya tidak masuk nilai fase', function () {
+    // Fase 12 minggu sejak 1 Agustus normalnya selesai 23 Oktober.
+    expect($this->room->fresh()->phase_ends_on->toDateString())->toBe('2026-10-23');
+
+    // Saran diambil dari tanggal Ramadan berikutnya di pengaturan Masjid.
+    MasjidProfile::current()->update(['ramadan_start' => '2027-02-08', 'ramadan_end' => '2027-03-09']);
+    $this->actingAs($this->admin);
+    Livewire::test(CurriculumBoard::class, ['tab' => 'jeda'])->call('suggestRamadan')
+        ->assertSet('b_name', 'Program Ramadan 2027')->assertSet('b_kind', 'special')->assertSet('b_start', '2027-02-08')->assertSet('b_end', '2027-03-09');
+
+    // Jeda 10 hari di tengah fase yang berjalan.
+    Livewire::test(CurriculumBoard::class, ['tab' => 'jeda'])->call('newBreak')
+        ->set('b_name', 'Program Ramadan uji')->set('b_start', '2026-09-01')->set('b_end', '2026-09-10')
+        ->call('saveBreak')->assertHasNoErrors()->assertSee('Program khusus')->assertSee('10 hari');
+
+    expect($this->room->fresh()->phase_ends_on->toDateString())->toBe('2026-11-02');
+
+    phaseAssess($this, $this->fiqih, $this->final, '2026-08-20', [$this->ahmad->id => '80']);
+    phaseAssess($this, $this->fiqih, $this->final, '2026-09-05', [$this->ahmad->id => '20']);
+    expect(app(ManagePhases::class)->subjectScores($this->ahmad, $this->room->fresh()))->toBe([$this->fiqih->id => 80.0]);
+
+    $break = AcademicBreak::firstOrFail();
+    Livewire::test(CurriculumBoard::class, ['tab' => 'jeda'])->call('deleteBreak', $break->uuid);
+    expect($this->room->fresh()->phase_ends_on->toDateString())->toBe('2026-10-23');
+});
+
+it('mulai fase serentak: banyak kelas satu tanggal, kelas berjalan disarankan ke fase berikutnya', function () {
+    $this->actingAs($this->admin);
+    $kelas8 = Classroom::create(['name' => 'Kelas 8']);
+    $page = Livewire::test(CurriculumBoard::class, ['tab' => 'rombongan'])
+        ->assertSet('together.'.$this->room->uuid, $this->basic->uuid)->assertSet('together.'.$kelas8->uuid, '')
+        ->assertSet('a_start', '2027-04-18');
+
+    $page->set('together.'.$kelas8->uuid, $this->intro->uuid)->set('a_start', '2026-11-09')->call('startTogether')->assertHasNoErrors();
+
+    foreach ([$this->room, $kelas8] as $room) {
+        expect($room->fresh()->phase_started_on->toDateString())->toBe('2026-11-09');
+    }
+    expect($this->room->fresh()->phase_id)->toBe($this->basic->id)->and($kelas8->fresh()->phase_id)->toBe($this->intro->id);
+
+    Livewire::test(CurriculumBoard::class, ['tab' => 'rombongan'])->set('together', [])->call('startTogether')->assertHasErrors('together');
+});
+
+it('pemetaan naik fase per santri: jalur kitab dan tahfidz di kurikulum berbeda, sebagian tetap', function () {
+    $this->actingAs($this->admin);
+    $phases = app(ManagePhases::class);
+    $kitab = $phases->savePhase(Curriculum::create(['name' => 'Jalur Kitab']), ['name' => 'Kitab Dasar', 'code' => 'KTB', 'duration_weeks' => 12, 'min_score' => 70, 'has_certificate' => false]);
+    $tahfidz = $phases->savePhase(Curriculum::create(['name' => 'Jalur Tahfidz']), ['name' => 'Tahfidz Dasar', 'code' => 'THF', 'duration_weeks' => 12, 'min_score' => 70, 'has_certificate' => false]);
+    $roomKitab = $phases->assign(Classroom::create(['name' => 'Kitab 1']), $kitab, '2026-11-01');
+    $roomTahfidz = $phases->assign(Classroom::create(['name' => 'Tahfidz 1']), $tahfidz, '2026-11-01');
+    $cici = Student::create(['nis' => 'C1', 'name' => 'Cici', 'gender' => 'P', 'classroom_id' => $this->room->id]);
+    $unplaced = Classroom::create(['name' => 'Belum Ditempatkan']);
+
+    phaseAssess($this, $this->fiqih, $this->final, '2026-10-20', [$this->ahmad->id => '88', $this->budi->id => '90', $cici->id => '85']);
+    $page = Livewire::test(CurriculumBoard::class)->call('openEvaluation', $this->room->uuid)->call('evaluate')->call('suggest')->call('decide')
+        ->assertSee('Kitab 1 (Jalur Kitab, Kitab Dasar)')->assertDontSee('Belum Ditempatkan (');
+
+    $result = fn (Student $student) => PhaseResult::where('student_id', $student->id)->firstOrFail()->uuid;
+    $page->set('mapAll', $roomKitab->uuid)->call('applyMapAll')->assertSet('mapping.'.$result($this->budi), $roomKitab->uuid)
+        ->set('mapping.'.$result($this->budi), $roomTahfidz->uuid)->set('mapping.'.$result($cici), '')
+        ->call('promote')->assertHasNoErrors();
+
+    expect($this->ahmad->fresh()->classroom_id)->toBe($roomKitab->id)
+        ->and($this->budi->fresh()->classroom_id)->toBe($roomTahfidz->id)
+        ->and($cici->fresh()->classroom_id)->toBe($this->room->id);
+
+    expect(fn () => $phases->promoteMapped($this->room->fresh(), [PhaseResult::where('student_id', $cici->id)->value('id') => $unplaced->id]))
+        ->toThrow(AcademicException::class, 'Belum Ditempatkan belum ditempatkan di fase.');
 });
