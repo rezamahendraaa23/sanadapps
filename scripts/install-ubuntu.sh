@@ -32,7 +32,7 @@ read -rp "Port web [80]: " PORT; PORT=${PORT:-80}
 exec > >(tee -a "$LOG") 2>&1
 
 step "1/8 Swap (hanya bila RAM di bawah 2 GB)"
-if [ "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -lt 2000000 ] && ! swapon --show | grep -q /swapfile; then
+if [ "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -lt 2000000 ] && ! grep -q /swapfile /proc/swaps; then
     fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
     grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
@@ -70,7 +70,7 @@ command -v composer >/dev/null || curl -sS https://getcomposer.org/installer | p
 step "3/8 Database"
 ENV="$APP_DIR/.env"
 DB_PASS=$( [ -f "$ENV" ] && grep -E '^DB_PASSWORD=' "$ENV" | cut -d= -f2- | tr -d '"' || true )
-[ -n "${DB_PASS:-}" ] && [ "$DB_PASS" != "sanad" ] || DB_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 24)
+[ -n "${DB_PASS:-}" ] && [ "$DB_PASS" != "sanad" ] || DB_PASS=$(head -c 32 /dev/urandom | sha256sum | cut -c1-24)
 sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='sanad'" | grep -q 1 \
     && sudo -u postgres psql -qc "ALTER USER sanad WITH PASSWORD '$DB_PASS';" \
     || sudo -u postgres psql -qc "CREATE USER sanad WITH PASSWORD '$DB_PASS';"
@@ -81,7 +81,15 @@ cd "$APP_DIR"
 [ -f .env ] || cp .env.example .env
 IP=$(curl -fsS https://api.ipify.org || hostname -I | awk '{print $1}')
 URL="http://$IP$( [ "$PORT" = 80 ] || echo ":$PORT" )"
-setenv() { if grep -qE "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env; else echo "$1=$2" >> .env; fi; }
+# Mengganti satu baris .env tanpa sed, jadi nilai berisi & | / atau \ tetap utuh.
+setenv() {
+    local key="$1" value="$2"
+    if grep -qE "^$key=" .env; then
+        KEY="$key" VALUE="$value" awk 'BEGIN { k = ENVIRON["KEY"]; v = ENVIRON["VALUE"] } index($0, k "=") == 1 { print k "=" v; next } { print }' .env > .env.tmp && mv .env.tmp .env
+    else
+        printf '%s=%s\n' "$key" "$value" >> .env
+    fi
+}
 setenv APP_ENV production
 setenv APP_DEBUG false
 setenv APP_URL "$URL"
@@ -104,7 +112,8 @@ composer install --no-dev --optimize-autoloader --no-interaction
 PUPPETEER_SKIP_DOWNLOAD=1 npm ci --no-audit --no-fund
 npm run build
 grep -qE '^APP_KEY=base64:' .env || php artisan key:generate --force
-SEED_OUT=$(php artisan migrate --seed --force 2>&1); echo "$SEED_OUT"
+SEED_OUT=$(php artisan migrate --seed --force 2>&1) || { echo "$SEED_OUT"; fail "Migrasi database gagal, lihat pesan di atas."; }
+echo "$SEED_OUT"
 php artisan storage:link 2>/dev/null || true
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 chown -R www-data:www-data storage bootstrap/cache
