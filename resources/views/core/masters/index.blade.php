@@ -2,7 +2,7 @@
     $tabs = ['classrooms' => 'Kelas', 'dormitories' => 'Asrama', 'years' => 'Tahun ajaran'];
     $createLabel = ['classrooms' => 'Tambah Kelas', 'dormitories' => 'Tambah Asrama', 'years' => 'Tambah Tahun Ajaran'][$tab];
     $emptyMessage = ['classrooms' => 'Belum ada kelas. Tambahkan kelas sebelum mengimpor santri.', 'dormitories' => 'Belum ada asrama.', 'years' => ''][$tab];
-    $formTitle = ['classrooms' => 'kelas', 'dormitories' => 'asrama', 'years' => 'tahun ajaran', 'terms' => 'term'][$formTarget];
+    $formTitle = ['classrooms' => 'kelas', 'dormitories' => 'asrama', 'years' => 'tahun ajaran', 'terms' => 'periode'][$formTarget];
 @endphp
 
 <div class="flex flex-col gap-4">
@@ -80,14 +80,14 @@
             @if ($formTarget === 'terms')
                 <x-ui.select label="Tahun ajaran" name="form.academic_year_id" required placeholder="Pilih tahun ajaran" :options="$years" wire:model="form.academic_year_id" />
             @endif
-            <x-ui.input label="Nama" name="form.name" required wire:model="form.name" :help="['years' => 'Contoh: 2026/2027', 'terms' => 'Contoh: Semester 2, atau Fase Lanjutan'][$formTarget] ?? null" />
+            <x-ui.input label="Nama" name="form.name" required wire:model="form.name" :help="['years' => 'Contoh: 2026/2027', 'terms' => 'Contoh: Semester 2, atau Tahun penuh'][$formTarget] ?? null" />
             @if (in_array($formTarget, ['years', 'terms'], true))
                 <div class="grid gap-4 md:grid-cols-2">
                     <x-ui.input label="Tanggal mulai" name="form.start_date" type="date" required wire:model="form.start_date" />
                     <x-ui.input label="Tanggal selesai" name="form.end_date" type="date" required wire:model="form.end_date" />
                 </div>
                 @if ($formTarget === 'years' && ! $editingId)
-                    <x-ui.select label="Dibagi menjadi" name="split" :options="$splits" wire:model="split" help="Term dibuat otomatis sesuai pilihan ini." />
+                    <x-ui.select label="Dibagi menjadi" name="split" :options="$splits" wire:model="split" help="Periode di dalamnya dibuat otomatis sesuai pilihan ini." />
                 @endif
             @elseif ($formTarget === 'classrooms')
                 <x-ui.input label="Jenjang" name="form.level" wire:model="form.level" help="Contoh: 7, 10, atau Ula. Dipakai untuk tarif per jenjang." />

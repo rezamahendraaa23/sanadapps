@@ -100,7 +100,7 @@ class ManageExam
     public function pushToGrades(Exam $exam, int $classroomId, int $componentId, SaveGrades $grades): int
     {
         if ($exam->subject_id === null || $exam->term_id === null) {
-            throw new ExamException('Ujian ini belum punya mapel dan term.');
+            throw new ExamException('Ujian ini belum punya mapel dan periode.');
         }
 
         $attempts = ExamAttempt::query()->with('student')->where('exam_id', $exam->id)->where('status', 'graded')->get()

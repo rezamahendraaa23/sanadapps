@@ -11,7 +11,7 @@
             </nav>
         @endif
 
-        <x-ui.card title="Target term ini">
+        <x-ui.card title="Target periode ini">
             @if ($progress['percent'] !== null)
                 <p class="font-display font-tabular text-3xl font-semibold">{{ $progress['percent'] }}%</p>
                 <div class="mt-2 h-3 overflow-hidden rounded-full bg-primary-soft" role="progressbar" aria-valuenow="{{ $progress['percent'] }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progres target hafalan">

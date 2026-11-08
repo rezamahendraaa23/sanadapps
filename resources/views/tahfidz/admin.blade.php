@@ -39,9 +39,9 @@
             @endif
         </x-ui.card>
     @elseif ($tab === 'target')
-        <x-ui.card title="Target term aktif untuk satu kelas">
+        <x-ui.card title="Target periode aktif untuk satu kelas">
             @if (! $hasTerm)
-                <x-ui.banner tone="warning">Belum ada term aktif.</x-ui.banner>
+                <x-ui.banner tone="warning">Belum ada periode aktif.</x-ui.banner>
             @endif
             <form wire:submit="saveTarget" class="mt-2 grid gap-3 md:grid-cols-[1fr_140px_140px_auto] md:items-start">
                 <x-ui.select label="Kelas" name="target_classroom" placeholder="Pilih" :options="$classrooms" wire:model="target_classroom" />

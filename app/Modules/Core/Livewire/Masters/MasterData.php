@@ -139,7 +139,7 @@ class MasterData extends Component
             // Term pertama di tahun ajaran yang sedang aktif langsung dipakai.
             if ($record instanceof Term && $record->academicYear->is_active && ! Term::query()->where('is_active', true)->exists()) {
                 app(SetActivePeriod::class)->term($record);
-                $message = 'Term dibuat dan langsung aktif.';
+                $message = 'Periode dibuat dan langsung aktif.';
             }
         }
 
@@ -187,10 +187,10 @@ class MasterData extends Component
             $record instanceof Classroom && $record->students()->exists() => 'Kelas ini masih punya santri. Pindahkan santrinya dulu.',
             $record instanceof Dormitory && $record->students()->exists() => 'Asrama ini masih punya santri. Pindahkan santrinya dulu.',
             $record instanceof AcademicYear && $record->is_active => 'Tahun ajaran aktif tidak bisa dihapus.',
-            $record instanceof Term && $record->is_active => 'Term aktif tidak bisa dihapus.',
+            $record instanceof Term && $record->is_active => 'Periode aktif tidak bisa dihapus.',
             // Menghapus periode ikut menghapus jadwal dan target tahfidz, dan ditolak database bila sudah ada nilai atau rapor.
             $record instanceof AcademicYear && $this->periodInUse($record->terms()->pluck('id')->all(), $record->id) => 'Tahun ajaran ini sudah dipakai jadwal, penugasan, nilai, atau rapor, jadi tidak bisa dihapus.',
-            $record instanceof Term && $this->periodInUse([$record->id], null) => 'Term ini sudah dipakai jadwal, nilai, atau rapor, jadi tidak bisa dihapus.',
+            $record instanceof Term && $this->periodInUse([$record->id], null) => 'Periode ini sudah dipakai jadwal, nilai, atau rapor, jadi tidak bisa dihapus.',
             default => null,
         };
     }

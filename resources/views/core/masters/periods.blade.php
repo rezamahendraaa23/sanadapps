@@ -1,11 +1,11 @@
-{{-- Tahun ajaran dan term dalam satu tampilan bertingkat; term selalu berada di dalam tahun ajarannya. --}}
+{{-- Tahun ajaran dan periodenya (tabel terms) dalam satu tampilan bertingkat; periode selalu berada di dalam tahun ajarannya. --}}
 <div class="flex flex-col gap-4">
     <x-ui.card>
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div class="max-w-2xl">
                 <h2 class="text-lg font-semibold">Untuk apa tahun ajaran aktif?</h2>
-                <p class="mt-1 text-sm text-text-muted">Menjadi patokan santri baru masuk, jadwal pelajaran, nilai dan rapor, catatan pelanggaran, dan kartu santri. Term adalah pembagian di dalamnya: satu periode setahun penuh (cocok untuk sistem fase) atau dua semester.</p>
-                <p class="mt-2 flex items-start gap-2 text-sm"><x-ui.icon name="refresh-cw" size="sm" class="mt-0.5 shrink-0 text-primary" />Cukup diatur sekali. Saat term atau tahun ajaran berakhir, sistem mengaktifkan term berikutnya dan membuat tahun ajaran baru sendiri.</p>
+                <p class="mt-1 text-sm text-text-muted">Menjadi patokan santri baru masuk, jadwal pelajaran, nilai dan rapor, catatan pelanggaran, dan kartu santri. Periode adalah pembagian di dalamnya, misalnya semester: pilih setahun penuh (cocok untuk sistem fase) atau dua semester.</p>
+                <p class="mt-2 flex items-start gap-2 text-sm"><x-ui.icon name="refresh-cw" size="sm" class="mt-0.5 shrink-0 text-primary" />Cukup diatur sekali. Saat periode atau tahun ajaran berakhir, sistem mengaktifkan periode berikutnya dan membuat tahun ajaran baru sendiri.</p>
             </div>
             @if ($rows->isNotEmpty())
                 <x-ui.button icon="plus" class="w-full shrink-0 md:w-auto" wire:click="create">Tambah Tahun Ajaran</x-ui.button>
@@ -56,17 +56,17 @@
 
             <div class="mt-4 border-t border-border pt-3">
                 @if ($year->terms->isEmpty())
-                    <p class="text-sm text-text-muted">Belum ada term di tahun ajaran ini.</p>
+                    <p class="text-sm text-text-muted">Belum ada periode di tahun ajaran ini.</p>
                 @else
-                    <x-ui.table :caption="'Term '.$year->name">
+                    <x-ui.table :caption="'Periode '.$year->name">
                         <thead>
-                            <tr><x-ui.th>Term</x-ui.th><x-ui.th>Periode</x-ui.th><x-ui.th>Status</x-ui.th><x-ui.th>Aksi</x-ui.th></tr>
+                            <tr><x-ui.th>Periode</x-ui.th><x-ui.th>Tanggal</x-ui.th><x-ui.th>Status</x-ui.th><x-ui.th>Aksi</x-ui.th></tr>
                         </thead>
                         <tbody>
                             @foreach ($year->terms as $term)
                                 <tr wire:key="term-{{ $term->id }}">
-                                    <x-ui.td label="Term">{{ $term->name }}</x-ui.td>
-                                    <x-ui.td label="Periode">{{ $term->start_date->translatedFormat('j M Y') }} sampai {{ $term->end_date->translatedFormat('j M Y') }}</x-ui.td>
+                                    <x-ui.td label="Periode">{{ $term->name }}</x-ui.td>
+                                    <x-ui.td label="Tanggal">{{ $term->start_date->translatedFormat('j M Y') }} sampai {{ $term->end_date->translatedFormat('j M Y') }}</x-ui.td>
                                     <x-ui.td label="Status">
                                         @if ($term->is_active)
                                             <x-ui.status-badge status="active" />
@@ -87,7 +87,7 @@
                         </tbody>
                     </x-ui.table>
                 @endif
-                <x-ui.button variant="tertiary" icon="plus" class="mt-2" wire:click="createTerm({{ $year->id }})">Tambah Term<span class="sr-only"> di {{ $year->name }}</span></x-ui.button>
+                <x-ui.button variant="tertiary" icon="plus" class="mt-2" wire:click="createTerm({{ $year->id }})">Tambah Periode<span class="sr-only"> di {{ $year->name }}</span></x-ui.button>
             </div>
         </x-ui.card>
     @endforeach

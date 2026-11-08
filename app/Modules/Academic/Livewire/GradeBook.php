@@ -140,7 +140,7 @@ class GradeBook extends Component
         $this->resetErrorBag();
 
         if ($term === null) {
-            $this->addError('title', 'Belum ada term aktif.');
+            $this->addError('title', 'Belum ada periode aktif.');
 
             return;
         }

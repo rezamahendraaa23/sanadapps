@@ -60,7 +60,7 @@
                         <x-ui.icon name="chevron-right" class="shrink-0" />
                     </button>
                 @empty
-                    <x-ui.empty-state icon="file-pen-line" message="Belum ada penilaian di term ini." class="py-2" />
+                    <x-ui.empty-state icon="file-pen-line" message="Belum ada penilaian di periode ini." class="py-2" />
                 @endforelse
             </x-ui.card>
 

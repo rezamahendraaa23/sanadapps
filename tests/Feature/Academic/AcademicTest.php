@@ -123,10 +123,10 @@ describe('jadwal', function () {
 
     it('term tidak aktif diberi peringatan di layar jadwal', function () {
         $this->actingAs($this->akademik);
-        Livewire::test(ScheduleBuilder::class)->assertDontSee('Term ini belum aktif');
+        Livewire::test(ScheduleBuilder::class)->assertDontSee('Periode ini belum aktif');
 
         $this->term->update(['is_active' => false]);
-        Livewire::test(ScheduleBuilder::class)->assertSee('Term ini belum aktif');
+        Livewire::test(ScheduleBuilder::class)->assertSee('Periode ini belum aktif');
     });
 
     it('salin jadwal hanya ke term kosong', function () {

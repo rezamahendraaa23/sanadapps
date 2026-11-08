@@ -39,7 +39,7 @@ class RollAcademicPeriod
             if ($next !== null) {
                 $this->periods->term($next);
 
-                return "Term {$next->name} aktif.";
+                return "Periode {$next->name} aktif.";
             }
         }
 

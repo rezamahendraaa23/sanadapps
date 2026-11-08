@@ -2,7 +2,7 @@
     <x-ui.card>
         <x-ui.page-toolbar class="!mb-0">
             <div class="grid min-w-0 flex-1 gap-3 md:max-w-xl md:grid-cols-2">
-                <x-ui.select label="Term" name="termId" placeholder="Pilih" :options="$terms" wire:model.live="termId" />
+                <x-ui.select label="Periode" name="termId" placeholder="Pilih" :options="$terms" wire:model.live="termId" />
                 <x-ui.select label="Kelas" name="classroomId" placeholder="Pilih" :options="$classrooms" wire:model.live="classroomId" />
             </div>
             <div class="flex flex-wrap gap-2">
@@ -18,7 +18,7 @@
 
     <x-ui.card>
         @if ($cards->isEmpty())
-            <x-ui.empty-state icon="file-text" message="Pilih term dan kelas, lalu buat draf rapor." class="py-2" />
+            <x-ui.empty-state icon="file-text" message="Pilih periode dan kelas, lalu buat draf rapor." class="py-2" />
         @else
             <x-ui.table caption="Rapor per santri">
                 <thead><tr><x-ui.th>Santri</x-ui.th><x-ui.th numeric>Rata-rata</x-ui.th><x-ui.th>Status</x-ui.th><x-ui.th>Aksi</x-ui.th></tr></thead>
@@ -50,7 +50,7 @@
     </x-ui.card>
 
     <x-ui.modal name="terbitkan-rapor" title="Terbitkan {{ $draftCount }} rapor?">
-        <p class="text-base">Wali langsung bisa melihat dan menerima kabar. Nilai term ini terkunci; mengubahnya perlu alasan dan tercatat.</p>
+        <p class="text-base">Wali langsung bisa melihat dan menerima kabar. Nilai periode ini terkunci; mengubahnya perlu alasan dan tercatat.</p>
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
             <x-ui.button wire:click="publish" wire:loading.attr="disabled" wire:target="publish">Terbitkan</x-ui.button>

@@ -39,7 +39,7 @@ class ReportCards extends Component
         $this->resetErrorBag();
 
         if ($this->termId === '' || $this->classroomId === '') {
-            $this->addError('classroomId', 'Pilih term dan kelas dulu.');
+            $this->addError('classroomId', 'Pilih periode dan kelas dulu.');
 
             return;
         }

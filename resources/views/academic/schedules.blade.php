@@ -2,12 +2,12 @@
     <x-ui.card>
         <x-ui.page-toolbar class="!mb-0">
             <div class="grid min-w-0 flex-1 gap-3 md:max-w-xl md:grid-cols-2">
-                <x-ui.select label="Term" name="termId" :options="$terms" wire:model.live="termId" />
+                <x-ui.select label="Periode" name="termId" :options="$terms" wire:model.live="termId" />
                 <x-ui.select label="Kelas" name="classroomId" placeholder="Semua kelas" :options="$classrooms" wire:model.live="classroomId" />
             </div>
             @if ($terms !== [])
                 <div class="flex flex-wrap gap-2">
-                    <x-ui.button variant="secondary" icon="copy" x-data x-on:click="$dispatch('open-modal', 'salin-jadwal')">Salin dari Term Lain</x-ui.button>
+                    <x-ui.button variant="secondary" icon="copy" x-data x-on:click="$dispatch('open-modal', 'salin-jadwal')">Salin dari Periode Lain</x-ui.button>
                     <x-ui.button icon="plus" wire:click="create(1)">Tambah Jadwal</x-ui.button>
                 </div>
             @endif
@@ -15,11 +15,11 @@
     </x-ui.card>
 
     @if ($terms !== [] && ! $termActive)
-        <x-ui.banner tone="warning">Term ini belum aktif. Ustadz dan santri baru melihat jadwalnya setelah term diaktifkan di Kelas &amp; Asrama.</x-ui.banner>
+        <x-ui.banner tone="warning">Periode ini belum aktif. Ustadz dan santri baru melihat jadwalnya setelah periode diaktifkan di Kelas &amp; Asrama.</x-ui.banner>
     @endif
 
     @if ($terms === [])
-        <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada term. Buat dulu di Kelas & Asrama." class="py-2" /></x-ui.card>
+        <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada periode. Buat dulu di Kelas & Asrama, tab Tahun ajaran." class="py-2" /></x-ui.card>
     @else
         <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @foreach ($days as $day => $dayName)
@@ -72,8 +72,8 @@
     </x-ui.modal>
 
     <x-ui.modal name="salin-jadwal" title="Salin jadwal">
-        <p class="mb-3 text-base">Hanya untuk term yang masih kosong. Jadwal yang ada tidak ditimpa.</p>
-        <x-ui.select label="Salin dari" name="copy_from" placeholder="Pilih term" :options="$terms" wire:model="copy_from" />
+        <p class="mb-3 text-base">Hanya untuk periode yang masih kosong. Jadwal yang ada tidak ditimpa.</p>
+        <x-ui.select label="Salin dari" name="copy_from" placeholder="Pilih periode" :options="$terms" wire:model="copy_from" />
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
             <x-ui.button wire:click="copy" wire:loading.attr="disabled" wire:target="copy">Salin</x-ui.button>

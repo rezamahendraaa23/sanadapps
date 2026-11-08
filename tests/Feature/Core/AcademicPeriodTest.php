@@ -58,7 +58,7 @@ it('pergantian otomatis: semester berikutnya, lalu tahun ajaran baru dengan pemb
     expect($roll->handle())->toBeNull();
 
     $this->travelTo('2027-01-02 00:05:00');
-    expect($roll->handle())->toBe('Term Semester 2 aktif.')
+    expect($roll->handle())->toBe('Periode Semester 2 aktif.')
         ->and(Term::where('is_active', true)->value('name'))->toBe('Semester 2');
 
     $this->travelTo('2027-07-01 00:05:00');
@@ -89,7 +89,7 @@ it('periode yang sudah dipakai jadwal tidak bisa dihapus, yang kosong bisa', fun
     Schedule::create(['term_id' => $term->id, 'classroom_id' => $classroom->id, 'subject_id' => $subject->id, 'day_of_week' => 1, 'start_time' => '07:00', 'end_time' => '08:00', 'activity_type' => 'kbm']);
 
     Livewire::test(MasterData::class, ['tab' => 'years'])->call('askDelete', $term->id, 'terms')->call('confirmDelete')
-        ->assertDispatched('toast', message: 'Term ini sudah dipakai jadwal, nilai, atau rapor, jadi tidak bisa dihapus.');
+        ->assertDispatched('toast', message: 'Periode ini sudah dipakai jadwal, nilai, atau rapor, jadi tidak bisa dihapus.');
     Livewire::test(MasterData::class, ['tab' => 'years'])->call('askDelete', $next->id, 'years')->call('confirmDelete')
         ->assertDispatched('toast', tone: 'danger');
     expect(Term::find($term->id))->not->toBeNull();

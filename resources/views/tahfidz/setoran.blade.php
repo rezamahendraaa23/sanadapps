@@ -14,7 +14,7 @@
                 <x-ui.button variant="tertiary" wire:click="$set('studentUuid', '')">Ganti Santri</x-ui.button>
             </div>
             @if ($progress['percent'] !== null)
-                <p class="mt-2 text-sm text-text-muted">Target term ini {{ $progress['percent'] }}%, sudah {{ rtrim(rtrim(number_format($progress['pages'], 2, ',', ''), '0'), ',') }} halaman.</p>
+                <p class="mt-2 text-sm text-text-muted">Target periode ini {{ $progress['percent'] }}%, sudah {{ rtrim(rtrim(number_format($progress['pages'], 2, ',', ''), '0'), ',') }} halaman.</p>
             @endif
         @else
             <x-ui.input label="Cari nama atau NIS" name="search" type="search" autocomplete="off" wire:model.live.debounce.250ms="search" />

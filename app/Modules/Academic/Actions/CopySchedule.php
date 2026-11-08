@@ -14,11 +14,11 @@ class CopySchedule
     public function handle(int $fromTermId, int $toTermId): int
     {
         if ($fromTermId === $toTermId) {
-            throw new AcademicException('Pilih term yang berbeda.');
+            throw new AcademicException('Pilih periode yang berbeda.');
         }
 
         if (Schedule::query()->where('term_id', $toTermId)->exists()) {
-            throw new AcademicException('Term tujuan sudah punya jadwal. Salin hanya untuk term yang masih kosong.');
+            throw new AcademicException('Periode tujuan sudah punya jadwal. Salin hanya untuk periode yang masih kosong.');
         }
 
         return DB::transaction(function () use ($fromTermId, $toTermId): int {

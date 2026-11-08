@@ -7,7 +7,7 @@
     </div>
 
     @if (! $hasTerm)
-        <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada term aktif. Hubungi admin akademik." class="py-2" /></x-ui.card>
+        <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada periode aktif. Hubungi admin akademik." class="py-2" /></x-ui.card>
     @endif
 
     <x-ui.card title="Jadwal hari ini">

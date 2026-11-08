@@ -82,7 +82,7 @@ class TahfidzAdmin extends Component
         $term = StudentSchedule::activeTerm();
 
         if ($term === null) {
-            $this->addError('target_classroom', 'Belum ada term aktif.');
+            $this->addError('target_classroom', 'Belum ada periode aktif.');
 
             return;
         }
