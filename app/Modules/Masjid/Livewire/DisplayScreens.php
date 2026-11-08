@@ -2,6 +2,7 @@
 
 namespace App\Modules\Masjid\Livewire;
 
+use App\Modules\Core\Models\OrgChart;
 use App\Modules\Masjid\Actions\ManageScreens;
 use App\Modules\Masjid\Models\DisplayCommand;
 use App\Modules\Masjid\Models\DisplayScreen;
@@ -34,6 +35,11 @@ class DisplayScreens extends Component
 
     public string $dim_until = '';
 
+    /** @var list<string> */
+    public array $org_charts = [];
+
+    public string $org_mode = 'rotate';
+
     #[Locked]
     public ?string $editing = null;
 
@@ -49,6 +55,9 @@ class DisplayScreens extends Component
             'content_pattern' => 'required|in:rotate,list',
             'dim_from' => 'nullable|date_format:H:i|required_with:dim_until',
             'dim_until' => 'nullable|date_format:H:i|required_with:dim_from',
+            'org_charts' => 'array',
+            'org_charts.*' => 'in:'.implode(',', array_keys(OrgChart::DEFAULTS)),
+            'org_mode' => 'required|in:rotate,always',
         ], ['code.digits' => 'Kode terdiri dari 6 angka.'], ['code' => 'kode', 'name' => 'nama layar', 'dim_from' => 'redup mulai', 'dim_until' => 'redup selesai']);
 
         try {
@@ -59,6 +68,8 @@ class DisplayScreens extends Component
                 'orientation' => $this->orientation,
                 'content_pattern' => $this->content_pattern,
                 'brightness_schedule' => $this->dim_from ? ['from' => $this->dim_from, 'until' => $this->dim_until, 'level' => 60] : null,
+                'org_charts' => array_values($this->org_charts),
+                'org_mode' => $this->org_mode,
             ]);
         } catch (MasjidException $exception) {
             $this->addError('code', $exception->getMessage());
@@ -66,14 +77,14 @@ class DisplayScreens extends Component
             return;
         }
 
-        $this->reset('code', 'name', 'location', 'dim_from', 'dim_until');
+        $this->reset('code', 'name', 'location', 'dim_from', 'dim_until', 'org_charts', 'org_mode');
         $this->dispatch('close-modal', 'pasang-layar');
         $this->dispatch('toast', message: 'Layar terpasang. Tampilan muncul dalam beberapa detik.', tone: 'success');
     }
 
     public function startClaim(): void
     {
-        $this->reset('editing', 'code', 'name', 'location', 'profile', 'orientation', 'content_pattern', 'dim_from', 'dim_until');
+        $this->reset('editing', 'code', 'name', 'location', 'profile', 'orientation', 'content_pattern', 'dim_from', 'dim_until', 'org_charts', 'org_mode');
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'pasang-layar');
     }
@@ -90,6 +101,8 @@ class DisplayScreens extends Component
             'content_pattern' => $screen->content_pattern,
             'dim_from' => (string) ($screen->brightness_schedule['from'] ?? ''),
             'dim_until' => (string) ($screen->brightness_schedule['until'] ?? ''),
+            'org_charts' => array_values($screen->org_charts ?? []),
+            'org_mode' => $screen->org_mode,
         ]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'ubah-layar');
@@ -109,6 +122,9 @@ class DisplayScreens extends Component
             'content_pattern' => 'required|in:rotate,list',
             'dim_from' => 'nullable|date_format:H:i|required_with:dim_until',
             'dim_until' => 'nullable|date_format:H:i|required_with:dim_from',
+            'org_charts' => 'array',
+            'org_charts.*' => 'in:'.implode(',', array_keys(OrgChart::DEFAULTS)),
+            'org_mode' => 'required|in:rotate,always',
         ], [], ['name' => 'nama layar', 'dim_from' => 'redup mulai', 'dim_until' => 'redup selesai']);
 
         $screen->update([
@@ -118,10 +134,12 @@ class DisplayScreens extends Component
             'orientation' => $this->orientation,
             'content_pattern' => $this->content_pattern,
             'brightness_schedule' => $this->dim_from ? ['from' => $this->dim_from, 'until' => $this->dim_until, 'level' => 60] : null,
+            'org_charts' => array_values($this->org_charts),
+            'org_mode' => $this->org_mode,
         ]);
         $screen->device?->update(['name' => $this->name, 'location' => $this->location ?: null]);
 
-        $this->reset('editing', 'name', 'location', 'dim_from', 'dim_until');
+        $this->reset('editing', 'name', 'location', 'dim_from', 'dim_until', 'org_charts', 'org_mode');
         $this->dispatch('close-modal', 'ubah-layar');
         $this->dispatch('toast', message: 'Layar diperbarui. TV menyesuaikan dalam beberapa detik.', tone: 'success');
     }
@@ -150,6 +168,7 @@ class DisplayScreens extends Component
             'lastCommands' => DisplayCommand::query()->whereIn('screen_id', $list->pluck('id'))->orderBy('id')->get()->keyBy('screen_id'),
             'dimmed' => DisplayCommand::query()->whereIn('screen_id', $list->pluck('id'))->whereIn('command', ['dim', 'undim'])->orderBy('id')->get()->keyBy('screen_id')->map(fn (DisplayCommand $row) => $row->command === 'dim'),
             'profiles' => DisplayScreen::PROFILES,
+            'charts' => OrgChart::query()->orderBy('id')->pluck('name', 'key')->all(),
         ]);
     }
 }

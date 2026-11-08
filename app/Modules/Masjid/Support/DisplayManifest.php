@@ -40,11 +40,11 @@ class DisplayManifest
         $zone = new DateTimeZone($profile->timezone);
 
         $data = [
-            'screen' => ['name' => $screen->name, 'profile' => $screen->profile, 'orientation' => $screen->orientation, 'pattern' => $screen->content_pattern, 'brightness' => $screen->brightness_schedule],
+            'screen' => ['name' => $screen->name, 'profile' => $screen->profile, 'orientation' => $screen->orientation, 'pattern' => $screen->content_pattern, 'org_mode' => $screen->org_mode, 'brightness' => $screen->brightness_schedule],
             'identity' => ['name' => $profile->name ?: $school->name, 'school' => $school->name, 'logo' => app(SchoolIdentity::class)->logoUrl()],
             // Pustaka terverifikasi ikut bergilir walau tidak dijadikan konten, agar layar tidak kosong.
             // Bagan struktur yang dipilih tampil di TV, paling dalam tiga tingkat agar terbaca dari jauh.
-            'structures' => $this->structures(),
+            'structures' => $this->structures($screen),
             'quotes' => Quote::query()->whereNotNull('verified_at')->where('is_active', true)->orderBy('id')->limit(60)->get()->map(fn (Quote $quote) => ['id' => 'q'.$quote->id, 'arabic' => $quote->text_ar, 'text' => $quote->text_id, 'source' => $quote->source_ref])->values()->all(),
             'tz_offset_minutes' => (int) ($zone->getOffset($today) / 60),
             'countdown_minutes' => $profile->countdown_minutes,
@@ -79,7 +79,7 @@ class DisplayManifest
     /**
      * @return list<array{key: string, name: string, nodes: list<array<string, mixed>>}>
      */
-    private function structures(): array
+    private function structures(DisplayScreen $screen): array
     {
         $map = function (array $nodes, int $depth) use (&$map): array {
             return $depth > 2 ? [] : array_map(fn (array $node) => [
@@ -91,7 +91,7 @@ class DisplayManifest
             ], $nodes);
         };
 
-        return OrgChart::query()->where('show_on_tv', true)->orderBy('id')->get()
+        return OrgChart::query()->whereIn('key', $screen->org_charts ?? [])->orderBy('id')->get()
             ->map(fn (OrgChart $chart) => ['key' => $chart->key, 'name' => $chart->name, 'nodes' => $map($chart->tree(), 0)])
             ->filter(fn (array $chart) => $chart['nodes'] !== [])->values()->all();
     }

@@ -239,6 +239,11 @@
     /* Bergilir per slide, atau daftar maksimal 3 item bersamaan. */
     function slotHtml(t, row) {
         var items = activeContents(t, row).concat(autoCards(t, row));
+        // Layar khusus struktur: hanya bagan yang bergilir.
+        if (manifest.screen.org_mode === 'always') {
+            var boards = items.filter(function (x) { return x.type === 'structure'; });
+            if (boards.length) { items = boards; }
+        }
         if (!items.length) { return { key: 'empty', cls: '', html: '<p class="empty">Selamat datang di ' + escapeHtml(manifest.identity.name) + '.</p>' }; }
 
         if (manifest.screen.pattern === 'list') {
@@ -305,7 +310,11 @@
     function footer() {
         var text = tickerText();
         if (!text && online) { return ''; }
-        return '<div class="foot"><div class="ticker">' + escapeHtml(text) + '</div><div class="sync">' + escapeHtml(syncNote()) + '</div></div>';
+        // Posisi teks berjalan dihitung dari jam, jadi tidak loncat ke awal saat layar digambar ulang.
+        var seconds = Math.round(18 + text.length * 0.3);
+        var delay = -((Date.now() / 1000) % seconds).toFixed(2);
+        var ticker = text ? '<span style="animation-duration:' + seconds + 's;animation-delay:' + delay + 's">' + escapeHtml(text) + '</span>' : '';
+        return '<div class="foot"><div class="ticker">' + ticker + '</div><div class="sync">' + escapeHtml(syncNote()) + '</div></div>';
     }
 
     function paint(key, cls, html) {

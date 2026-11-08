@@ -10,18 +10,13 @@ class OrgChart extends Model
 {
     use HasPublicUuid;
 
-    /** Dua bagan bawaan: yayasan dari pendiri, kesantrian dari rois. */
+    /** Dua bagan bawaan: yayasan dari pendiri, kesantrian dari rois. Tampil di TV diatur per layar. */
     public const DEFAULTS = [
-        'yayasan' => ['name' => 'Struktur Yayasan', 'root' => 'Pendiri', 'tv' => false],
-        'kesantrian' => ['name' => 'Struktur Kesantrian', 'root' => 'Rois', 'tv' => true],
+        'yayasan' => ['name' => 'Struktur Yayasan', 'root' => 'Pendiri'],
+        'kesantrian' => ['name' => 'Struktur Kesantrian', 'root' => 'Rois'],
     ];
 
     protected $guarded = ['id', 'uuid'];
-
-    protected function casts(): array
-    {
-        return ['show_on_tv' => 'boolean'];
-    }
 
     public function positions(): HasMany
     {
@@ -31,7 +26,7 @@ class OrgChart extends Model
     public static function ensureDefaults(): void
     {
         foreach (self::DEFAULTS as $key => $default) {
-            $chart = static::query()->firstOrCreate(['key' => $key], ['name' => $default['name'], 'show_on_tv' => $default['tv']]);
+            $chart = static::query()->firstOrCreate(['key' => $key], ['name' => $default['name']]);
 
             if ($chart->wasRecentlyCreated) {
                 $chart->positions()->create(['title' => $default['root']]);

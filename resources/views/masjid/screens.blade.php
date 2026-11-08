@@ -49,6 +49,15 @@
             <div></div>
             <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
             <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
+            <fieldset class="sm:col-span-2">
+                <legend class="text-sm font-semibold">Struktur pesantren di layar ini</legend>
+                @forelse ($charts as $chartKey => $chartName)
+                    <label wire:key="oc-{{ $chartKey }}-{{ $editing ?? 'baru' }}" class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" value="{{ $chartKey }}" wire:model="org_charts" class="size-5 accent-primary">{{ $chartName }}</label>
+                @empty
+                    <p class="text-sm text-text-muted">Belum ada bagan. Susun dulu di menu Struktur Pesantren.</p>
+                @endforelse
+            </fieldset>
+            <x-ui.select label="Cara tampil struktur" name="org_mode" :options="['rotate' => 'Ikut bergiliran dengan konten lain', 'always' => 'Tampil terus (layar khusus struktur)']" wire:model="org_mode" />
         </form>
         @endif
         <x-slot:footer>
@@ -73,6 +82,15 @@
             <x-ui.select label="Pola pengumuman" name="content_pattern" :options="['rotate' => 'Bergilir satu per satu', 'list' => 'Daftar, tiga sekaligus']" wire:model="content_pattern" />
             <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
             <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
+            <fieldset class="sm:col-span-2">
+                <legend class="text-sm font-semibold">Struktur pesantren di layar ini</legend>
+                @forelse ($charts as $chartKey => $chartName)
+                    <label wire:key="oc-{{ $chartKey }}-{{ $editing ?? 'baru' }}" class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" value="{{ $chartKey }}" wire:model="org_charts" class="size-5 accent-primary">{{ $chartName }}</label>
+                @empty
+                    <p class="text-sm text-text-muted">Belum ada bagan. Susun dulu di menu Struktur Pesantren.</p>
+                @endforelse
+            </fieldset>
+            <x-ui.select label="Cara tampil struktur" name="org_mode" :options="['rotate' => 'Ikut bergiliran dengan konten lain', 'always' => 'Tampil terus (layar khusus struktur)']" wire:model="org_mode" />
         </form>
         @endunless
         <x-slot:footer>

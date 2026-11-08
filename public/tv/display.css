@@ -27,8 +27,9 @@
 }
 
 * { box-sizing: border-box; }
-html { font-size: 0.5208vw; }
-@media (orientation: portrait) { html { font-size: 0.5208vh; } }
+/* Selalu muat satu layar walau jendela tidak 16:9 (misalnya browser di laptop). */
+html { font-size: min(0.5208vw, 0.9259vh); }
+@media (orientation: portrait) { html { font-size: min(0.5208vh, 0.9259vw); } }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
 body { font-family: 'Nunito', sans-serif; cursor: none; }
 body.pointer { cursor: auto; }
@@ -102,7 +103,9 @@ body.pointer { cursor: auto; }
 .slotime.past .ico { stroke: var(--muted); }
 
 .foot { flex: none; display: flex; align-items: center; margin-top: 2rem; font-size: 3.2rem; font-weight: 700; }
-.ticker { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ticker { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.ticker span { display: inline-block; padding-left: 100%; animation-name: ticker; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 .sync { flex: none; margin-left: 2rem; font-size: 2.2rem; color: var(--muted); }
 
 /* Hitung mundur adzan dan iqamah: satu angka besar dengan cincin kemajuan. */

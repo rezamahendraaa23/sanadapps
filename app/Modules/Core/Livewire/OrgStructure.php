@@ -4,8 +4,10 @@ namespace App\Modules\Core\Livewire;
 
 use App\Modules\Core\Models\OrgChart;
 use App\Modules\Core\Models\OrgPosition;
+use App\Modules\Masjid\Models\DisplayScreen;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -146,13 +148,6 @@ class OrgStructure extends Component
         });
     }
 
-    public function toggleTv(): void
-    {
-        $chart = $this->chart();
-        $chart->update(['show_on_tv' => ! $chart->show_on_tv]);
-        $this->dispatch('toast', message: $chart->show_on_tv ? 'Bagan ini akan tampil bergiliran di layar TV.' : 'Bagan ini tidak tampil di TV.', tone: 'success');
-    }
-
     public function render(): View
     {
         $chart = $this->chart();
@@ -163,6 +158,9 @@ class OrgStructure extends Component
             'tree' => $chart->tree(),
             'parentPosition' => $this->parent ? $chart->positions()->where('uuid', $this->parent)->first() : null,
             'editingPosition' => $this->editing ? $chart->positions()->where('uuid', $this->editing)->first() : null,
+            // Layar TV yang menampilkan bagan ini, sekadar informasi; pengaturannya di menu Layar TV.
+            'screens' => DisplayScreen::query()->where('is_active', true)->whereJsonContains('org_charts', $chart->key)->orderBy('name')->pluck('name')->all(),
+            'canScreens' => Route::has('staff.masjid.screens') && auth()->user()->can('masjid.screens'),
         ]);
     }
 }

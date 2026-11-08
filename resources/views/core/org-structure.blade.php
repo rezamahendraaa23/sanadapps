@@ -24,9 +24,12 @@
             @endforeach
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="toggleTv" role="switch" aria-checked="{{ $chart->show_on_tv ? 'true' : 'false' }}" @class(['inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold', 'border-primary bg-primary-soft text-primary' => $chart->show_on_tv, 'border-border bg-surface text-text-muted' => ! $chart->show_on_tv])>
-                <x-ui.icon name="monitor" size="sm" />{{ $chart->show_on_tv ? 'Tampil di layar TV' : 'Tidak tampil di TV' }}
-            </button>
+            <span class="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 text-sm">
+                <x-ui.icon name="monitor" size="sm" class="text-primary" />{{ $screens === [] ? 'Belum tampil di layar TV mana pun' : 'Tampil di: '.implode(', ', $screens) }}
+            </span>
+            @if ($canScreens)
+                <x-ui.button variant="tertiary" :href="route('staff.masjid.screens')" wire:navigate>Atur di Layar TV</x-ui.button>
+            @endif
             <x-ui.button variant="secondary" icon="plus" wire:click="add">Tambah Puncak</x-ui.button>
         </div>
     </div>

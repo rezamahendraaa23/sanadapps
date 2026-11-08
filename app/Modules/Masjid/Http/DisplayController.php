@@ -73,11 +73,12 @@ class DisplayController
     }
 
     /**
-     * Foto struktur hanya untuk bagan yang memang dipilih tampil di TV.
+     * Foto struktur hanya untuk bagan yang dipilih tampil di salah satu layar.
      */
     public function orgPhoto(OrgPosition $position): Response
     {
-        abort_unless($position->photo_path && $position->chart->show_on_tv && Storage::disk('local')->exists($position->photo_path), 404);
+        $shown = DisplayScreen::query()->where('is_active', true)->whereJsonContains('org_charts', $position->chart->key)->exists();
+        abort_unless($position->photo_path && $shown && Storage::disk('local')->exists($position->photo_path), 404);
 
         return Storage::disk('local')->response($position->photo_path, null, ['Cache-Control' => 'private, max-age=86400']);
     }
