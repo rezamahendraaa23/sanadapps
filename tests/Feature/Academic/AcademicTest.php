@@ -217,13 +217,29 @@ describe('absensi', function () {
         expect(AttendanceSession::where('taken_by', $this->otherUser->id)->count())->toBe(0);
     });
 
+    it('admin membuka absen tanpa jadwal untuk semua santri atau satu kelas; semua cara absen boleh, jam otomatis', function () {
+        $this->actingAs($this->akademik);
+        $page = Livewire::test(AttendanceToday::class)->assertSee('Semua santri aktif')->assertSet('dorm_title', 'Sholat Berjamaah')
+            ->set('dorm_kind', 'asrama')->assertSet('dorm_title', 'Apel Asrama');
+        $page->set('target', 'all')->call('openGroup')->assertHasNoErrors()->assertRedirect();
+
+        $session = AttendanceSession::latest('id')->firstOrFail();
+        $active = Student::where('status', 'active')->count();
+        expect($session->records()->count())->toBe($active)
+            ->and($session->allowed_modes)->toEqualCanonicalizing(array_keys(AcademicSettings::modeOptions()))
+            ->and($session->start_time)->not->toBeNull()
+            ->and($session->records()->where('status', 'alpa')->count())->toBe($active);
+        $this->get(route('staff.attendance.session', $session))->assertOk()->assertSee('Tap kartu atau pindai QR');
+    });
+
     it('musyrif membuka sesi asrama sendiri, bukan asrama lain', function () {
         $other = Dormitory::create(['name' => 'Asrama 2', 'gender' => 'L']);
         $this->actingAs($this->musyrif);
 
-        Livewire::test(AttendanceToday::class)
-            ->set('dorm_id', (string) $other->id)->set('dorm_title', 'Subuh')->set('dorm_time', '04:30')->call('openDormitory')->assertHasErrors('dorm_id')
-            ->set('dorm_id', (string) $this->dormitory->id)->set('dorm_kind', 'sholat')->call('openDormitory')->assertHasNoErrors();
+        // Musyrif hanya melihat asramanya sendiri, dan karena hanya satu, langsung terpilih.
+        Livewire::test(AttendanceToday::class)->assertSet('target', 'd:'.$this->dormitory->id)->assertDontSee('Semua santri aktif')
+            ->set('target', 'd:'.$other->id)->call('openGroup')->assertHasErrors('target')
+            ->set('target', 'd:'.$this->dormitory->id)->set('dorm_kind', 'sholat')->call('openGroup')->assertHasNoErrors();
 
         $session = AttendanceSession::where('kind', 'sholat')->first();
         expect($session->records()->count())->toBe(2);

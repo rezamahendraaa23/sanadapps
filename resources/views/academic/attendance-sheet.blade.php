@@ -33,7 +33,7 @@
         <x-ui.icon name="wifi-off" class="mt-0.5 shrink-0" />Tidak tersambung. Perubahan tersimpan di HP ini, tekan Simpan setelah tersambung lagi.
     </div>
 
-    @if ($session->source === 'face' && ! $session->isClosed())
+    @if ($faceAllowed && ! $session->isClosed())
         <x-ui.card>
             <x-ui.button icon="scan-face" :href="route('attendance.face', $session)">Buka Kamera Wajah</x-ui.button>
             <p class="mt-2 text-sm text-text-muted">Santri tanpa data wajah atau yang gagal dikenali: tandai manual di bawah atau tap kartu.</p>

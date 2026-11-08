@@ -68,7 +68,8 @@ class AttendanceSheet extends Component
         return view('academic.attendance-sheet', [
             'records' => $this->session->records()->with('student:id,name,nis')->get()->sortBy('student.name'),
             'labels' => AttendanceRecord::STATUSES,
-            'scanning' => $this->session->source !== 'manual' && ! $this->session->isClosed(),
+            'scanning' => array_intersect(['card', 'qr'], $this->session->allowed_modes ?? [$this->session->source]) !== [] && ! $this->session->isClosed(),
+            'faceAllowed' => in_array('face', $this->session->allowed_modes ?? [$this->session->source], true),
             'reviewCount' => $this->session->records()->awaitingReview()->count(),
             'reviewUrl' => route($role ? $role.'.attendance.review' : 'staff.attendance.review'),
         ])->layout($role ? 'components.layouts.portal' : 'components.layouts.staff', $role ? ['role' => $role, 'active' => 'attendance', 'title' => $this->session->title] : ['active' => 'attendance'])->title($this->session->title);

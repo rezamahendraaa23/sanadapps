@@ -28,14 +28,15 @@ async function noOverflow(page) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
 }
 
-async function openSession(page, title, mode) {
+// Absen tanpa jadwal: tanpa jam mulai, dan semua cara absen (termasuk wajah) boleh di satu sesi.
+async function openSession(page, title) {
     await page.goto('/musyrif/absensi');
     await pageReady(page);
-    await page.getByLabel('Asrama', { exact: true }).selectOption({ label: 'Asrama Uji' });
+    await page.getByRole('radio', { name: 'Asrama' }).check();
+    await page.getByLabel('Peserta').selectOption({ label: 'Asrama Asrama Uji' });
     await page.getByLabel('Nama sesi').fill(title);
-    await page.getByLabel('Jam mulai').fill('00:00');
-    await page.getByLabel('Cara absen').last().selectOption(mode);
-    await page.getByRole('button', { name: 'Buka Sesi' }).click();
+    await expect(page.getByLabel('Jam mulai')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Mulai Absen' }).click();
     await expect(page).toHaveURL(/musyrif\/absensi\/[0-9a-f-]{36}$/);
     await pageReady(page);
 }
@@ -118,7 +119,7 @@ test('wajah: tanpa persetujuan diblok, wali setuju, daftar, pindai di pos, wali 
     const musyrifContext = await browser.newContext(options);
     const musyrif = await musyrifContext.newPage();
     await loginStaff(musyrif, 'musyrif@uji.test', 'sandi-uji-musyrif', /\/musyrif$/);
-    await openSession(musyrif, 'Apel Wajah', 'face');
+    await openSession(musyrif, 'Apel Wajah');
     await musyrif.getByRole('link', { name: 'Buka Kamera Wajah' }).click();
     await expect(musyrif).toHaveURL(/absensi-wajah/);
     const kioskUrl = musyrif.url();

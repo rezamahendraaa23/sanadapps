@@ -17,7 +17,7 @@ class OpenAttendanceSession
     /**
      * Membuka sesi dari jadwal; membuka dua kali mengembalikan sesi yang sama.
      */
-    public function fromSchedule(Schedule $schedule, string $date, string $source, int $userId): AttendanceSession
+    public function fromSchedule(Schedule $schedule, string $date, string $source, int $userId, ?array $modes = null): AttendanceSession
     {
         $existing = AttendanceSession::query()->where('schedule_id', $schedule->id)->whereDate('session_date', $date)->first();
 
@@ -39,7 +39,7 @@ class OpenAttendanceSession
                 'start_time' => $schedule->start_time,
                 'source' => $source,
                 'taken_by' => $userId,
-            ], Student::query()->where('status', 'active')->where('classroom_id', $schedule->classroom_id)->pluck('id')->all());
+            ], Student::query()->where('status', 'active')->where('classroom_id', $schedule->classroom_id)->pluck('id')->all(), $modes);
         } catch (UniqueConstraintViolationException) {
             return AttendanceSession::query()->where('schedule_id', $schedule->id)->whereDate('session_date', $date)->firstOrFail();
         }
@@ -48,34 +48,55 @@ class OpenAttendanceSession
     /**
      * Sesi asrama, sholat, atau kegiatan tanpa jadwal (ATT-02).
      */
-    public function forDormitory(int $dormitoryId, string $kind, string $title, string $date, string $startTime, string $source, int $userId): AttendanceSession
+    public function forDormitory(int $dormitoryId, string $kind, string $title, string $date, string $startTime, string $source, int $userId, ?array $modes = null): AttendanceSession
+    {
+        return $this->forGroup(null, $dormitoryId, $kind, $title, $date, $startTime, $source, $userId, $modes);
+    }
+
+    /**
+     * Sesi tanpa jadwal untuk semua santri aktif, satu kelas, atau satu asrama.
+     *
+     * @param  list<string>|null  $modes  cara absen yang boleh dipakai di sesi ini; kosong berarti hanya $source
+     */
+    public function forGroup(?int $classroomId, ?int $dormitoryId, string $kind, string $title, string $date, string $startTime, string $source, int $userId, ?array $modes = null): AttendanceSession
     {
         return $this->create([
             'session_date' => $date,
             'kind' => $kind,
             'title' => $title,
+            'classroom_id' => $classroomId,
             'dormitory_id' => $dormitoryId,
             'start_time' => $startTime,
             'source' => $source,
             'taken_by' => $userId,
-        ], Student::query()->where('status', 'active')->where('dormitory_id', $dormitoryId)->pluck('id')->all());
+        ], Student::query()->where('status', 'active')
+            ->when($classroomId, fn ($query) => $query->where('classroom_id', $classroomId))
+            ->when($dormitoryId, fn ($query) => $query->where('dormitory_id', $dormitoryId))
+            ->pluck('id')->all(), $modes);
     }
 
     /**
      * Manual: semua hadir, pengabsen hanya mengubah yang tidak hadir (ATT-01). Kartu dan QR: semua alpa
      * sampai memindai, karena yang tidak memindai memang tidak hadir (PRD Sistem 8.9).
      *
+     * Beberapa cara sekaligus boleh dipakai (manual, kartu, QR, wajah).
+     *
      * @param  array<string, mixed>  $data
      * @param  list<int>  $studentIds
+     * @param  list<string>|null  $modes
      */
-    private function create(array $data, array $studentIds): AttendanceSession
+    private function create(array $data, array $studentIds, ?array $modes = null): AttendanceSession
     {
-        if (! in_array($data['source'], AcademicSettings::verificationModes(), true)) {
+        $allowed = AcademicSettings::verificationModes();
+        $modes = array_values(array_unique([$data['source'], ...($modes ?? [])]));
+
+        if (array_diff($modes, $allowed) !== []) {
             throw new AcademicException('Cara absen ini tidak diizinkan pesantren.');
         }
 
-        return DB::transaction(function () use ($data, $studentIds): AttendanceSession {
-            $session = AttendanceSession::create($data + ['allowed_modes' => [$data['source']]]);
+        return DB::transaction(function () use ($data, $studentIds, $modes): AttendanceSession {
+            $session = AttendanceSession::create($data + ['allowed_modes' => $modes]);
+            // Cara utama menentukan status awal: manual berarti hadir semua, pindai berarti alpa sampai tercatat.
             $scanned = $data['source'] !== 'manual';
             $onLeave = LeaveRequest::query()->whereIn('student_id', $studentIds)
                 ->where('start_at', '<=', now())->where('end_at', '>=', now())

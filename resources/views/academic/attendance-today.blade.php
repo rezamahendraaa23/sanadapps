@@ -6,6 +6,11 @@
         @endcan
     </div>
 
+    <p class="flex items-start gap-2 rounded-control bg-primary-soft p-3 text-sm">
+        <x-ui.icon name="info" size="sm" class="mt-0.5 shrink-0 text-primary" />
+        <span>Satu sesi bisa diabsen dengan cara apa saja{{ count($modes) > 1 ? ': '.implode(', ', $modes) : '' }}. Pilih yang paling praktis di lapangan.</span>
+    </p>
+
     @if (! $hasTerm)
         <x-ui.card><x-ui.empty-state icon="calendar-days" message="Belum ada periode aktif. Hubungi admin akademik." class="py-2" /></x-ui.card>
     @endif
@@ -14,9 +19,6 @@
         @if ($schedules->isEmpty())
             <x-ui.empty-state icon="calendar-check" message="Tidak ada jadwal mengajar hari ini." class="py-2" />
         @else
-            @if (count($modes) > 1)
-                <div class="mb-3 w-full md:max-w-xs"><x-ui.select label="Cara absen" name="class_source" :options="$modes" wire:model="class_source" /></div>
-            @endif
             <ul class="flex flex-col">
                 @foreach ($schedules as $schedule)
                     @php($opened = $openedBySchedule[$schedule->id] ?? null)
@@ -38,17 +40,25 @@
         @endif
     </x-ui.card>
 
-    @if ($dormitories->isNotEmpty())
-        <x-ui.card title="Sesi asrama, sholat, kegiatan">
-            <form wire:submit="openDormitory" class="grid gap-3 md:grid-cols-2">
-                <x-ui.select label="Asrama" name="dorm_id" placeholder="Pilih" :options="$dormitories->pluck('name', 'id')->all()" wire:model="dorm_id" />
-                <x-ui.select label="Jenis" name="dorm_kind" :options="['asrama' => 'Asrama', 'sholat' => 'Sholat', 'kegiatan' => 'Kegiatan']" wire:model="dorm_kind" />
-                <x-ui.input label="Nama sesi" name="dorm_title" required wire:model="dorm_title" />
-                <x-ui.input label="Jam mulai" name="dorm_time" type="time" required wire:model="dorm_time" />
-                @if (count($modes) > 1)
-                    <x-ui.select label="Cara absen" name="dorm_source" :options="$modes" wire:model="dorm_source" />
-                @endif
-                <x-ui.button type="submit" class="md:col-span-2 md:justify-self-end" wire:loading.attr="disabled" wire:target="openDormitory">Buka Sesi</x-ui.button>
+    @if ($targets !== [])
+        <x-ui.card title="Absen tanpa jadwal">
+            <p class="mb-3 text-sm text-text-muted">Untuk sholat berjamaah, apel asrama, atau kegiatan. Jam dicatat otomatis saat sesi dibuka.</p>
+            <form wire:submit="openGroup" class="flex flex-col gap-4">
+                <fieldset class="flex flex-col gap-1">
+                    <legend class="mb-1 text-sm font-semibold">Jenis</legend>
+                    <div class="grid grid-cols-3 gap-2 md:max-w-md">
+                        @foreach (['sholat' => 'Sholat', 'asrama' => 'Asrama', 'kegiatan' => 'Kegiatan'] as $value => $label)
+                            <label class="relative flex min-h-11 cursor-pointer items-center justify-center rounded-control border border-text-muted px-3 text-base font-semibold has-checked:border-primary has-checked:bg-primary-soft has-checked:text-primary has-focus-visible:outline-2 has-focus-visible:outline-primary">
+                                <input type="radio" name="dorm_kind" value="{{ $value }}" wire:model.live="dorm_kind" class="absolute inset-0 size-full cursor-pointer appearance-none rounded-control opacity-0">{{ $label }}
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <x-ui.select label="Peserta" name="target" placeholder="Pilih" :options="$targets" wire:model="target" />
+                    <x-ui.input label="Nama sesi" name="dorm_title" required wire:model="dorm_title" />
+                </div>
+                <x-ui.button type="submit" icon="play" class="self-end" wire:loading.attr="disabled" wire:target="openGroup">Mulai Absen</x-ui.button>
             </form>
             @if ($dormSessions->isNotEmpty())
                 <ul class="mt-4 flex flex-col border-t border-border pt-2">
