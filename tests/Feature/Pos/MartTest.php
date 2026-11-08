@@ -26,6 +26,7 @@ use App\Modules\Pos\Models\MerchantLedgerEntry;
 use App\Modules\Pos\Models\MerchantPayout;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Pos\Models\PosPromotion;
 use App\Modules\Pos\Models\ProductCategory;
 use App\Modules\Pos\Models\StockMovement;
 use App\Modules\Pos\Support\SalesStats;
@@ -346,7 +347,15 @@ describe('katalog', function () {
             }
         });
 
-        $this->actingAs($this->pengelola)->get(route('staff.merchants.pricelist', $this->merchant))->assertOk()->assertHeader('content-type', 'application/pdf');
+        $drinks = ProductCategory::create(['merchant_id' => $this->merchant->id, 'name' => 'Minuman']);
+        MerchantProduct::create(['merchant_id' => $this->merchant->id, 'category_id' => $drinks->id, 'name' => 'Teh Kotak', 'price' => 5000]);
+        MerchantProduct::create(['merchant_id' => $this->merchant->id, 'name' => 'Pulpen Kosong', 'price' => 3000, 'stock' => 0]);
+        MerchantProduct::create(['merchant_id' => $this->merchant->id, 'name' => 'Produk Nonaktif', 'price' => 1000, 'is_active' => false]);
+        PosPromotion::create(['merchant_id' => $this->merchant->id, 'category_id' => $drinks->id, 'name' => 'Promo Minuman', 'kind' => 'percent', 'value' => 20]);
+
+        $this->actingAs($this->pengelola)->get(route('staff.merchants.pricelist', $this->merchant))->assertOk()->assertHeader('content-type', 'application/pdf')
+            ->assertSeeInOrder(['1 produk sedang promo', 'Minuman', 'Teh Kotak', 'Rp 5.000', 'Rp 4.000', 'Lainnya', 'Pulpen Kosong', 'Habis'])
+            ->assertDontSee('Produk Nonaktif');
         $this->get(route('staff.merchants.pricelist', $this->other))->assertForbidden();
     });
 

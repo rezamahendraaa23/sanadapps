@@ -137,6 +137,7 @@ use App\Modules\Pos\Livewire\StockScreen;
 use App\Modules\Pos\Models\Merchant;
 use App\Modules\Pos\Models\MerchantProduct;
 use App\Modules\Pos\Models\PosOrder;
+use App\Modules\Pos\Support\PriceList;
 use App\Modules\Pos\Support\SalesStats;
 use App\Modules\Tahfidz\Livewire\MutabaahVerify;
 use App\Modules\Tahfidz\Livewire\SetoranForm;
@@ -532,9 +533,9 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
             Route::get('/{merchant}/daftar-harga', function (Merchant $merchant, Request $request, PdfRenderer $pdf) {
                 abort_unless(Merchant::query()->accessibleBy($request->user())->whereKey($merchant->id)->exists(), 403);
 
-                return response($pdf->render(view('pos.pdf.pricelist', ['merchant' => $merchant, 'products' => $merchant->products()->where('is_active', true)->orderBy('name')->get()])->render()), 200, [
+                return response($pdf->render(view('pos.pdf.pricelist', PriceList::data($merchant))->render()), 200, [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="daftar-harga.pdf"',
+                    'Content-Disposition' => 'attachment; filename="daftar-harga-'.Str::slug($merchant->name).'.pdf"',
                 ]);
             })->name('pricelist');
             Route::get('/{merchant}/stok', StockScreen::class)->name('stock');
