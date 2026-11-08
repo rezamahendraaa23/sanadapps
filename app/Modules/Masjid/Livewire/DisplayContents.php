@@ -10,6 +10,7 @@ use App\Modules\Masjid\Models\KajianSchedule;
 use App\Modules\Masjid\Models\KhutbahSchedule;
 use App\Modules\Masjid\Models\Quote;
 use App\Modules\Masjid\Support\MasjidException;
+use App\Modules\Masjid\Support\QuoteTemplates;
 use App\Modules\Masjid\Support\YoutubeLink;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -91,6 +92,8 @@ class DisplayContents extends Component
 
     /** @var list<string> */
     public array $emergency_screens = [];
+
+    public string $templateTopic = 'jamaah';
 
     public string $q_ar = '';
 
@@ -325,6 +328,32 @@ class DisplayContents extends Component
         $this->reset('q_ar', 'q_id', 'q_ref');
     }
 
+    /**
+     * Menambah templat ke pustaka; yang sudah ada (rujukan sama) dilewati. Tetap menunggu verifikasi ustadz.
+     */
+    public function showTopic(string $topic): void
+    {
+        abort_unless(isset(QuoteTemplates::TOPICS[$topic]), 404);
+        $this->templateTopic = $topic;
+    }
+
+    public function addTemplates(string $topic, ?int $index = null): void
+    {
+        $templates = QuoteTemplates::for($topic);
+        abort_if($templates === [] || ($index !== null && ! isset($templates[$index])), 404);
+
+        $existing = Quote::query()->pluck('source_ref')->all();
+        $added = 0;
+        foreach ($index === null ? $templates : [$templates[$index]] as $template) {
+            if (! in_array($template['ref'], $existing, true)) {
+                Quote::create(['text_ar' => $template['ar'], 'text_id' => $template['id'], 'source_ref' => $template['ref']]);
+                $added++;
+            }
+        }
+
+        $this->dispatch('toast', message: $added > 0 ? $added.' templat masuk pustaka. Minta ustadz memverifikasi sebelum tayang.' : 'Templat ini sudah ada di pustaka.', tone: $added > 0 ? 'success' : 'info');
+    }
+
     public function verifyQuote(string $uuid): void
     {
         $this->approve();
@@ -368,7 +397,10 @@ class DisplayContents extends Component
             'pending' => DisplayContent::query()->where('status', 'pending')->latest('id')->get(),
             'emergencies' => DisplayContent::query()->where('type', 'emergency')->where('status', 'approved')->where('ends_at', '>', now())->get(),
             'screenOptions' => DisplayScreen::query()->where('is_active', true)->orderBy('name')->pluck('name', 'uuid')->all(),
-            'quotes' => Quote::query()->latest('id')->get(),
+            'quotes' => $quotes = Quote::query()->latest('id')->get(),
+            'quoteRefs' => $quotes->pluck('source_ref')->all(),
+            'templates' => QuoteTemplates::for(isset(QuoteTemplates::TOPICS[$this->templateTopic]) ? $this->templateTopic : 'jamaah'),
+            'topics' => QuoteTemplates::TOPICS,
             'verifiedQuotes' => Quote::query()->whereNotNull('verified_at')->where('is_active', true)->get()->mapWithKeys(fn (Quote $quote) => [$quote->id => Str::limit($quote->text_id, 60).' ('.$quote->source_ref.')'])->all(),
             'khutbah' => KhutbahSchedule::query()->whereDate('date', '>=', now()->subWeek())->orderBy('date')->get(),
             'kajian' => KajianSchedule::query()->orderBy('day_of_week')->orderBy('start_time')->get(),

@@ -18,12 +18,20 @@ class DisplayController
 {
     public function page(): View
     {
-        return view('masjid.display', ['preview' => null]);
+        return view('masjid.display', ['preview' => null, 'previewUrl' => null]);
     }
 
     public function preview(DisplayScreen $screen, DisplayManifest $manifest): View
     {
-        return view('masjid.display', ['preview' => $manifest->build($screen)]);
+        return view('masjid.display', ['preview' => $manifest->build($screen), 'previewUrl' => route('staff.masjid.preview-manifest', $screen)]);
+    }
+
+    /**
+     * Pratinjau menanyakan isi terbaru lewat sesi staf, jadi perubahan konten dan pengaturan terlihat tanpa muat ulang.
+     */
+    public function previewManifest(DisplayScreen $screen, DisplayManifest $manifest): JsonResponse
+    {
+        return response()->json($manifest->build($screen));
     }
 
     public function pairStart(ManageScreens $screens): JsonResponse

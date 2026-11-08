@@ -562,12 +562,29 @@
     });
     document.addEventListener('mousemove', function () { pointerUntil = Date.now() + 5000; });
 
+    function refreshPreview() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', config.previewUrl);
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.timeout = 15000;
+        xhr.onload = function () {
+            var data = null;
+            try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
+            if (xhr.status !== 200 || !data) { return; }
+            adoptServerTime(data.server_time);
+            if (data.version !== manifest.version) { manifest = data; renderedKey = ''; }
+        };
+        xhr.send(null);
+    }
+
     function boot() {
         if (config.preview) {
             manifest = config.preview;
             adoptServerTime(manifest.server_time);
             online = true;
             setInterval(function () { render(); }, 1000);
+            // Pratinjau ikut memperbarui diri seperti layar asli, tanpa menyentuh penyimpanan layar yang dipasangkan.
+            if (config.previewUrl) { setInterval(refreshPreview, POLL_MS); }
             render();
             return;
         }

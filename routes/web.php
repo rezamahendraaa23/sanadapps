@@ -379,6 +379,7 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
     Route::middleware('module:masjid_display')->group(function (): void {
         Route::get('/masjid/layar', DisplayScreens::class)->middleware('can:masjid.screens')->name('masjid.screens');
         Route::get('/masjid/layar/{screen}/pratinjau', [DisplayController::class, 'preview'])->middleware('can:masjid.screens')->name('masjid.preview');
+        Route::get('/masjid/layar/{screen}/pratinjau/isi', [DisplayController::class, 'previewManifest'])->middleware('can:masjid.screens')->name('masjid.preview-manifest');
         Route::get('/masjid/konten', DisplayContents::class)->middleware('can:masjid.content')->name('masjid.contents');
     });
     Route::get('/pelanggaran', DisciplineBoard::class)->middleware('module:discipline')->middleware('can:discipline.access')->name('discipline.index');

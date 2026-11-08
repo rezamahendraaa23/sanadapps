@@ -34,6 +34,7 @@ use App\Modules\Masjid\Models\Quote;
 use App\Modules\Masjid\Support\DisplayManifest;
 use App\Modules\Masjid\Support\HijriDate;
 use App\Modules\Masjid\Support\MasjidException;
+use App\Modules\Masjid\Support\QuoteTemplates;
 use App\Modules\Masjid\Support\YoutubeLink;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ModuleSeeder;
@@ -259,6 +260,27 @@ describe('layar', function () {
         $quote->update(['verified_at' => now(), 'verified_by' => $this->takmir->id]);
         $manifest = app(DisplayManifest::class)->build($screen);
         expect($manifest['contents'][0]['body']['source'])->toBe('QS. Al-Baqarah: 153')->and($manifest['version'])->not->toBe($version);
+    });
+
+    it('templat ayat dan hadis masuk pustaka belum terverifikasi, tanpa duplikat', function () {
+        $this->actingAs($this->humas);
+        $page = Livewire::test(DisplayContents::class)->set('tab', 'pustaka')->assertSee('Sholat berjamaah')->assertSee('HR. Bukhari no. 645 dan Muslim no. 650');
+        $page->call('addTemplates', 'jamaah', 1);
+        expect(Quote::where('source_ref', 'HR. Bukhari no. 645 dan Muslim no. 650')->firstOrFail()->verified_at)->toBeNull();
+        $page->assertSee('Sudah di pustaka')->call('addTemplates', 'jamaah');
+        expect(Quote::count())->toBe(count(QuoteTemplates::for('jamaah')));
+        $page->call('showTopic', 'ilmu')->assertSee('QS. Taha: 114');
+        Livewire::test(DisplayContents::class)->call('addTemplates', 'ilmu', 99)->assertNotFound();
+        Livewire::test(DisplayContents::class)->call('showTopic', 'tidak-ada')->assertNotFound();
+    });
+
+    it('pratinjau mengambil isi terbaru tanpa muat ulang', function () {
+        [$screen] = pairScreen();
+        $this->actingAs($this->takmir)->get(route('staff.masjid.preview', $screen))->assertOk()->assertSee('pratinjau\/isi', false);
+        $first = $this->getJson(route('staff.masjid.preview-manifest', $screen))->assertOk()->json('version');
+        $screen->update(['org_mode' => 'always']);
+        expect($this->getJson(route('staff.masjid.preview-manifest', $screen))->json('version'))->not->toBe($first);
+        $this->actingAs($this->humas)->getJson(route('staff.masjid.preview-manifest', $screen))->assertForbidden();
     });
 
     it('heartbeat, perintah jarak jauh, dan status offline', function () {

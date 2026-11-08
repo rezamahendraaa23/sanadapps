@@ -77,7 +77,34 @@
             <x-ui.card><p class="text-base">Pesan darurat hanya bisa dikirim takmir atau admin.</p></x-ui.card>
         @endif
     @elseif ($tab === 'pustaka')
-        <x-ui.card title="Tambah ayat atau hadis">
+        <x-ui.card title="Templat siap pakai">
+            <p class="mb-3 text-sm text-text-muted">Ayat dan hadis yang sering dipakai di pesantren. Setelah masuk pustaka, ustadz atau takmir tetap mengecek teks Arab, terjemah, dan rujukannya sebelum tayang.</p>
+            <div class="mb-4 flex flex-wrap gap-2" role="group" aria-label="Topik templat">
+                @foreach ($topics as $topicKey => $topicName)
+                    <button type="button" wire:key="tp-{{ $topicKey }}" wire:click="showTopic('{{ $topicKey }}')" aria-pressed="{{ $templateTopic === $topicKey ? 'true' : 'false' }}"
+                        @class(['inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold', 'border-primary bg-primary text-on-primary' => $templateTopic === $topicKey, 'border-border bg-surface hover:border-primary' => $templateTopic !== $topicKey])>{{ $topicName }}</button>
+                @endforeach
+            </div>
+            <div class="grid gap-3 md:grid-cols-2">
+                @foreach ($templates as $i => $template)
+                    @php $inLibrary = in_array($template['ref'], $quoteRefs, true); @endphp
+                    <article wire:key="tpl-{{ $templateTopic }}-{{ $i }}" class="flex flex-col gap-2 rounded-card border border-border bg-bg p-4">
+                        <x-ui.arabic class="text-2xl leading-loose">{{ $template['ar'] }}</x-ui.arabic>
+                        <p class="text-base">{{ $template['id'] }}</p>
+                        <div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <p class="text-sm font-semibold text-primary">{{ $template['ref'] }}</p>
+                            @if ($inLibrary)
+                                <span class="inline-flex items-center gap-1 text-sm text-text-muted"><x-ui.icon name="check" size="sm" />Sudah di pustaka</span>
+                            @else
+                                <x-ui.button variant="secondary" icon="plus" wire:click="addTemplates('{{ $templateTopic }}', {{ $i }})">Tambah<span class="sr-only"> {{ $template['ref'] }}</span></x-ui.button>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+            <x-ui.button variant="tertiary" icon="list-plus" class="mt-3" wire:click="addTemplates('{{ $templateTopic }}')">Tambah Semua Topik {{ $topics[$templateTopic] ?? '' }}</x-ui.button>
+        </x-ui.card>
+        <x-ui.card title="Tulis sendiri">
             <div class="flex flex-col gap-3">
                 <x-ui.textarea label="Teks Arab" name="q_ar" wire:model="q_ar" dir="rtl" />
                 <x-ui.textarea label="Terjemah" name="q_id" wire:model="q_id" />

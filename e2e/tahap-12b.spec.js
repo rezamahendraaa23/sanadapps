@@ -79,6 +79,12 @@ test('admin mengatur masjid, memasang TV dengan kode, TV tetap jalan saat offlin
     await expect(tv.getByText(/Offline/)).toBeVisible({ timeout: 20_000 });
     await tvContext.setOffline(false);
 
+    await admin.goto('/panel/masjid/konten?tab=pustaka');
+    await pageReady(admin);
+    await admin.getByRole('button', { name: 'Tambah HR. Bukhari no. 723' }).click();
+    await expect(admin.getByText('Sudah di pustaka')).toBeVisible();
+    if (shots) await admin.screenshot({ path: `${shots}/masjid-templat-ayat-1280.png`, fullPage: true });
+
     await admin.goto('/panel/masjid/konten?tab=darurat');
     await pageReady(admin);
     await admin.getByLabel('Pesan').fill('Hujan deras, santri berkumpul di aula');
