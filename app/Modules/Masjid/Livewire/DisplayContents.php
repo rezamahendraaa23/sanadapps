@@ -360,6 +360,32 @@ class DisplayContents extends Component
         Quote::query()->where('uuid', $uuid)->firstOrFail()->update(['verified_by' => auth()->id(), 'verified_at' => now()]);
     }
 
+    /**
+     * Ayat terverifikasi hanya bisa dinonaktifkan atau dihapus oleh penyetuju; yang belum terverifikasi boleh oleh pembuat konten.
+     */
+    private function editableQuote(string $uuid): Quote
+    {
+        $quote = Quote::query()->where('uuid', $uuid)->firstOrFail();
+        if ($quote->verified_at) {
+            $this->approve();
+        }
+
+        return $quote;
+    }
+
+    public function toggleQuote(string $uuid): void
+    {
+        $quote = $this->editableQuote($uuid);
+        $quote->update(['is_active' => ! $quote->is_active]);
+        $this->dispatch('toast', message: $quote->is_active ? 'Ayat aktif lagi dan ikut bergiliran.' : 'Ayat dinonaktifkan, tidak tampil di layar.', tone: 'success');
+    }
+
+    public function deleteQuote(string $uuid): void
+    {
+        $this->editableQuote($uuid)->delete();
+        $this->dispatch('toast', message: 'Ayat dihapus dari pustaka.', tone: 'success');
+    }
+
     public function saveKhutbah(): void
     {
         $this->resetErrorBag();

@@ -121,13 +121,23 @@
                         <p class="text-base break-words">{{ $quote->text_id }}</p>
                         <p class="text-sm text-text-muted">{{ $quote->source_ref }}</p>
                     </div>
-                    @if ($quote->verified_at)
-                        <span class="inline-flex items-center gap-1 text-sm font-semibold text-success"><x-ui.icon name="circle-check" size="sm" />Terverifikasi</span>
-                    @elseif ($canApprove)
-                        <x-ui.button variant="secondary" wire:click="verifyQuote('{{ $quote->uuid }}')">Verifikasi<span class="sr-only"> {{ $quote->source_ref }}</span></x-ui.button>
-                    @else
-                        <span class="text-sm">Belum diverifikasi</span>
-                    @endif
+                    <div class="flex flex-col items-end gap-2">
+                        @if ($quote->verified_at)
+                            <span @class(['inline-flex items-center gap-1 text-sm font-semibold', 'text-success' => $quote->is_active, 'text-text-muted' => ! $quote->is_active])><x-ui.icon :name="$quote->is_active ? 'circle-check' : 'circle-pause'" size="sm" />{{ $quote->is_active ? 'Terverifikasi, tayang' : 'Terverifikasi, nonaktif' }}</span>
+                        @elseif ($canApprove)
+                            <x-ui.button variant="secondary" wire:click="verifyQuote('{{ $quote->uuid }}')">Verifikasi<span class="sr-only"> {{ $quote->source_ref }}</span></x-ui.button>
+                        @else
+                            <span class="text-sm">Belum diverifikasi</span>
+                        @endif
+                        @if (! $quote->verified_at || $canApprove)
+                            <div class="flex gap-1">
+                                @if ($quote->verified_at)
+                                    <x-ui.button variant="tertiary" wire:click="toggleQuote('{{ $quote->uuid }}')">{{ $quote->is_active ? 'Nonaktifkan' : 'Aktifkan' }}<span class="sr-only"> {{ $quote->source_ref }}</span></x-ui.button>
+                                @endif
+                                <x-ui.button variant="tertiary" class="text-danger" wire:click="deleteQuote('{{ $quote->uuid }}')" wire:confirm="Hapus {{ $quote->source_ref }} dari pustaka?">Hapus<span class="sr-only"> {{ $quote->source_ref }}</span></x-ui.button>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             @empty
                 <x-ui.empty-state icon="book-open" message="Pustaka masih kosong." class="py-2" />

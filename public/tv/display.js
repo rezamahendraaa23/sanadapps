@@ -239,6 +239,8 @@
     /* Bergilir per slide, atau daftar maksimal 3 item bersamaan. */
     function slotHtml(t, row) {
         var items = activeContents(t, row).concat(autoCards(t, row));
+        // Kartu "Hari ini" hanya pengisi saat tidak ada konten, ayat, atau info lain.
+        if (items.length > 1) { items = items.filter(function (x) { return x.type !== 'today'; }); }
         // Layar khusus struktur: hanya bagan yang bergilir.
         if (manifest.screen.org_mode === 'always') {
             var boards = items.filter(function (x) { return x.type === 'structure'; });

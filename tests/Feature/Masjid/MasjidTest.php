@@ -274,6 +274,25 @@ describe('layar', function () {
         Livewire::test(DisplayContents::class)->call('showTopic', 'tidak-ada')->assertNotFound();
     });
 
+    it('ayat terverifikasi bisa dinonaktifkan dan dihapus oleh penyetuju saja', function () {
+        [$screen] = pairScreen();
+        $verified = Quote::create(['text_ar' => 'وَقُلْ رَبِّ زِدْنِي عِلْمًا', 'text_id' => 'Tambahkan ilmu', 'source_ref' => 'QS. Taha: 114', 'verified_at' => now(), 'verified_by' => $this->takmir->id]);
+        $draft = Quote::create(['text_ar' => 'نص', 'text_id' => 'Draf', 'source_ref' => 'Draf 1']);
+
+        $this->actingAs($this->humas);
+        Livewire::test(DisplayContents::class)->call('toggleQuote', $verified->uuid)->assertForbidden();
+        Livewire::test(DisplayContents::class)->call('deleteQuote', $draft->uuid);
+        expect(Quote::find($draft->id))->toBeNull();
+
+        $this->actingAs($this->takmir);
+        Livewire::test(DisplayContents::class)->set('tab', 'pustaka')->call('toggleQuote', $verified->uuid)->assertSee('Terverifikasi, nonaktif');
+        expect(app(DisplayManifest::class)->build($screen)['quotes'])->toBe([]);
+        Livewire::test(DisplayContents::class)->call('toggleQuote', $verified->uuid);
+        expect(app(DisplayManifest::class)->build($screen)['quotes'])->toHaveCount(1);
+        Livewire::test(DisplayContents::class)->call('deleteQuote', $verified->uuid);
+        expect(Quote::count())->toBe(0)->and(app(DisplayManifest::class)->build($screen)['quotes'])->toBe([]);
+    });
+
     it('pratinjau mengambil isi terbaru tanpa muat ulang', function () {
         [$screen] = pairScreen();
         $this->actingAs($this->takmir)->get(route('staff.masjid.preview', $screen))->assertOk()->assertSee('pratinjau\/isi', false);

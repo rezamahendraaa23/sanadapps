@@ -33,7 +33,7 @@ final class QuoteTemplates
             ['ar' => 'صَلَاةُ الْجَمَاعَةِ أَفْضَلُ مِنْ صَلَاةِ الْفَذِّ بِسَبْعٍ وَعِشْرِينَ دَرَجَةً', 'id' => 'Sholat berjamaah lebih utama daripada sholat sendirian dengan dua puluh tujuh derajat.', 'ref' => 'HR. Bukhari no. 645 dan Muslim no. 650'],
             ['ar' => 'سَوُّوا صُفُوفَكُمْ، فَإِنَّ تَسْوِيَةَ الصُّفُوفِ مِنْ إِقَامَةِ الصَّلَاةِ', 'id' => 'Luruskanlah saf kalian, karena meluruskan saf termasuk bagian dari menegakkan sholat.', 'ref' => 'HR. Bukhari no. 723'],
             ['ar' => 'صَلُّوا كَمَا رَأَيْتُمُونِي أُصَلِّي', 'id' => 'Sholatlah kalian sebagaimana kalian melihat aku sholat.', 'ref' => 'HR. Bukhari no. 631'],
-            ['ar' => 'قَدْ أَفْلَحَ الْمُؤْمِنُونَ ۝ الَّذِينَ هُمْ فِي صَلَاتِهِمْ خَاشِعُونَ', 'id' => 'Sungguh beruntung orang-orang yang beriman, yaitu orang yang khusyuk dalam sholatnya.', 'ref' => 'QS. Al-Mu\'minun: 1-2'],
+            ['ar' => 'قَدْ أَفْلَحَ الْمُؤْمِنُونَ الَّذِينَ هُمْ فِي صَلَاتِهِمْ خَاشِعُونَ', 'id' => 'Sungguh beruntung orang-orang yang beriman, yaitu orang yang khusyuk dalam sholatnya.', 'ref' => 'QS. Al-Mu\'minun: 1-2'],
             ['ar' => 'إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنْكَرِ', 'id' => 'Sesungguhnya sholat itu mencegah dari perbuatan keji dan mungkar.', 'ref' => 'QS. Al-\'Ankabut: 45'],
         ],
         'jumat' => [
@@ -66,9 +66,9 @@ final class QuoteTemplates
         ],
         'sabar' => [
             ['ar' => 'يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ', 'id' => 'Wahai orang-orang yang beriman, mohonlah pertolongan dengan sabar dan sholat. Sesungguhnya Allah bersama orang-orang yang sabar.', 'ref' => 'QS. Al-Baqarah: 153'],
-            ['ar' => 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا ۝ إِنَّ مَعَ الْعُسْرِ يُسْرًا', 'id' => 'Maka sesungguhnya bersama kesulitan ada kemudahan. Sesungguhnya bersama kesulitan ada kemudahan.', 'ref' => 'QS. Al-Insyirah: 5-6'],
+            ['ar' => 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا إِنَّ مَعَ الْعُسْرِ يُسْرًا', 'id' => 'Maka sesungguhnya bersama kesulitan ada kemudahan. Sesungguhnya bersama kesulitan ada kemudahan.', 'ref' => 'QS. Al-Insyirah: 5-6'],
             ['ar' => 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ', 'id' => 'Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram.', 'ref' => 'QS. Ar-Ra\'d: 28'],
-            ['ar' => 'وَالْعَصْرِ ۝ إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ ۝ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ', 'id' => 'Demi masa. Sungguh manusia berada dalam kerugian, kecuali orang-orang yang beriman, beramal saleh, saling menasihati dalam kebenaran, dan saling menasihati dalam kesabaran.', 'ref' => 'QS. Al-\'Asr: 1-3'],
+            ['ar' => 'وَالْعَصْرِ إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ', 'id' => 'Demi masa. Sungguh manusia berada dalam kerugian, kecuali orang-orang yang beriman, beramal saleh, saling menasihati dalam kebenaran, dan saling menasihati dalam kesabaran.', 'ref' => 'QS. Al-\'Asr: 1-3'],
         ],
         'orangtua' => [
             ['ar' => 'وَقُلْ رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا', 'id' => 'Dan ucapkanlah: Wahai Tuhanku, sayangilah keduanya sebagaimana mereka berdua telah mendidikku sewaktu kecil.', 'ref' => 'QS. Al-Isra: 24'],
