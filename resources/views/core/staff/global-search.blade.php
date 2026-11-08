@@ -12,18 +12,23 @@
     }"
     x-on:click.outside="open = false"
     x-on:keydown.escape.window="open = false"
-    x-on:keydown.window="if ($event.key === '/' && ! ['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); $refs.search.focus(); }"
+    x-on:keydown.window="
+        const slash = $event.key === '/' && ! ['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName);
+        {{-- Ctrl+F atau Cmd+F membuka pencarian SANAD; bila kotak cari tersembunyi (layar kecil), pencarian bawaan browser tetap jalan. --}}
+        const find = ($event.ctrlKey || $event.metaKey) && ! $event.altKey && ! $event.shiftKey && $event.key.toLowerCase() === 'f' && $refs.search.offsetParent !== null;
+        if (slash || find) { $event.preventDefault(); $refs.search.focus(); $refs.search.select(); open = true; }
+    "
     x-on:keydown.down.prevent="open = true; move(1)"
     x-on:keydown.up.prevent="move(-1)"
 >
-    <label for="pencarian-cepat" class="sr-only">Cari menu, santri, wali, tagihan, atau surat. Tekan garis miring untuk fokus.</label>
+    <label for="pencarian-cepat" class="sr-only">Cari menu, santri, wali, tagihan, atau surat. Tekan Ctrl+F atau garis miring untuk fokus.</label>
     <div class="relative">
         <x-ui.icon name="search" size="sm" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-text-muted" />
         <input
             id="pencarian-cepat"
             x-ref="search"
             type="search"
-            placeholder="Cari apa saja ( / )"
+            placeholder="Cari apa saja (Ctrl+F)"
             autocomplete="off"
             wire:model.live.debounce.250ms="query"
             x-on:focus="open = true"

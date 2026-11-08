@@ -364,8 +364,8 @@ describe('gerbang', function () {
     });
 
     it('kolom pencarian tidak muncul untuk penjaga yang tidak punya data untuk dicari', function () {
-        $this->actingAs($this->penjaga)->get(route('staff.gate.index'))->assertDontSee('Cari santri, NIS');
-        $this->actingAs($this->admin)->get(route('staff.dashboard'))->assertSee('Cari santri, NIS');
+        $this->actingAs($this->penjaga)->get(route('staff.gate.index'))->assertDontSee('Cari menu, santri');
+        $this->actingAs($this->admin)->get(route('staff.dashboard'))->assertSee('Cari menu, santri');
     });
 
     it('riwayat dengan filter rusak tidak galat', function () {

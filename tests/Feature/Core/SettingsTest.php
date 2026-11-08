@@ -50,6 +50,38 @@ it('menyembunyikan menu pengaturan dari selain admin', function () {
     expect($keys)->not->toContain('profile')->not->toContain('audit');
 });
 
+it('sidebar ruang kerja: menu umum plus pintu masuk, di dalam ruang kerja hanya menunya sendiri', function () {
+    Module::query()->update(['is_enabled' => true]);
+    app(ModuleRegistry::class)->forget();
+    $navigation = app(Navigation::class);
+    $groups = $navigation->staff();
+
+    $main = $navigation->sidebar($groups, 'students');
+    $doors = collect($main['groups'])->firstWhere('label', 'Ruang kerja')['items'];
+    expect($main['workspace'])->toBeNull()
+        ->and(array_column($doors, 'label'))->toBe(['Keuangan', 'Mart & Kasir', 'PPDB', 'Masjid & Layar TV'])
+        ->and($doors[0]['url'])->toBe(route('staff.invoices.index'))
+        ->and(collect($main['groups'])->flatMap(fn ($group) => $group['items'])->pluck('key'))->not->toContain('invoices')->toContain('students');
+
+    $mart = $navigation->sidebar($groups, 'merchants');
+    expect($mart['workspace']['label'])->toBe('Mart & Kasir')
+        ->and(collect($mart['groups'][0]['items'])->pluck('key')->all())->toBe(['pos', 'merchants', 'payouts']);
+
+    // Pencarian global tetap menemukan menu di dalam ruang kerja.
+    expect(collect($groups)->flatMap(fn ($group) => $group['items'])->pluck('key'))->toContain('masjid-screens');
+
+    $this->get(route('staff.merchants.index'))->assertOk()->assertSee('Ruang kerja')->assertSee('Menu utama')->assertDontSee('Kelas &amp; Asrama', false);
+    $this->get(route('staff.dashboard'))->assertOk()->assertSee('Kasir, katalog, stok, pencairan');
+});
+
+it('kasir hanya melihat pintu ruang kerja mart', function () {
+    $this->actingAs(staff('kasir'));
+    $sidebar = app(Navigation::class)->sidebar(app(Navigation::class)->staff(), 'home');
+    $doors = collect($sidebar['groups'])->firstWhere('label', 'Ruang kerja')['items'] ?? [];
+
+    expect(array_column($doors, 'label'))->not->toContain('Keuangan')->not->toContain('PPDB');
+});
+
 it('mengubah semua identitas pesantren dan langsung tampil', function () {
     Storage::fake('public');
 

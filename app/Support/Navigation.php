@@ -25,11 +25,46 @@ final class Navigation
             $items = $this->resolve($group['items'], $homeUrl, $preview);
 
             if ($items !== []) {
-                $groups[] = ['label' => $group['label'], 'items' => $items];
+                $groups[] = ['label' => $group['label'], 'workspace' => $group['workspace'] ?? null, 'items' => $items];
             }
         }
 
         return $groups;
+    }
+
+    /**
+     * Sidebar bertingkat: di halaman ruang kerja (Keuangan, Mart, PPDB, Masjid) hanya menu ruang kerja itu yang tampil;
+     * di luar itu tampil menu umum ditambah pintu masuk tiap ruang kerja.
+     *
+     * @param  list<array{label: string, workspace: array<string, string>|null, items: list<array<string, mixed>>}>  $groups
+     * @return array{workspace: array<string, mixed>|null, groups: list<array<string, mixed>>}
+     */
+    public function sidebar(array $groups, ?string $active): array
+    {
+        foreach ($groups as $group) {
+            if ($group['workspace'] && in_array($active, array_column($group['items'], 'key'), true)) {
+                return ['workspace' => [...$group['workspace'], 'label' => $group['label']], 'groups' => [['label' => 'Menu '.$group['label'], 'items' => $group['items']]]];
+            }
+        }
+
+        $general = [];
+        $doors = [];
+        foreach ($groups as $group) {
+            if (! $group['workspace']) {
+                $general[] = $group;
+
+                continue;
+            }
+            // Pintu masuk menuju menu pertama yang boleh dibuka pengguna di ruang kerja itu.
+            $first = $group['items'][0];
+            $doors[] = ['key' => 'ruang-'.$group['workspace']['key'], 'label' => $group['label'], 'icon' => $group['workspace']['icon'], 'hint' => $group['workspace']['hint'], 'url' => $first['url'], 'door' => true];
+        }
+
+        if ($doors !== []) {
+            array_splice($general, min(1, count($general)), 0, [['label' => 'Ruang kerja', 'items' => $doors]]);
+        }
+
+        return ['workspace' => null, 'groups' => $general];
     }
 
     /**

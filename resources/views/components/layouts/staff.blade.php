@@ -2,7 +2,7 @@
 
 @inject('navigation', \App\Support\Navigation::class)
 
-@php($groups = $navigation->staff($homeUrl, $preview))
+@php($sidebar = $navigation->sidebar($navigation->staff($homeUrl, $preview), $active))
 
 <x-layouts.base :title="$title">
     <div x-data="{ collapsed: $persist(false).as('sanad-sidebar-collapsed'), drawer: false }" x-on:keydown.escape.window="drawer = false">
@@ -14,7 +14,7 @@
                 <span x-show="collapsed"><x-ui.logo variant="mark" /></span>
                 <span x-show="!collapsed"><x-ui.logo /></span>
             </a>
-            <x-layouts.partials-staff-nav :groups="$groups" :active="$active" collapsible />
+            <x-layouts.partials-staff-nav :groups="$sidebar['groups']" :workspace="$sidebar['workspace']" :home-url="$homeUrl ?? route('staff.dashboard')" :active="$active" collapsible />
         </aside>
 
         <div x-show="drawer" x-cloak class="fixed inset-0 z-100 lg:hidden">
@@ -43,7 +43,7 @@
                         <x-ui.icon name="x" />
                     </button>
                 </div>
-                <x-layouts.partials-staff-nav :groups="$groups" :active="$active" />
+                <x-layouts.partials-staff-nav :groups="$sidebar['groups']" :workspace="$sidebar['workspace']" :home-url="$homeUrl ?? route('staff.dashboard')" :active="$active" />
             </aside>
         </div>
 

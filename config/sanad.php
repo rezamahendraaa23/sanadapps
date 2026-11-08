@@ -67,23 +67,27 @@ return [
                 ['key' => 'tahfidz', 'permission' => 'tahfidz.input', 'label' => 'Tahfidz', 'icon' => 'book-open', 'route' => 'staff.tahfidz.index', 'module' => 'tahfidz'],
                 ['key' => 'exams', 'permission' => 'exams.manage', 'label' => 'Ujian', 'icon' => 'file-pen-line', 'route' => 'staff.exams.index', 'module' => 'exam'],
             ]],
-            ['label' => 'Keuangan', 'items' => [
+            // Grup bertanda workspace menjadi ruang kerja sendiri: sidebar utama hanya menampilkan pintu masuknya.
+            ['label' => 'Keuangan', 'workspace' => ['key' => 'keuangan', 'icon' => 'landmark', 'hint' => 'Tagihan, pembayaran, dompet, kas'], 'items' => [
                 ['key' => 'invoices', 'permission' => 'finance.view', 'label' => 'Tagihan', 'icon' => 'receipt-text', 'route' => 'staff.invoices.index', 'module' => 'finance'],
                 ['key' => 'payments', 'permission' => 'finance.view', 'label' => 'Pembayaran', 'icon' => 'banknote', 'route' => 'staff.payments.index', 'module' => 'finance'],
                 ['key' => 'transfer-review', 'permission' => 'finance.verify', 'label' => 'Verifikasi Transfer', 'icon' => 'badge-check', 'route' => 'staff.transfers.index', 'module' => 'payment_manual'],
                 ['key' => 'arrears', 'permission' => 'finance.view', 'label' => 'Tunggakan', 'icon' => 'clock-alert', 'route' => 'staff.arrears.index', 'module' => 'finance'],
                 ['key' => 'wallets', 'permission' => 'wallet.view', 'label' => 'Dompet', 'icon' => 'wallet', 'route' => 'staff.wallets.index', 'module' => 'wallet'],
+                ['key' => 'cash', 'permission' => 'finance.view', 'label' => 'Laporan Kas', 'icon' => 'landmark', 'route' => 'staff.cash.index', 'module' => 'finance'],
+                ['key' => 'fee-types', 'permission' => 'finance.manage', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
+            ]],
+            ['label' => 'Mart & Kasir', 'workspace' => ['key' => 'mart', 'icon' => 'store', 'hint' => 'Kasir, katalog, stok, pencairan'], 'items' => [
                 ['key' => 'pos', 'permission' => 'pos.operate', 'label' => 'Kasir', 'icon' => 'store', 'route' => 'staff.pos.index', 'module' => 'pos'],
                 ['key' => 'merchants', 'permission' => ['merchants.manage', 'merchants.own', 'pos.view'], 'label' => 'Mart & Warung', 'icon' => 'shopping-basket', 'route' => 'staff.merchants.index', 'module' => 'pos'],
                 ['key' => 'payouts', 'permission' => 'payouts.approve', 'label' => 'Pencairan', 'icon' => 'hand-coins', 'route' => 'staff.payouts.index', 'module' => 'pos'],
-                ['key' => 'cash', 'permission' => 'finance.view', 'label' => 'Laporan Kas', 'icon' => 'landmark', 'route' => 'staff.cash.index', 'module' => 'finance'],
             ]],
-            ['label' => 'PPDB', 'items' => [
+            ['label' => 'PPDB', 'workspace' => ['key' => 'ppdb', 'icon' => 'user-plus', 'hint' => 'Periode, pendaftar, seleksi'], 'items' => [
                 ['key' => 'ppdb-periods', 'permission' => 'ppdb.view', 'label' => 'Periode', 'icon' => 'calendar-range', 'route' => 'staff.ppdb.periods.index', 'module' => 'ppdb'],
                 ['key' => 'ppdb-applicants', 'permission' => 'ppdb.view', 'label' => 'Pendaftar', 'icon' => 'user-plus', 'route' => 'staff.ppdb.applicants.index', 'module' => 'ppdb'],
                 ['key' => 'ppdb-selection', 'permission' => 'ppdb.view', 'label' => 'Seleksi', 'icon' => 'list-checks', 'route' => 'staff.ppdb.selection.index', 'module' => 'ppdb'],
             ]],
-            ['label' => 'Masjid', 'items' => [
+            ['label' => 'Masjid & Layar TV', 'workspace' => ['key' => 'masjid', 'icon' => 'monitor', 'hint' => 'Jadwal sholat, konten, layar'], 'items' => [
                 ['key' => 'masjid', 'permission' => ['masjid.settings', 'masjid.schedule'], 'label' => 'Jadwal Sholat', 'icon' => 'clock', 'route' => 'staff.masjid.index', 'module' => 'masjid_prayer'],
                 ['key' => 'masjid-contents', 'permission' => 'masjid.content', 'label' => 'Konten Layar', 'icon' => 'megaphone', 'route' => 'staff.masjid.contents', 'module' => 'masjid_display'],
                 ['key' => 'masjid-screens', 'permission' => 'masjid.screens', 'label' => 'Layar TV', 'icon' => 'monitor', 'route' => 'staff.masjid.screens', 'module' => 'masjid_display'],
@@ -100,7 +104,6 @@ return [
                 ['key' => 'profile', 'permission' => 'settings.manage', 'label' => 'Profil & Branding', 'icon' => 'building-2', 'route' => 'staff.settings.profile', 'module' => 'core'],
                 ['key' => 'modules', 'permission' => 'settings.manage', 'label' => 'Modul', 'icon' => 'toggle-right', 'route' => 'staff.settings.modules', 'module' => 'core'],
                 ['key' => 'integrations', 'permission' => 'settings.manage', 'label' => 'Integrasi', 'icon' => 'plug', 'route' => 'staff.settings.integrations', 'module' => 'core'],
-                ['key' => 'fee-types', 'permission' => 'finance.manage', 'label' => 'Jenis Tagihan', 'icon' => 'tags', 'route' => 'staff.settings.fee-types', 'module' => 'finance'],
                 ['key' => 'notifications', 'permission' => 'settings.manage', 'label' => 'Notifikasi', 'icon' => 'message-circle', 'route' => 'staff.settings.notifications', 'module' => 'core'],
                 ['key' => 'users', 'permission' => 'users.manage', 'label' => 'Pengguna & Role', 'icon' => 'user-cog', 'route' => 'staff.settings.users', 'module' => 'core'],
                 ['key' => 'devices', 'permission' => 'devices.manage', 'label' => 'Perangkat', 'icon' => 'scan-line', 'route' => 'staff.cards.devices', 'module' => 'card'],

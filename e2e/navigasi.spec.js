@@ -104,3 +104,27 @@ test('menu samping tetap di posisinya setelah pindah halaman', async ({ page }) 
     await page.waitForFunction(() => document.querySelector('[data-keep-scroll]')?.scrollTop > 0);
     await expect.poll(() => menu.evaluate((element) => element.scrollTop)).toBe(before);
 });
+
+test('ruang kerja punya sidebar sendiri dan Ctrl+F membuka pencarian', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await loginAdmin(page);
+    const shots = process.env.E2E_SCREENSHOTS;
+
+    await page.keyboard.press('Control+f');
+    await expect(page.getByLabel(/Cari menu, santri/)).toBeFocused();
+    await page.keyboard.type('tunggakan');
+    await expect(page.getByRole('link', { name: /Tunggakan/ }).first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    if (shots) await page.screenshot({ path: `${shots}/sidebar-utama-1280.png` });
+
+    const main = page.getByRole('navigation', { name: 'Menu utama' }).first();
+    await main.getByRole('link', { name: /^Keuangan/ }).click();
+    const finance = page.getByRole('navigation', { name: 'Menu Keuangan' }).first();
+    await expect(finance.getByRole('link', { name: 'Tagihan', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(finance.getByRole('link', { name: 'Santri', exact: true })).toHaveCount(0);
+    if (shots) await page.screenshot({ path: `${shots}/sidebar-keuangan-1280.png` });
+
+    await finance.getByRole('link', { name: 'Menu utama' }).click();
+    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page.getByRole('navigation', { name: 'Menu utama' }).first().getByRole('link', { name: 'Santri', exact: true })).toBeVisible();
+});
