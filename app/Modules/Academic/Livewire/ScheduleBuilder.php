@@ -159,7 +159,7 @@ class ScheduleBuilder extends Component
 
         return view('academic.schedules', [
             'terms' => Term::query()->orderByDesc('start_date')->pluck('name', 'id')->all(),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'subjects' => Subject::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'teachers' => Teacher::query()->orderBy('name')->pluck('name', 'id')->all(),
             'schedules' => $schedules,

@@ -102,7 +102,7 @@ class StudentIndex extends Component
 
         return view('core.students.index', [
             'students' => $this->query()->with(['classroom:id,name', 'dormitory:id,name'])->orderBy($sort, $this->direction === 'desc' ? 'desc' : 'asc')->paginate(25),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'hasAnyStudent' => Student::query()->visibleTo(auth()->user())->exists(),
         ]);

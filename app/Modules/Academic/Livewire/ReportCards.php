@@ -84,7 +84,7 @@ class ReportCards extends Component
         return view('academic.report-cards', [
             'cards' => $cards,
             'terms' => Term::query()->orderByDesc('start_date')->pluck('name', 'id')->all(),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'draftCount' => $cards->where('status', 'draft')->count(),
         ]);
     }

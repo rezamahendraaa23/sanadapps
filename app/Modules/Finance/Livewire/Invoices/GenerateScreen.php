@@ -90,7 +90,7 @@ class GenerateScreen extends Component
     {
         return view('finance.invoices.generate', [
             'feeTypes' => FeeType::query()->where('is_active', true)->orderBy('name')->get(),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
         ]);
     }
 }

@@ -240,3 +240,12 @@ it('mewajibkan role dan melarang mencabut role admin sendiri', function () {
 it('hanya menerima role staf yang terdaftar', function () {
     Livewire::test(UserIndex::class)->call('create')->set('name', 'A')->set('email', 'b@uji.test')->set('roles', ['wali'])->call('save')->assertHasErrors('roles.0');
 });
+
+it('kelas diurutkan alami menurut jenjang, bukan abjad', function () {
+    foreach (['Kelas 10' => '10', 'Kelas 7' => '7', 'Kelas 12' => '12', 'Kelas 9' => '9', 'Tahfidz Khusus' => null] as $name => $level) {
+        Classroom::create(['name' => $name, 'level' => $level]);
+    }
+
+    expect(Classroom::query()->ordered()->pluck('name')->all())->toBe(['Kelas 7', 'Kelas 9', 'Kelas 10', 'Kelas 12', 'Tahfidz Khusus']);
+    Livewire::test(MasterData::class)->assertSeeInOrder(['Kelas 7', 'Kelas 9', 'Kelas 10', 'Kelas 12']);
+});

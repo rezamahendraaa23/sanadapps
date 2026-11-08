@@ -210,7 +210,7 @@ class StudentForm extends Component
     public function render(): View
     {
         return view('core.students.form', [
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'fields' => $this->customFields(),
         ])->title($this->studentId ? 'Ubah Santri' : 'Tambah Santri');

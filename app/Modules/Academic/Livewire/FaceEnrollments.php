@@ -205,7 +205,7 @@ class FaceEnrollments extends Component
             'results' => mb_strlen($term) >= 2 ? Student::query()->visibleTo(auth()->user())->where('status', 'active')->where(fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%')->orWhere('nis', 'like', addcslashes($term, '%_').'%'))->orderBy('name')->limit(8)->get() : collect(),
             'consent' => $student ? BiometricConsent::query()->active()->where('student_id', $student->id)->first() : null,
             'enrollment' => $student ? FaceEnrollment::query()->where('student_id', $student->id)->where('status', 'active')->first() : null,
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'guardians' => $student ? $student->guardians()->get()->mapWithKeys(fn (Guardian $guardian) => [$guardian->id => $guardian->name])->all() : [],
             'activeCount' => (clone $active)->count(),
             'consentCount' => BiometricConsent::query()->active()->whereIn('student_id', (clone $active)->select('id'))->count(),

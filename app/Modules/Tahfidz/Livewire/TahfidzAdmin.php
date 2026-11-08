@@ -117,7 +117,7 @@ class TahfidzAdmin extends Component
 
         return view('tahfidz.admin', [
             'rows' => $this->tab === 'rekap' ? TahfidzRecap::rows($this->classroom !== '' ? (int) $this->classroom : null, $from, $to) : collect(),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'items' => MutabaahItem::query()->orderBy('name')->get(),
             'params' => array_filter(['kelas' => $this->classroom, 'dari' => $from, 'sampai' => $to]),
             'hasTerm' => StudentSchedule::activeTerm() !== null,

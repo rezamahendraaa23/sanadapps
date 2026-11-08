@@ -23,6 +23,6 @@ class GovernmentExport extends Component
 
     public function render(): View
     {
-        return view('affairs.export', ['classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all()]);
+        return view('affairs.export', ['classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all()]);
     }
 }

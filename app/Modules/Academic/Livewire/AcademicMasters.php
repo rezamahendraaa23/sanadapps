@@ -203,7 +203,7 @@ class AcademicMasters extends Component
             'subjects' => Subject::query()->orderBy('type')->orderBy('name')->get(),
             'assignments' => TeachingAssignment::query()->with(['teacher:id,name', 'subject:id,name', 'classroom:id,name'])->whereHas('academicYear', fn ($query) => $query->where('is_active', true))->orderBy('classroom_id')->get(),
             'teachers' => Teacher::query()->orderBy('name')->pluck('name', 'id')->all(),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'subjectOptions' => Subject::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'components' => $components,
             'totalWeight' => (int) $components->where('is_active', true)->sum('weight'),

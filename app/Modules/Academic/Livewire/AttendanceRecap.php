@@ -44,7 +44,7 @@ class AttendanceRecap extends Component
 
         return view('academic.attendance-recap', [
             'rows' => $rows,
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'average' => $rows->isEmpty() ? null : (int) round($rows->avg('percent')),
             'params' => array_filter(['kelas' => $this->classroom, 'dari' => $from, 'sampai' => $to]),
         ]);

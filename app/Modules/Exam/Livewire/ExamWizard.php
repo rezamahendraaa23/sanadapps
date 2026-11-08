@@ -282,7 +282,7 @@ class ExamWizard extends Component
             'chosen' => $chosen,
             'chosenIds' => $chosen->pluck('id')->all(),
             'totalPoints' => (float) $chosen->sum(fn ($question) => (float) ($question->pivot->points_override ?? $question->points)),
-            'classroomOptions' => Classroom::query()->orderBy('name')->get(),
+            'classroomOptions' => Classroom::query()->ordered()->get(),
             'studentResults' => mb_strlen($term) >= 2 ? Student::query()->visibleTo(auth()->user())->where(fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%')->orWhere('nis', 'like', addcslashes($term, '%_').'%'))->orderBy('name')->limit(6)->get() : collect(),
             'targetStudents' => Student::query()->whereIn('id', $this->exam->targets()->whereNotNull('student_id')->pluck('student_id'))->orderBy('name')->get(),
             'problems' => $this->step === 4 ? $exams->problems($this->exam->refresh()) : [],

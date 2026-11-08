@@ -57,7 +57,7 @@ class ClassPromotion extends Component
 
     public function render(PromoteStudents $action): View
     {
-        $classrooms = Classroom::query()->orderBy('name')->pluck('name', 'id')->all();
+        $classrooms = Classroom::query()->ordered()->pluck('name', 'id')->all();
 
         $batches = StudentEnrollment::query()
             ->select('batch_id', 'classroom_id', 'status', DB::raw('count(*) as total'), DB::raw('max(ended_at) as ended_at'))

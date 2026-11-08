@@ -10,9 +10,11 @@ use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\Teacher;
 use App\Modules\Core\Models\Term;
 use App\Modules\Core\Models\User;
+use App\Modules\Core\Support\ModuleRegistry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -286,9 +288,11 @@ class MasterData extends Component
             'rows' => match ($this->tab) {
                 'years' => AcademicYear::query()->with(['terms' => fn ($query) => $query->orderBy('start_date')])->orderByDesc('is_active')->orderByDesc('start_date')->get(),
                 'dormitories' => Dormitory::query()->with('musyrif')->withCount('students')->orderBy('name')->get(),
-                default => Classroom::query()->with('homeroomTeacher')->withCount('students')->orderBy('name')->get(),
+                default => Classroom::query()->with(['homeroomTeacher', 'phase.curriculum'])->withCount('students')->ordered()->get(),
             },
             'years' => AcademicYear::query()->orderByDesc('start_date')->pluck('name', 'id')->all(),
+            // Kolom fase hanya bila modul kurikulum dipakai; kelas dipetakan ke fase di menu Kurikulum.
+            'showPhase' => app(ModuleRegistry::class)->enabled('curriculum') && Route::has('staff.curriculum.index'),
             'formTarget' => $this->target(),
             'splits' => CreateAcademicYear::SPLITS,
             'suggestion' => $this->tab === 'years' ? CreateAcademicYear::suggestion() : null,

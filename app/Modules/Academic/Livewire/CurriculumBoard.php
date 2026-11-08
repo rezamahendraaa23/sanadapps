@@ -151,7 +151,7 @@ class CurriculumBoard extends Component
      */
     private function suggestedPlan(): array
     {
-        return Classroom::query()->with('phase')->orderBy('name')->get()
+        return Classroom::query()->with('phase')->ordered()->get()
             ->mapWithKeys(fn (Classroom $room) => [$room->uuid => (string) $room->phase?->next()?->uuid])->all();
     }
 
@@ -498,14 +498,14 @@ class CurriculumBoard extends Component
 
         return view('academic.curriculum', [
             'curricula' => Curriculum::query()->with(['phases' => fn ($q) => $q->withCount('classrooms')])->orderBy('name')->get(),
-            'classrooms' => Classroom::query()->with('phase.curriculum')->withCount(['students' => fn ($q) => $q->where('status', 'active')])->orderBy('name')->get(),
+            'classrooms' => Classroom::query()->with('phase.curriculum')->withCount(['students' => fn ($q) => $q->where('status', 'active')])->ordered()->get(),
             'phaseOptions' => CurriculumPhase::query()->with('curriculum:id,name')->orderBy('curriculum_id')->orderBy('sort_order')->get()->mapWithKeys(fn (CurriculumPhase $phase) => [$phase->uuid => $phase->curriculum->name.': '.$phase->name])->all(),
             'classroom' => $classroom,
             'results' => $classroom ? $this->results($classroom) : collect(),
             'next' => $next,
-            'targets' => $next ? Classroom::query()->where('phase_id', $next->id)->orderBy('name')->pluck('name', 'uuid')->all() : [],
+            'targets' => $next ? Classroom::query()->where('phase_id', $next->id)->ordered()->pluck('name', 'uuid')->all() : [],
             // Semua kelas yang sudah ditempatkan di fase bisa jadi tujuan, termasuk jalur di kurikulum lain (kitab, tahfidz).
-            'mapTargets' => $classroom ? Classroom::query()->with('phase.curriculum')->whereNotNull('phase_id')->whereKeyNot($classroom->id)->orderBy('name')->get()
+            'mapTargets' => $classroom ? Classroom::query()->with('phase.curriculum')->whereNotNull('phase_id')->whereKeyNot($classroom->id)->ordered()->get()
                 ->mapWithKeys(fn (Classroom $room) => [$room->uuid => $room->name.' ('.$room->phase->curriculum->name.', '.$room->phase->name.')'])->all() : [],
             'breaks' => AcademicBreak::query()->orderBy('starts_on')->get(),
             'today' => now(config('sanad.display_timezone'))->toDateString(),

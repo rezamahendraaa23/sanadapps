@@ -190,7 +190,7 @@ class ApplicantDetail extends Component
             'invoice' => $this->applicant->invoice,
             'canManage' => $user->can('ppdb.manage'),
             'canCash' => $user->can('finance.manage'),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'feeNames' => FeeType::query()->where('category', 'one_time')->where('is_active', true)->where('is_mandatory', true)->pluck('name')->all(),
             'money' => fn (int $value) => Rupiah::format($value),

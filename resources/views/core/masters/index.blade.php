@@ -28,7 +28,7 @@
                     <tr>
                         <x-ui.th>Nama</x-ui.th>
                         @if ($tab === 'classrooms')
-                            <x-ui.th>Jenjang</x-ui.th><x-ui.th>Wali kelas</x-ui.th><x-ui.th numeric>Santri</x-ui.th>
+                            <x-ui.th>Jenjang</x-ui.th><x-ui.th>Wali kelas</x-ui.th><x-ui.th numeric>Santri</x-ui.th>@if ($showPhase)<x-ui.th>Fase</x-ui.th>@endif
                         @elseif ($tab === 'dormitories')
                             <x-ui.th>Untuk</x-ui.th><x-ui.th>Musyrif</x-ui.th><x-ui.th numeric>Penghuni</x-ui.th>
                         @else
@@ -46,6 +46,16 @@
                                 <x-ui.td label="Jenjang">{{ $row->level ?? '-' }}</x-ui.td>
                                 <x-ui.td label="Wali kelas">{{ $row->homeroomTeacher?->name ?? 'Belum ada' }}</x-ui.td>
                                 <x-ui.td label="Santri" numeric>{{ $row->students_count }}{{ $row->capacity ? ' / '.$row->capacity : '' }}</x-ui.td>
+                                @if ($showPhase)
+                                    <x-ui.td label="Fase">
+                                        @if ($row->phase)
+                                            <span class="block">{{ $row->phase->curriculum->name }}, {{ $row->phase->name }}</span>
+                                            <span class="block text-xs text-text-muted">sampai {{ $row->phase_ends_on->translatedFormat('j M Y') }}</span>
+                                        @else
+                                            <a href="{{ route('staff.curriculum.index', ['tab' => 'rombongan']) }}" wire:navigate class="text-sm font-semibold text-primary hover:underline">Belum di fase<span class="sr-only"> {{ $row->name }}</span>, atur</a>
+                                        @endif
+                                    </x-ui.td>
+                                @endif
                             @elseif ($tab === 'dormitories')
                                 <x-ui.td label="Untuk">{{ $row->gender === 'L' ? 'Putra' : 'Putri' }}</x-ui.td>
                                 <x-ui.td label="Musyrif">{{ $row->musyrif?->name ?? 'Belum ada' }}</x-ui.td>

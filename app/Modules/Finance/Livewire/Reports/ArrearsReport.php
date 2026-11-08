@@ -87,7 +87,7 @@ class ArrearsReport extends Component
             'rows' => $rows,
             'grandTotal' => $rows->sum('outstanding'),
             'waEnabled' => app(ModuleRegistry::class)->enabled('notification_wa'),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
         ]);
     }
 }

@@ -129,7 +129,7 @@ class ExamResults extends Component
             'items' => $items,
             'buckets' => $buckets,
             'maxBucket' => max(1, $buckets->max()),
-            'classrooms' => Classroom::query()->whereIn('id', $attempts->pluck('student.classroom_id')->filter()->unique())->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->whereIn('id', $attempts->pluck('student.classroom_id')->filter()->unique())->ordered()->pluck('name', 'id')->all(),
             'components' => GradeComponent::query()->where('is_active', true)->orderBy('id')->pluck('name', 'id')->all(),
             'monitorUrl' => $this->examRoute('monitor', $this->exam),
         ])->layout($layout, $params)->title('Hasil: '.$this->exam->title);

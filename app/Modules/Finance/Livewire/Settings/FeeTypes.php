@@ -198,7 +198,7 @@ class FeeTypes extends Component
     public function render(ResolveFeeRate $resolver): View
     {
         $type = $this->selected !== '' ? FeeType::query()->where('uuid', $this->selected)->first() : null;
-        $classrooms = Classroom::query()->orderBy('name')->pluck('name', 'id');
+        $classrooms = Classroom::query()->ordered()->pluck('name', 'id');
         $dormitories = Dormitory::query()->orderBy('name')->pluck('name', 'id');
 
         $preview = null;

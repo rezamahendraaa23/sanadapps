@@ -116,7 +116,7 @@ class AnnouncementIndex extends Component
     {
         return view('core.announcements.index', [
             'announcements' => Announcement::query()->latest('publish_at')->paginate(20),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'dormitories' => Dormitory::query()->orderBy('name')->pluck('name', 'id')->all(),
             'waEnabled' => app(ModuleRegistry::class)->enabled('notification_wa'),
             'tvEnabled' => app(ModuleRegistry::class)->enabled('masjid_display') && auth()->user()->can('masjid.content'),

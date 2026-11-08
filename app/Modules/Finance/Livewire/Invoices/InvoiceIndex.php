@@ -61,7 +61,7 @@ class InvoiceIndex extends Component
                 ->when(preg_match('/^\d{4}-\d{2}$/', $this->period) === 1, fn (Builder $query) => $query->whereDate('period', $this->period.'-01'))
                 ->latest('id')
                 ->paginate(25),
-            'classrooms' => Classroom::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'classrooms' => Classroom::query()->ordered()->pluck('name', 'id')->all(),
             'hasAny' => Invoice::query()->exists(),
         ]);
     }
