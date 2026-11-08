@@ -34,6 +34,9 @@ class DisplayScreens extends Component
 
     public string $dim_until = '';
 
+    #[Locked]
+    public ?string $editing = null;
+
     public function claim(ManageScreens $screens): void
     {
         $this->resetErrorBag();
@@ -66,6 +69,61 @@ class DisplayScreens extends Component
         $this->reset('code', 'name', 'location', 'dim_from', 'dim_until');
         $this->dispatch('close-modal', 'pasang-layar');
         $this->dispatch('toast', message: 'Layar terpasang. Tampilan muncul dalam beberapa detik.', tone: 'success');
+    }
+
+    public function startClaim(): void
+    {
+        $this->reset('editing', 'code', 'name', 'location', 'profile', 'orientation', 'content_pattern', 'dim_from', 'dim_until');
+        $this->resetErrorBag();
+        $this->dispatch('open-modal', 'pasang-layar');
+    }
+
+    public function editScreen(string $uuid): void
+    {
+        $screen = DisplayScreen::query()->where('uuid', $uuid)->where('is_active', true)->firstOrFail();
+        $this->editing = $screen->uuid;
+        $this->fill([
+            'name' => $screen->name,
+            'location' => (string) $screen->location,
+            'profile' => $screen->profile,
+            'orientation' => $screen->orientation,
+            'content_pattern' => $screen->content_pattern,
+            'dim_from' => (string) ($screen->brightness_schedule['from'] ?? ''),
+            'dim_until' => (string) ($screen->brightness_schedule['until'] ?? ''),
+        ]);
+        $this->resetErrorBag();
+        $this->dispatch('open-modal', 'ubah-layar');
+    }
+
+    /**
+     * Mengubah pengaturan layar terpasang; TV mengambil perubahan dalam beberapa detik tanpa dipasangkan ulang.
+     */
+    public function updateScreen(): void
+    {
+        $screen = DisplayScreen::query()->where('uuid', $this->editing)->where('is_active', true)->firstOrFail();
+        $this->validate([
+            'name' => 'required|string|max:100',
+            'location' => 'nullable|string|max:100',
+            'profile' => 'required|in:masjid,canteen,lobby,announcement_only',
+            'orientation' => 'required|in:landscape,portrait',
+            'content_pattern' => 'required|in:rotate,list',
+            'dim_from' => 'nullable|date_format:H:i|required_with:dim_until',
+            'dim_until' => 'nullable|date_format:H:i|required_with:dim_from',
+        ], [], ['name' => 'nama layar', 'dim_from' => 'redup mulai', 'dim_until' => 'redup selesai']);
+
+        $screen->update([
+            'name' => $this->name,
+            'location' => $this->location ?: null,
+            'profile' => $this->profile,
+            'orientation' => $this->orientation,
+            'content_pattern' => $this->content_pattern,
+            'brightness_schedule' => $this->dim_from ? ['from' => $this->dim_from, 'until' => $this->dim_until, 'level' => 60] : null,
+        ]);
+        $screen->device?->update(['name' => $this->name, 'location' => $this->location ?: null]);
+
+        $this->reset('editing', 'name', 'location', 'dim_from', 'dim_until');
+        $this->dispatch('close-modal', 'ubah-layar');
+        $this->dispatch('toast', message: 'Layar diperbarui. TV menyesuaikan dalam beberapa detik.', tone: 'success');
     }
 
     public function command(string $uuid, string $command, ManageScreens $screens): void

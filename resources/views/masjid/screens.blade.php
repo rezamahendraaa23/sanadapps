@@ -3,7 +3,7 @@
         <p class="text-base text-text-muted">Buka <strong class="break-all text-text">{{ url('/display') }}</strong> di TV atau laptop, lalu pasangkan dengan kode yang muncul.</p>
         <div class="flex flex-wrap gap-2">
             <x-ui.button variant="secondary" icon="download" :href="url('/display?pasang=1')" target="_blank">Pasang Aplikasi Layar</x-ui.button>
-            <x-ui.button icon="plus" x-data x-on:click="$dispatch('open-modal', 'pasang-layar')">Pasang Layar</x-ui.button>
+            <x-ui.button icon="plus" wire:click="startClaim">Pasang Layar</x-ui.button>
         </div>
     </div>
 
@@ -21,6 +21,7 @@
                     <p class="text-sm text-text-muted" aria-live="polite">Perintah terakhir: {{ ['reload' => 'muat ulang', 'test' => 'layar tes', 'dim' => 'redupkan', 'undim' => 'terangkan'][$last->command] ?? $last->command }}, {{ $last->acked_at ? 'sudah diterima layar' : 'menunggu layar' }}.@if ($dimmed[$screen->id] ?? false) Layar sedang redup.@endif</p>
                 @endif
                 <div class="flex flex-wrap gap-2">
+                    <x-ui.button variant="secondary" icon="pencil" wire:click="editScreen('{{ $screen->uuid }}')">Ubah<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                     <x-ui.button variant="secondary" icon="monitor" :href="route('staff.masjid.preview', $screen)" target="_blank">Pratinjau</x-ui.button>
                     <x-ui.button variant="tertiary" wire:click="command('{{ $screen->uuid }}', 'reload')">Muat Ulang<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
                     <x-ui.button variant="tertiary" wire:click="command('{{ $screen->uuid }}', 'test')">Layar Tes<span class="sr-only"> {{ $screen->name }}</span></x-ui.button>
@@ -36,12 +37,33 @@
         @endforelse
     </x-ui.card>
 
+    <x-ui.modal name="ubah-layar" title="Ubah layar" class="md:max-w-2xl">
+        {{-- Hanya dirender saat mengubah, agar id isian tidak kembar dengan popup Pasang Layar. --}}
+        @if ($editing)
+        <form id="form-ubah-layar" wire:submit="updateScreen" class="grid gap-3 sm:grid-cols-2">
+            <x-ui.input label="Nama layar" name="name" required wire:model="name" />
+            <x-ui.input label="Lokasi" name="location" wire:model="location" />
+            <x-ui.select label="Profil" name="profile" :options="$profiles" help="Hanya pengumuman: tanpa jam dan hitung mundur sholat." wire:model="profile" />
+            <x-ui.select label="Orientasi" name="orientation" :options="['landscape' => 'Mendatar', 'portrait' => 'Tegak']" wire:model="orientation" />
+            <x-ui.select label="Pola pengumuman" name="content_pattern" :options="['rotate' => 'Bergilir satu per satu', 'list' => 'Daftar, tiga sekaligus']" wire:model="content_pattern" />
+            <div></div>
+            <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
+            <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
+        </form>
+        @endif
+        <x-slot:footer>
+            <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
+            <x-ui.button type="submit" form="form-ubah-layar" wire:loading.attr="disabled" wire:target="updateScreen">Simpan</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
+
     <x-ui.modal name="pasang-layar" title="Pasang layar baru" class="md:max-w-2xl">
         <ol class="mb-4 flex flex-col gap-1 text-base">
             <li>1. Buka <strong class="break-all">{{ url('/display') }}</strong> di TV atau laptop.</li>
             <li>2. Ketik kode 6 angka yang muncul di layar itu.</li>
         </ol>
         <x-ui.button variant="secondary" icon="monitor" class="mb-4" :href="url('/display')" target="_blank">Buka Layar di Tab Baru</x-ui.button>
+        @unless ($editing)
         <form id="form-pasang" wire:submit="claim" class="grid gap-3 sm:grid-cols-2">
             <x-ui.input label="Kode di layar" name="code" inputmode="numeric" autocomplete="off" required wire:model="code" />
             <x-ui.input label="Nama layar" name="name" required help="Contoh: TV Masjid Utama." wire:model="name" />
@@ -52,6 +74,7 @@
             <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
             <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
         </form>
+        @endunless
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
             <x-ui.button type="submit" form="form-pasang" wire:loading.attr="disabled" wire:target="claim">Pasangkan</x-ui.button>

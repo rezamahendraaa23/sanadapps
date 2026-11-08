@@ -438,3 +438,18 @@ describe('konten fleksibel', function () {
         $this->actingAs($this->admin)->get(route('staff.cards.devices'))->assertOk()->assertDontSee('TV Rahasia');
     });
 });
+
+it('layar terpasang bisa diubah tanpa dipasangkan ulang; manifest ikut berubah', function () {
+    [$screen] = pairScreen(['name' => 'TV Lama']);
+    $before = app(DisplayManifest::class)->build($screen)['version'];
+    $this->actingAs($this->admin);
+
+    Livewire::test(DisplayScreens::class)->call('editScreen', $screen->uuid)->assertSet('name', 'TV Lama')
+        ->set('name', 'TV Aula')->set('profile', 'announcement_only')->set('dim_from', '22:00')->call('updateScreen')->assertHasErrors('dim_until')
+        ->set('dim_until', '04:00')->call('updateScreen')->assertHasNoErrors()->assertSee('TV Aula');
+
+    $screen->refresh();
+    expect($screen->profile)->toBe('announcement_only')->and($screen->brightness_schedule['from'])->toBe('22:00')
+        ->and($screen->device->name)->toBe('TV Aula')
+        ->and(app(DisplayManifest::class)->build($screen)['version'])->not->toBe($before);
+});
