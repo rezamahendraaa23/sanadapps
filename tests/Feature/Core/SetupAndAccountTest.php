@@ -8,6 +8,7 @@ use App\Modules\Core\Livewire\Staff\NotificationBell;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Dormitory;
+use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Teacher;
@@ -147,4 +148,17 @@ it('kesehatan sistem menampilkan dan mengulang job gagal, hanya untuk admin', fu
 
     $this->actingAs(tap(User::create(['name' => 'B', 'email' => 'b@uji.test', 'type' => 'staff']))->assignRole('bendahara'));
     $this->get(route('staff.settings.system'))->assertForbidden();
+});
+
+it('pencarian cepat juga menemukan menu, wali, dan kata lain untuk menu', function () {
+    Guardian::create(['name' => 'Bapak Hasan', 'phone_wa' => '6281299990000']);
+    Livewire::test(GlobalSearch::class)
+        ->set('query', 'santri')->assertSee('Santri')
+        ->set('query', 'orang tua')->assertSee('Wali')
+        ->set('query', 'hasan')->assertSee('Bapak Hasan')
+        ->set('query', '99990000')->assertSee('Bapak Hasan')
+        ->set('query', 'zzzz')->assertSee('Tidak ada yang cocok.');
+
+    $this->actingAs(tap(User::create(['name' => 'K', 'email' => 'k3@uji.test', 'type' => 'staff']))->assignRole('kasir'));
+    Livewire::test(GlobalSearch::class)->set('query', 'tagihan')->assertDontSee('Tagihan')->set('query', 'hasan')->assertDontSee('Bapak Hasan');
 });
