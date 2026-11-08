@@ -169,6 +169,12 @@ body.pointer { cursor: auto; }
 .onode span { margin-top: 0.8rem; font-family: 'Fredoka', sans-serif; font-size: 3rem; font-weight: 600; line-height: 1.15; }
 .onode.d0 b { background: var(--color-primary); color: #fff; }
 
+/* Tema malam: lingkaran emas muda butuh huruf gelap; pil di latar gelap diberi bingkai agar terlihat. */
+.night .onode.d1 i { color: #13201B; }
+.night .chip, .night ~ .preview-tag, .night .preview-tag { border: 0.3rem solid rgba(242,207,126,0.45); }
+.preview-tag { border: 1px solid rgba(242,207,126,0.45); }
+.night .chip { background: #0F3A2D; }
+
 /* Sholat berlangsung: hitam total, tanpa tulisan, agar khusyuk. */
 .praying { background: #000; }
 
