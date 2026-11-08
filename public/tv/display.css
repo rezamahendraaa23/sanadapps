@@ -136,6 +136,12 @@ body.pointer { cursor: auto; }
 .chip b { margin-left: 2.4rem; font-family: 'Nunito', sans-serif; font-size: 3rem; font-weight: 800; color: #F2CF7E; }
 .chip span:last-child:not(:first-child) { margin-left: 1.2rem; font-size: 3.6rem; font-weight: 600; color: #F2CF7E; }
 
+/* Tema siang: aksen emasnya gelap, jadi tulisan di atasnya putih agar tidak nyaru. */
+.day .next, .day .slot .kind, .day .slotime.is-next, .day .slotime.is-next b, .day .slotime.is-next span, .day .brand .mark, .day .whole .stage .kind { color: #fff; }
+.day .slotime.is-next .ico { stroke: #fff; }
+.day .brand .mark svg { fill: #fff; }
+.day .slot .kind i { filter: invert(1); }
+
 /* Sholat berlangsung: hitam total, tanpa tulisan, agar khusyuk. */
 .praying { background: #000; }
 
@@ -150,7 +156,7 @@ body.pointer { cursor: auto; }
 .test { background: repeating-linear-gradient(45deg, #0B5D45, #0B5D45 8rem, #F4F1E8 8rem, #F4F1E8 16rem); }
 .test .box { background: #fff; color: #000; padding: 4rem; font-size: 6rem; font-weight: 800; }
 
-#pasang { position: fixed; left: 50%; bottom: 4rem; z-index: 50; transform: translateX(-50%); max-width: 90%; text-align: center; font-family: 'Nunito', sans-serif; }
+#pasang { position: fixed; left: 50%; top: 2rem; z-index: 50; transform: translateX(-50%); max-width: 90%; text-align: center; font-family: 'Nunito', sans-serif; }
 #pasang button { min-height: 44px; padding: 1.4rem 3.6rem; border: 0; border-radius: 99rem; background: #F2CF7E; color: #13201B; font: inherit; font-size: max(16px, 2.8rem); font-weight: 800; cursor: pointer; }
 #pasang button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 #pasang p { margin: 0; padding: 1.4rem 3rem; border-radius: 2rem; background: rgba(7,31,24,0.92); color: #fff; font-size: max(14px, 2.2rem); font-weight: 700; }
