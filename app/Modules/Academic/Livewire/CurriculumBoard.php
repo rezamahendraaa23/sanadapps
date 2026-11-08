@@ -7,14 +7,18 @@ use App\Modules\Academic\Models\Curriculum;
 use App\Modules\Academic\Models\CurriculumPhase;
 use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Support\AcademicException;
+use App\Modules\Academic\Support\CertificateDesigns;
 use App\Modules\Core\Models\Classroom;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 /**
  * Kurikulum berbasis fase: susun fase, tempatkan rombongan, evaluasi, sertifikat, naik fase.
@@ -23,7 +27,14 @@ use Livewire\Component;
 #[Title('Kurikulum')]
 class CurriculumBoard extends Component
 {
-    private const TABS = ['kurikulum', 'rombongan', 'evaluasi'];
+    use WithFileUploads;
+
+    public const MAX_LOGOS = 4;
+
+    /** @var TemporaryUploadedFile|null */
+    public $newLogo = null;
+
+    private const TABS = ['kurikulum', 'rombongan', 'evaluasi', 'desain'];
 
     #[Url(as: 'tab', except: 'kurikulum')]
     public string $tab = 'kurikulum';
@@ -54,6 +65,15 @@ class CurriculumBoard extends Component
 
     public string $p_description = '';
 
+    public string $p_design = '';
+
+    public string $p_title_ar = '';
+
+    // Desain sertifikat
+    public string $school_name_ar = '';
+
+    public string $default_design = '';
+
     // Rombongan
     public string $a_classroom = '';
 
@@ -71,6 +91,9 @@ class CurriculumBoard extends Component
     {
         abort_unless(in_array($this->tab, self::TABS, true), 404);
         $this->a_start = now(config('sanad.display_timezone'))->toDateString();
+        $settings = CertificateDesigns::settings();
+        $this->school_name_ar = $settings['school_name_ar'];
+        $this->default_design = $settings['default_design'];
     }
 
     public function selectTab(string $tab): void
@@ -91,7 +114,7 @@ class CurriculumBoard extends Component
     {
         $this->phaseCurriculum = Curriculum::query()->where('uuid', $curriculumUuid)->firstOrFail()->uuid;
         $this->editingPhase = null;
-        $this->reset('p_name', 'p_code', 'p_description', 'p_certificate_title');
+        $this->reset('p_name', 'p_code', 'p_description', 'p_certificate_title', 'p_design', 'p_title_ar');
         $this->fill(['p_weeks' => '12', 'p_min' => '70', 'p_certificate' => true]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-fase');
@@ -105,6 +128,7 @@ class CurriculumBoard extends Component
         $this->fill([
             'p_name' => $phase->name, 'p_code' => $phase->code, 'p_weeks' => (string) $phase->duration_weeks, 'p_min' => (string) (float) $phase->min_score,
             'p_certificate' => $phase->has_certificate, 'p_certificate_title' => (string) $phase->certificate_title, 'p_description' => (string) $phase->description,
+            'p_design' => (string) $phase->certificate_design, 'p_title_ar' => (string) $phase->certificate_title_ar,
         ]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-fase');
@@ -119,6 +143,8 @@ class CurriculumBoard extends Component
             'p_min' => 'required|numeric|min:0|max:100',
             'p_certificate_title' => 'nullable|string|max:100',
             'p_description' => 'nullable|string|max:500',
+            'p_design' => 'nullable|in:'.implode(',', array_keys(CertificateDesigns::ALL)),
+            'p_title_ar' => 'nullable|string|max:120',
         ], ['p_code.regex' => 'Kode hanya huruf, angka, atau tanda hubung.'], ['p_name' => 'nama fase', 'p_code' => 'kode', 'p_weeks' => 'durasi', 'p_min' => 'nilai lulus']);
 
         $curriculum = Curriculum::query()->where('uuid', $this->phaseCurriculum)->firstOrFail();
@@ -130,10 +156,61 @@ class CurriculumBoard extends Component
             'has_certificate' => $this->p_certificate,
             'certificate_title' => $this->p_certificate_title ?: null,
             'description' => $this->p_description ?: null,
+            'certificate_design' => $this->p_design ?: null,
+            'certificate_title_ar' => trim($this->p_title_ar) ?: null,
         ], $this->editingPhase ? CurriculumPhase::query()->where('uuid', $this->editingPhase)->where('curriculum_id', $curriculum->id)->firstOrFail() : null);
 
         $this->dispatch('close-modal', 'form-fase');
         $this->dispatch('toast', message: 'Fase tersimpan.', tone: 'success');
+    }
+
+    public function saveDesignSettings(): void
+    {
+        $this->validate(['school_name_ar' => 'nullable|string|max:150', 'default_design' => 'required|in:'.implode(',', array_keys(CertificateDesigns::ALL))], [], ['school_name_ar' => 'nama pesantren dalam bahasa Arab']);
+        CertificateDesigns::save(['school_name_ar' => trim($this->school_name_ar), 'default_design' => $this->default_design]);
+        $this->dispatch('toast', message: 'Pengaturan sertifikat tersimpan.', tone: 'success');
+    }
+
+    public function addLogo(): void
+    {
+        $this->validate(['newLogo' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048'], [], ['newLogo' => 'logo']);
+        $logos = CertificateDesigns::settings()['logos'];
+
+        if (count($logos) >= self::MAX_LOGOS) {
+            $this->addError('newLogo', 'Paling banyak '.self::MAX_LOGOS.' logo.');
+
+            return;
+        }
+
+        CertificateDesigns::save(['logos' => [...$logos, $this->newLogo->store('certificate-logos', 'local')]]);
+        $this->reset('newLogo');
+        $this->dispatch('toast', message: 'Logo ditambahkan ke sertifikat.', tone: 'success');
+    }
+
+    public function removeLogo(int $index): void
+    {
+        $logos = CertificateDesigns::settings()['logos'];
+        abort_unless(isset($logos[$index]), 404);
+        Storage::disk('local')->delete($logos[$index]);
+        unset($logos[$index]);
+        CertificateDesigns::save(['logos' => array_values($logos)]);
+    }
+
+    public function moveLogo(int $index, int $direction): void
+    {
+        $logos = CertificateDesigns::settings()['logos'];
+        $target = $index + ($direction < 0 ? -1 : 1);
+        abort_unless(isset($logos[$index], $logos[$target]), 404);
+        [$logos[$index], $logos[$target]] = [$logos[$target], $logos[$index]];
+        CertificateDesigns::save(['logos' => $logos]);
+    }
+
+    public function useDesign(string $key): void
+    {
+        abort_unless(isset(CertificateDesigns::ALL[$key]), 404);
+        $this->default_design = $key;
+        CertificateDesigns::save(['default_design' => $key]);
+        $this->dispatch('toast', message: CertificateDesigns::ALL[$key]['name'].' jadi desain bawaan.', tone: 'success');
     }
 
     public function movePhase(string $uuid, int $direction, ManagePhases $phases): void
@@ -258,6 +335,8 @@ class CurriculumBoard extends Component
             'next' => $next,
             'targets' => $next ? Classroom::query()->where('phase_id', $next->id)->orderBy('name')->pluck('name', 'uuid')->all() : [],
             'today' => now(config('sanad.display_timezone'))->toDateString(),
+            'designs' => CertificateDesigns::ALL,
+            'logoCount' => count(CertificateDesigns::settings()['logos']),
         ]);
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsurePreviewAllowed;
 use App\Modules\Academic\Actions\BuildReportCardPdf;
 use App\Modules\Academic\Http\AttendanceCameraController;
+use App\Modules\Academic\Http\PhaseDocuments;
 use App\Modules\Academic\Livewire\AcademicMasters;
 use App\Modules\Academic\Livewire\AttendanceRecap;
 use App\Modules\Academic\Livewire\AttendanceReview;
@@ -16,7 +17,6 @@ use App\Modules\Academic\Livewire\ReportCards;
 use App\Modules\Academic\Livewire\ScheduleBuilder;
 use App\Modules\Academic\Livewire\StudentAcademics;
 use App\Modules\Academic\Livewire\TeacherHome;
-use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Models\ReportCard;
 use App\Modules\Academic\Support\AttendanceStats;
 use App\Modules\Admission\Http\ApplicantFileController;
@@ -286,29 +286,10 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
 
     Route::prefix('kurikulum')->name('curriculum.')->middleware(['module:curriculum', 'can:academic.manage'])->group(function (): void {
         Route::get('/', CurriculumBoard::class)->name('index');
-        // Rapor fase dan sertifikat satu rombongan, atau satu santri bila ada ?santri=uuid.
-        foreach (['rapor' => ['report', 'academic.pdf.phase-report', 'A4', 'rapor-fase'], 'sertifikat' => ['certificate', 'academic.pdf.phase-certificate', 'A4', 'sertifikat']] as $segment => [$name, $view, $format, $file]) {
-            Route::get('/{classroom}/'.$segment, function (Classroom $classroom, Request $request, PdfRenderer $pdf, SchoolIdentity $identity) use ($name, $view, $format, $file) {
-                abort_if($classroom->phase_id === null, 404);
-                $results = PhaseResult::query()->with(['student', 'classroom', 'phase.curriculum'])
-                    ->where('classroom_id', $classroom->id)->where('phase_id', $classroom->phase_id)->where('started_on', $classroom->phase_started_on)
-                    ->when($name === 'certificate', fn ($query) => $query->whereNotNull('certificate_no'))
-                    ->when(Str::isUuid((string) $request->query('santri')), fn ($query) => $query->whereHas('student', fn ($s) => $s->where('uuid', $request->query('santri'))))
-                    ->get()->sortBy('student.name')->values();
-                abort_if($results->isEmpty(), 404);
-                $settings = LetterSettings::all();
-                $logoPath = SchoolProfile::query()->value('logo_path');
-                $logoData = $logoPath && Storage::disk('public')->exists($logoPath) ? 'data:'.Storage::disk('public')->mimeType($logoPath).';base64,'.base64_encode(Storage::disk('public')->get($logoPath)) : null;
-
-                return response($pdf->render(view($view, [
-                    'results' => $results, 'identity' => $identity, 'logo' => $logoData,
-                    'signerName' => $settings['signer_name'], 'signerTitle' => $settings['signer_title'], 'city' => $settings['city'],
-                ])->render(), $format), 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="'.$file.'-'.Str::slug($classroom->name).'.pdf"',
-                ]);
-            })->name($name);
-        }
+        Route::get('/desain/{design}', [PhaseDocuments::class, 'preview'])->name('design');
+        Route::get('/logo/{index}', [PhaseDocuments::class, 'logo'])->whereNumber('index')->name('logo');
+        Route::get('/{classroom}/rapor', [PhaseDocuments::class, 'report'])->name('report');
+        Route::get('/{classroom}/sertifikat', [PhaseDocuments::class, 'certificate'])->name('certificate');
     });
 
     Route::middleware('module:grading')->group(function (): void {

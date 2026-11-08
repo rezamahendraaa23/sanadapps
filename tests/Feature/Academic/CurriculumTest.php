@@ -10,6 +10,7 @@ use App\Modules\Academic\Models\GradeComponent;
 use App\Modules\Academic\Models\PhaseResult;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Academic\Support\AcademicException;
+use App\Modules\Academic\Support\CertificateDesigns;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Module;
@@ -20,6 +21,8 @@ use App\Modules\Core\Support\ModuleRegistry;
 use App\Support\Pdf\PdfRenderer;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -139,4 +142,57 @@ it('layar kurikulum: fase baru dengan validasi; ustadz tidak boleh; modul mati m
     Module::where('module_key', 'curriculum')->update(['is_enabled' => false]);
     app(ModuleRegistry::class)->forget();
     $this->actingAs($this->admin)->get(route('staff.curriculum.index'))->assertForbidden();
+});
+
+it('sepuluh desain sertifikat bisa dipratinjau; desain fase dan nama Arab dipakai di PDF beserta fontnya', function () {
+    $this->actingAs($this->admin);
+    foreach (array_keys(CertificateDesigns::ALL) as $key) {
+        $this->get(route('staff.curriculum.design', $key))->assertOk()->assertSee('d-'.$key, false)->assertSee('شَهَادَة');
+    }
+    $this->get(route('staff.curriculum.design', 'tidak-ada'))->assertNotFound();
+
+    Livewire::test(CurriculumBoard::class, ['tab' => 'desain'])->assertSee('Kufi Modern')
+        ->set('school_name_ar', 'مَعْهَدُ الْمُخْتَارِ')->call('saveDesignSettings')->assertHasNoErrors()
+        ->call('useDesign', 'tinta')->assertSet('default_design', 'tinta');
+
+    phaseAssess($this, $this->fiqih, $this->final, '2026-10-20', [$this->ahmad->id => '90', $this->budi->id => '90']);
+    $phases = app(ManagePhases::class);
+    $phases->evaluate($this->room);
+    $phases->decide($this->room, PhaseResult::pluck('uuid')->mapWithKeys(fn ($uuid) => [$uuid => 'passed'])->all(), $this->admin);
+    $phases->certify($this->room);
+
+    $captured = new class implements PdfRenderer
+    {
+        public string $html = '';
+
+        public function render(string $html, string $format = 'A4'): string
+        {
+            $this->html = $html;
+
+            return '%PDF';
+        }
+    };
+    $this->app->instance(PdfRenderer::class, $captured);
+
+    $this->get(route('staff.curriculum.certificate', $this->room))->assertOk();
+    expect($captured->html)->toContain('d-tinta')->toContain('مَعْهَدُ الْمُخْتَارِ')->toContain("font-family:'Aref Ruqaa'")->toContain('data:font/woff2;base64,');
+
+    $this->intro->update(['certificate_design' => 'kufi', 'certificate_title_ar' => 'شَهَادَةُ التَّعَارُفِ']);
+    $this->get(route('staff.curriculum.certificate', $this->room).'?santri='.$this->ahmad->uuid)->assertOk();
+    expect($captured->html)->toContain('d-kufi')->toContain('شَهَادَةُ التَّعَارُفِ')->toContain('Ahmad')->not->toContain('Budi');
+});
+
+it('logo sertifikat bisa lebih dari satu, paling banyak empat, dan ikut tercetak', function () {
+    Storage::fake('local');
+    $this->actingAs($this->admin);
+    $page = Livewire::test(CurriculumBoard::class, ['tab' => 'desain']);
+    foreach (range(1, 4) as $i) {
+        $page->set('newLogo', UploadedFile::fake()->image("logo{$i}.png", 200, 200))->call('addLogo')->assertHasNoErrors();
+    }
+    $page->set('newLogo', UploadedFile::fake()->image('logo5.png', 200, 200))->call('addLogo')->assertHasErrors('newLogo')
+        ->call('moveLogo', 0, 1)->call('removeLogo', 3);
+
+    expect(CertificateDesigns::settings()['logos'])->toHaveCount(3)->and(CertificateDesigns::logoData())->toHaveCount(3);
+    $this->get(route('staff.curriculum.logo', 0))->assertOk();
+    $this->get(route('staff.curriculum.design', 'mihrab'))->assertOk()->assertSee('class="logos', false);
 });
