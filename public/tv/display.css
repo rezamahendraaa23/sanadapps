@@ -175,8 +175,11 @@ body.pointer { cursor: auto; }
 .preview-tag { border: 1px solid rgba(242,207,126,0.45); }
 .night .chip { background: #0F3A2D; }
 
-/* Sholat berlangsung: hitam total, tanpa tulisan, agar khusyuk. */
-.praying { background: #000; }
+/* Sholat berlangsung: gelap dan tenang, satu baris redup di tengah. */
+#layar.praying { background: #000; color: rgba(255,255,255,0.4); }
+.praying .box { text-align: center; }
+.praying .pray-title { margin: 0; font-family: 'Fredoka', sans-serif; font-size: 6rem; font-weight: 500; }
+.praying .pray-note { margin: 2.4rem 0 0; font-size: 3rem; font-weight: 600; color: rgba(255,255,255,0.28); }
 
 .emergency { background: #7F1D1D; color: #fff; }
 .emergency .box { text-align: center; }

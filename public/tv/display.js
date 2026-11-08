@@ -353,7 +353,8 @@
         var mode = manifest.screen.profile === 'announcement_only' ? { name: 'normal' } : currentMode(t, row);
 
         if (mode.name === 'praying') {
-            paint('praying', 'praying', '');
+            // Gelap dan tenang agar khusyuk, dengan satu baris redup supaya jelas layar tidak mati.
+            paint('praying' + mode.prayer, 'praying', '<div class="full"><div class="box"><p class="pray-title">Sholat ' + escapeHtml(prayerLabel(mode.prayer, t.weekday).replace(/^Sholat /, '')) + ' sedang berlangsung</p><p class="pray-note">Luruskan dan rapatkan shaf. Matikan nada HP.</p></div></div>');
             return;
         }
         if (mode.name === 'before_adhan' || mode.name === 'before_iqamah') {
@@ -513,7 +514,7 @@
     }
     function installBar() {
         var bar = document.getElementById('pasang');
-        var show = !isInstalled() && (wantsInstall || !manifest || Date.now() < pointerUntil) && (installEvent || wantsInstall);
+        var show = !isInstalled() && root.className.indexOf('praying') < 0 && (wantsInstall || !manifest || Date.now() < pointerUntil) && (installEvent || wantsInstall);
         document.body.className = Date.now() < pointerUntil || !manifest ? 'pointer' : '';
         if (!show) {
             if (bar) { bar.parentNode.removeChild(bar); }

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Layar Masjid</title>
     <link rel="manifest" href="{{ asset('tv/manifest.webmanifest') }}">
-    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=14">
+    <link rel="stylesheet" href="{{ asset('tv/display.css') }}?v=15">
     @if ($brandCss = app(\App\Support\SchoolIdentity::class)->brandCss())
         <style>{!! $brandCss !!}</style>
     @endif
@@ -22,6 +22,6 @@
             preview: {!! json_encode($preview) !!}
         };
     </script>
-    <script src="{{ asset('tv/display.js') }}?v=14"></script>
+    <script src="{{ asset('tv/display.js') }}?v=15"></script>
 </body>
 </html>

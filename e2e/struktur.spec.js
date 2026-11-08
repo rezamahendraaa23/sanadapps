@@ -41,3 +41,32 @@ test('admin menyusun struktur dari kotak atasan, garis tersambung sendiri', asyn
     await expect(page.getByText('Belum diisi')).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/struktur-1440.png`, fullPage: true });
 });
+
+test('lingkaran foto tidak menembus header saat digulir', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 500 });
+    await page.goto('/masuk?sebagai=staf');
+    await pageReady(page);
+    await page.getByLabel('Email').fill('admin@uji.test');
+    await page.getByLabel('Sandi', { exact: true }).fill('sandi-uji-admin');
+    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+    await expect(page).toHaveURL(/\/panel$/);
+    await page.goto('/panel/struktur?bagan=kesantrian');
+    await pageReady(page);
+    // Halaman harus cukup panjang untuk digulir.
+    for (const [parent, title] of [['Rois', 'Tingkat Dua'], ['Tingkat Dua', 'Tingkat Tiga'], ['Tingkat Tiga', 'Tingkat Empat']]) {
+        await page.getByRole('button', { name: `Tambah bawahan ${parent}` }).first().click();
+        const form = page.getByRole('dialog', { name: 'Tambah jabatan' });
+        await form.getByLabel('Jabatan').fill(title);
+        await form.getByRole('button', { name: 'Simpan' }).click();
+        await expect(form).toBeHidden();
+    }
+    // Gulir sampai lingkaran foto teratas tepat di balik header, lalu periksa titik itu milik header.
+    const header = await page.locator('header').first().boundingBox();
+    const avatar = await page.locator('.org-tree article > span').first().boundingBox();
+    await page.mouse.move(900, 400);
+    await page.mouse.wheel(0, avatar.y + avatar.height / 2 - (header.y + header.height / 2));
+    await page.waitForTimeout(400);
+    const spot = await page.locator('.org-tree article > span').first().boundingBox();
+    const topElement = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('header') !== null, [spot.x + spot.width / 2, spot.y + spot.height / 2]);
+    expect(topElement).toBe(true);
+});

@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-4">
     <style>
         /* Bagan pohon: garis penghubung lembut dari atasan ke bawahan. */
-        .org-tree { overflow-x: auto; padding: 0.25rem 0 1.5rem }
+        .org-tree { position: relative; isolation: isolate; overflow-x: auto; padding: 0.75rem 0 1.5rem }
         .org-tree ul { position: relative; display: flex; justify-content: center; margin: 0; padding: 1.75rem 0 0 }
         .org-tree > ul { padding-top: 0; min-width: max-content; margin: 0 auto }
         .org-tree li { position: relative; display: flex; flex-direction: column; align-items: center; padding: 1.75rem 0.5rem 0; list-style: none }
@@ -32,7 +32,7 @@
     </div>
 
     <x-ui.card>
-        <p class="text-sm text-text-muted">Tekan <strong>+</strong> di kotak mana saja untuk menambah bawahannya. Garis penghubung tersambung sendiri.</p>
+        <p class="text-sm text-text-muted">Tekan <strong>+</strong> di kotak mana saja untuk menambah bawahannya. Garis penghubung tersambung sendiri. Bagan yang lebar bisa digeser ke samping.</p>
         @if ($tree === [])
             <x-ui.empty-state icon="network" message="Bagan masih kosong. Mulai dari Tambah Puncak." class="py-6" />
         @else
