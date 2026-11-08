@@ -16,3 +16,12 @@ it('mengabaikan header proxy palsu dari alamat luar', function () {
         ->get('/_uji-proxy', ['X-Forwarded-Proto' => 'https', 'X-Forwarded-Host' => 'jahat.example'])
         ->assertJson(['secure' => false])->assertJsonMissing(['url' => 'https://jahat.example/masuk']);
 });
+
+it('mempercayai proxy penyedia bila TRUSTED_PROXIES diisi bintang, juga setelah config di-cache', function () {
+    config(['sanad.trusted_proxies' => '*']);
+    (new App\Providers\AppServiceProvider(app()))->boot();
+
+    $this->withServerVariables(['REMOTE_ADDR' => '10.20.30.40'])
+        ->get('/_uji-proxy', ['X-Forwarded-Proto' => 'https', 'X-Forwarded-Host' => 'sanad.instabox.sh'])
+        ->assertJson(['secure' => true, 'url' => 'https://sanad.instabox.sh/masuk']);
+});

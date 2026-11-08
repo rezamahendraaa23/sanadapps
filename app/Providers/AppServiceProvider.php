@@ -29,6 +29,7 @@ use App\Modules\Payment\Support\MidtransGateway;
 use App\Support\Pdf\BrowsershotPdfRenderer;
 use App\Support\Pdf\PdfRenderer;
 use App\Support\SchoolIdentity;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -58,6 +59,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $proxies = trim((string) config('sanad.trusted_proxies'));
+        TrustProxies::at($proxies === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $proxies)))));
+
         SchoolProfile::saved(fn () => app(SchoolIdentity::class)->forget());
         Paginator::defaultView('components.ui.pagination');
         Event::subscribe(SendFinanceNotifications::class);

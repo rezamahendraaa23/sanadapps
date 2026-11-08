@@ -34,6 +34,10 @@ return [
         'keep_days' => (int) env('SANAD_BACKUP_KEEP_DAYS', 14),
     ],
 
+    // Proxy yang boleh menyatakan pengunjung datang lewat HTTPS. Bawaan: hanya mesin ini (Cloudflare Tunnel, Nginx).
+    // Isi "*" bila aplikasi di belakang proxy penyedia (misalnya port publik InstaBox) dan port aplikasi tidak bisa diakses langsung.
+    'trusted_proxies' => env('TRUSTED_PROXIES', '127.0.0.1,::1'),
+
     'pdf' => [
         'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
         'no_sandbox' => env('BROWSERSHOT_NO_SANDBOX', false),

@@ -26,9 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [ApplySchoolTimezone::class]);
         $middleware->append(SecurityHeaders::class);
-        // Proxy di mesin yang sama (Cloudflare Tunnel, Nginx) memberi tahu bahwa pengunjung datang lewat HTTPS.
-        // Hanya alamat lokal yang dipercaya, kecuali TRUSTED_PROXIES diisi untuk proxy di mesin lain.
-        $middleware->trustProxies(at: array_filter(explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1,::1'))));
+        // Daftar proxy tepercaya dibaca dari config('sanad.trusted_proxies') di AppServiceProvider, agar tetap berlaku setelah config:cache.
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => StartSession::homeFor($request->user()));
