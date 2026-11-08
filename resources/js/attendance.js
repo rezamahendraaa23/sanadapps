@@ -210,17 +210,27 @@ export function registerAttendanceCamera(Alpine) {
         ready: false,
         busy: false,
         error: '',
-        notice: config.browser ? 'Menyiapkan pengenal wajah…' : '',
+        notice: config.browser ? 'Menyiapkan pengenal wajah...' : '',
+        // Scan otomatis (mesin di browser): arahan, wajah sudah pas atau belum, dan arah toleh langkah kedua.
+        prompt: '',
+        aligned: false,
+        scanning: false,
+        firstSide: 0,
+        steady: 0,
+        alive: true,
 
         async init() {
+            let stream;
             try {
-                const stream = await openCamera(this.$refs.video);
-                document.addEventListener('livewire:navigating', () => stream.getTracks().forEach((track) => track.stop()), { once: true });
+                stream = await openCamera(this.$refs.video);
             } catch {
                 this.error = 'Kamera tidak bisa dibuka.';
                 this.notice = '';
                 return;
             }
+            const stop = () => { this.alive = false; stream.getTracks().forEach((track) => track.stop()); };
+            document.addEventListener('livewire:navigating', stop, { once: true });
+            window.addEventListener('pagehide', stop, { once: true });
 
             if (config.browser) {
                 try {
@@ -233,6 +243,59 @@ export function registerAttendanceCamera(Alpine) {
             }
 
             this.ready = true;
+            if (config.browser) this.scan();
+        },
+
+        /**
+         * Langkah ke-n: 0 lurus, 1 toleh ke satu sisi, 2 toleh ke sisi lain, selebihnya lurus lagi.
+         */
+        stepFor(index) {
+            return [
+                { text: 'Lihat lurus ke kamera', ok: (face) => Math.abs(face.yaw) < 0.12 },
+                { text: 'Tolehkan kepala sedikit ke samping', ok: (face) => Math.abs(face.yaw) > 0.18 },
+                { text: 'Sekarang toleh ke sisi lainnya', ok: (face) => face.yaw * this.firstSide < 0 && Math.abs(face.yaw) > 0.18 },
+            ][index] ?? { text: 'Lihat lurus ke kamera', ok: (face) => Math.abs(face.yaw) < 0.12 };
+        },
+
+        async scan() {
+            if (this.scanning) return;
+            this.scanning = true;
+            this.steady = 0;
+
+            while (this.alive && this.scanning && this.shots.length < this.needed) {
+                const step = this.stepFor(this.shots.length);
+                // Lewat window.sanadFace agar bisa diganti wajah tiruan saat pengujian.
+                const face = await window.sanadFace.describe(this.$refs.video).catch(() => null);
+
+                if (! face) {
+                    [this.prompt, this.aligned, this.steady] = ['Arahkan wajah ke dalam lingkaran', false, 0];
+                } else if (face.width < 0.22) {
+                    [this.prompt, this.aligned, this.steady] = ['Dekatkan wajah ke kamera', false, 0];
+                } else if (! step.ok(face)) {
+                    [this.prompt, this.aligned, this.steady] = [step.text, false, 0];
+                } else {
+                    // Pose harus bertahan dua kali periksa berturut-turut agar foto tidak buram.
+                    this.aligned = true;
+                    this.steady++;
+                    this.prompt = 'Tahan sebentar...';
+                    if (this.steady >= 2) {
+                        if (this.shots.length === 1) this.firstSide = Math.sign(face.yaw);
+                        this.shots.push(face.descriptor);
+                        this.steady = 0;
+                        this.prompt = this.shots.length < this.needed ? 'Bagus. ' + this.stepFor(this.shots.length).text : 'Selesai, menyimpan...';
+                        await pause(700);
+                    }
+                }
+                await pause(200);
+            }
+
+            this.scanning = false;
+            if (this.alive && this.shots.length >= this.needed) this.send();
+        },
+
+        restart() {
+            [this.shots, this.firstSide, this.notice] = [[], 0, ''];
+            this.scan();
         },
 
         async shoot() {
@@ -251,7 +314,7 @@ export function registerAttendanceCamera(Alpine) {
 
         send() {
             this.busy = true;
-            const done = () => { this.shots = []; this.busy = false; };
+            const done = () => { this.shots = []; this.busy = false; this.prompt = ''; this.aligned = false; };
 
             if (config.browser) {
                 this.$wire.enrollDescriptors(this.shots).then(done);

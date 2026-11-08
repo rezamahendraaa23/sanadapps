@@ -50,14 +50,30 @@
                     <div x-show="error" x-cloak role="alert" class="rounded-control bg-warning-soft p-3 text-base"><span x-text="error"></span> @unless ($runsInBrowser) Pilih foto dari berkas di bawah. @endunless</div>
                     <div x-show="!error" class="relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-card bg-text">
                         <video x-ref="video" autoplay playsinline muted class="size-full -scale-x-100 object-cover" aria-label="Kamera"></video>
-                        <div class="pointer-events-none absolute inset-[12%] rounded-[50%] border-2 border-on-primary"></div>
+                        {{-- Bingkai wajah berubah hijau saat posisi sudah pas; foto diambil otomatis. --}}
+                        <div class="pointer-events-none absolute inset-[12%] rounded-[50%] border-4 transition-colors" :class="aligned ? 'border-success' : 'border-on-primary'"></div>
                     </div>
-                    <p class="text-center text-base" aria-live="polite"><span class="font-tabular font-semibold" x-text="shots.length"></span> dari <span x-text="needed"></span> foto. Minta santri menoleh sedikit tiap foto, di tempat terang.</p>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <x-ui.button icon="camera" x-show="!error" x-bind:disabled="busy || !ready" x-on:click="shoot()">Ambil Foto</x-ui.button>
-                        <x-ui.button variant="secondary" x-show="shots.length > 0" x-on:click="shots = []">Ulangi</x-ui.button>
-                        <x-ui.button x-show="shots.length >= needed" x-bind:disabled="busy" x-on:click="send()">Simpan Wajah</x-ui.button>
-                    </div>
+                    @if ($runsInBrowser)
+                        <div class="flex flex-col items-center gap-2" aria-live="polite">
+                            <p class="font-display min-h-8 text-center text-xl font-semibold" x-text="prompt || (ready ? '' : 'Menyiapkan kamera...')"></p>
+                            <div class="flex gap-2" role="img" :aria-label="shots.length + ' dari ' + needed + ' foto'">
+                                <template x-for="i in needed" :key="i">
+                                    <span class="size-3 rounded-full transition-colors" :class="i <= shots.length ? 'bg-success' : 'bg-border'"></span>
+                                </template>
+                            </div>
+                            <p class="text-center text-sm text-text-muted">Foto diambil otomatis saat wajah pas. Cari tempat terang, minta santri melepas masker atau kacamata hitam.</p>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <x-ui.button variant="secondary" icon="rotate-ccw" x-show="ready && !scanning && !busy" x-on:click="restart()">Scan Ulang</x-ui.button>
+                        </div>
+                    @else
+                        <p class="text-center text-base" aria-live="polite"><span class="font-tabular font-semibold" x-text="shots.length"></span> dari <span x-text="needed"></span> foto. Minta santri menoleh sedikit tiap foto, di tempat terang.</p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <x-ui.button icon="camera" x-show="!error" x-bind:disabled="busy || !ready" x-on:click="shoot()">Ambil Foto</x-ui.button>
+                            <x-ui.button variant="secondary" x-show="shots.length > 0" x-on:click="shots = []">Ulangi</x-ui.button>
+                            <x-ui.button x-show="shots.length >= needed" x-bind:disabled="busy" x-on:click="send()">Simpan Wajah</x-ui.button>
+                        </div>
+                    @endif
                     <p x-show="notice" x-cloak role="status" class="text-center text-base font-semibold" x-text="notice"></p>
                     @unless ($runsInBrowser)
                     <div class="flex flex-col gap-1">
