@@ -154,9 +154,7 @@
             @if ($logoCount < \App\Modules\Academic\Livewire\CurriculumBoard::MAX_LOGOS)
                 <form wire:submit="addLogo" class="mt-3 flex flex-wrap items-end gap-3">
                     <div class="flex flex-col gap-1">
-                        <label for="field-newLogo" class="text-sm font-semibold">Tambah logo (PNG transparan paling bagus)</label>
-                        <input id="field-newLogo" type="file" accept="image/png,image/jpeg,image/webp" wire:model="newLogo" class="min-h-11 text-base">
-                        @error('newLogo')<p role="alert" class="text-sm font-semibold text-danger">{{ $message }}</p>@enderror
+                        <x-ui.file-drop label="Tambah logo" name="newLogo" accept="image/png,image/jpeg,image/webp" hint="PNG berlatar transparan paling bagus" wire:model="newLogo" />
                     </div>
                     <x-ui.button type="submit" icon="upload" wire:loading.attr="disabled" wire:target="addLogo,newLogo">Unggah Logo</x-ui.button>
                 </form>

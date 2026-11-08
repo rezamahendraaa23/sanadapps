@@ -94,13 +94,7 @@
             @elseif ($needsTransfer)
                 <form wire:submit="submit" class="flex flex-col gap-3">
                     <div class="flex flex-col gap-1">
-                        <label for="field-proof" class="text-sm font-semibold">Foto atau PDF bukti transfer</label>
-                        <input id="field-proof" type="file" accept="image/jpeg,image/png,application/pdf" wire:model="proof" @error('proof') aria-invalid="true" @enderror class="min-h-11 w-full min-w-0 text-sm">
-                        <p class="text-sm text-text-muted">JPG, PNG, atau PDF, maksimal 5 MB.</p>
-                        <div wire:loading wire:target="proof" class="text-sm text-text-muted">Mengunggah…</div>
-                        @error('proof')
-                            <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                        @enderror
+                        <x-ui.file-drop label="Foto atau PDF bukti transfer" name="proof" accept="image/jpeg,image/png,application/pdf" hint="JPG, PNG, atau PDF, maksimal 5 MB." wire:model="proof" />
                     </div>
                     @if ($proof && ! $errors->has('proof') && str_starts_with((string) $proof->getMimeType(), 'image/'))
                         <img src="{{ $proof->temporaryUrl() }}" alt="Pratinjau bukti" class="max-h-60 w-full rounded-control border border-border object-contain">

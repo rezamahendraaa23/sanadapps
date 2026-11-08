@@ -95,31 +95,37 @@ test('alur setup: profil, tahun ajaran, kelas, asrama, tambah santri, cari, deta
 test('impor: template terunduh, pratinjau melaporkan baris salah, hasil tercatat', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await login(page);
-    await page.goto('/panel/santri/impor');
+    await page.goto('/panel/santri');
+    await page.waitForFunction(() => window.Livewire && window.Alpine);
+    await page.getByRole('button', { name: 'Impor', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Impor santri dari Excel' });
+    await expect(dialog).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/impor-popup-1280.png` });
 
     const download = page.waitForEvent('download');
-    await page.getByRole('link', { name: 'Unduh Template' }).click();
+    await dialog.getByRole('link', { name: 'Unduh Template' }).click();
     expect((await download).suggestedFilename()).toBe('template-impor-santri.xlsx');
 
     mkdirSync(testInfo.outputDir, { recursive: true });
     const file = path.join(testInfo.outputDir, 'santri.xlsx');
     execFileSync(process.env.PHP_BIN || 'php', ['e2e/make-import-file.php', file]);
 
-    await page.locator('#field-file').setInputFiles(file);
-    await expect(page.getByRole('button', { name: 'Periksa Berkas' })).toBeEnabled();
-    await page.getByRole('button', { name: 'Periksa Berkas' }).click();
-    await expect(page.getByRole('heading', { name: 'Pratinjau' })).toBeVisible();
+    await dialog.locator('#field-file').setInputFiles(file);
+    await expect(dialog.getByText('santri.xlsx')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Periksa Berkas' })).toBeEnabled();
+    await dialog.getByRole('button', { name: 'Periksa Berkas' }).click();
+    await expect(dialog.getByRole('heading', { name: 'Periksa sebelum impor' })).toBeVisible();
     await expect(page.getByText('Jenis kelamin harus L atau P.')).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/impor-pratinjau-1280.png`, fullPage: true });
 
-    await page.getByRole('button', { name: /Impor 2 Santri/ }).click();
+    await dialog.getByRole('button', { name: /Impor 2 Santri/ }).click();
     await expect(page.getByText('2 santri berhasil diimpor, 1 baris gagal.')).toBeVisible();
 
     const errors = page.waitForEvent('download');
-    await page.getByRole('link', { name: 'Unduh Baris Gagal' }).click();
+    await dialog.getByRole('link', { name: 'Unduh Baris Gagal' }).click();
     expect((await errors).suggestedFilename()).toBe('baris-gagal-impor.xlsx');
 
-    await page.getByRole('link', { name: 'Lihat Santri' }).click();
+    await dialog.getByRole('link', { name: 'Lihat Santri' }).click();
     await expect(page.getByRole('link', { name: 'Impor Satu' })).toBeVisible();
 });
 

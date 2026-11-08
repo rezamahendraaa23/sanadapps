@@ -50,11 +50,7 @@
             <x-ui.input label="Tanggal" name="form_date" type="date" required wire:model="form_date" />
             <x-ui.textarea label="Keterangan" name="form_description" required wire:model="form_description" />
             <div class="flex flex-col gap-1">
-                <label for="field-form_attachment" class="text-sm font-semibold">Lampiran (JPG, PNG, atau PDF, maksimal 5 MB)</label>
-                <input id="field-form_attachment" type="file" accept=".jpg,.jpeg,.png,.pdf" wire:model="form_attachment" class="min-h-11 w-full min-w-0 text-sm">
-                @error('form_attachment')
-                    <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                @enderror
+                <x-ui.file-drop label="Lampiran" name="form_attachment" accept=".jpg,.jpeg,.png,.pdf" hint="JPG, PNG, atau PDF, maksimal 5 MB" wire:model="form_attachment" />
             </div>
         </form>
         <x-slot:footer>

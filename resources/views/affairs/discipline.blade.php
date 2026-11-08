@@ -17,9 +17,7 @@
                     <x-ui.input label="Tanggal" name="occurred_on" type="date" required wire:model="occurred_on" />
                     <x-ui.textarea label="Catatan" name="notes" wire:model="notes" />
                     <div class="flex flex-col gap-1">
-                        <label for="field-evidence" class="text-sm font-semibold">Foto bukti (tidak wajib)</label>
-                        <input id="field-evidence" type="file" accept="image/jpeg,image/png" capture="environment" wire:model="evidence" class="min-h-11 w-full text-base">
-                        @error('evidence')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                        <x-ui.file-drop label="Foto bukti" name="evidence" accept="image/jpeg,image/png" hint="Tidak wajib" capture="environment" wire:model="evidence" />
                     </div>
                     <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="record,evidence">Simpan Catatan</x-ui.button>
                 @endif

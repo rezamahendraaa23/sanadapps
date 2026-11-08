@@ -58,9 +58,7 @@
             <x-ui.input label="Nama" name="person_name" help="Kosongkan bila jabatan belum terisi." wire:model="person_name" />
             <x-ui.input label="Keterangan" name="note" help="Tidak wajib, misalnya periode 2025 sampai 2027." wire:model="note" />
             <div class="flex flex-col gap-1">
-                <label for="field-photo" class="text-sm font-semibold">Foto (tidak wajib)</label>
-                <input id="field-photo" type="file" accept="image/jpeg,image/png,image/webp" wire:model="photo" class="min-h-11 text-base">
-                @error('photo')<p role="alert" class="text-sm font-semibold text-danger">{{ $message }}</p>@enderror
+                <x-ui.file-drop label="Foto" name="photo" accept="image/jpeg,image/png,image/webp" hint="Tidak wajib" wire:model="photo" />
                 @if ($editingPosition?->photo_path)
                     <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="removePhoto" class="size-5 accent-primary">Hapus foto sekarang</label>
                 @endif

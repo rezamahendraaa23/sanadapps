@@ -39,11 +39,7 @@
         <x-ui.card title="Langkah 2: unggah berkas">
             <form wire:submit="check" class="flex flex-col gap-3">
                 <div class="flex flex-col gap-1">
-                    <label for="field-file" class="text-sm font-semibold">Berkas Excel (.xlsx), maksimal 10 MB</label>
-                    <input id="field-file" type="file" accept=".xlsx" wire:model="file" @error('file') aria-invalid="true" @enderror class="min-h-11 w-full text-base">
-                    @error('file')
-                        <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                    @enderror
+                    <x-ui.file-drop label="Berkas Excel" name="file" accept=".xlsx" hint="Format .xlsx sesuai template, maksimal 10 MB" wire:model="file" />
                 </div>
                 <div class="flex justify-end">
                     <x-ui.button type="submit" class="w-full md:w-auto" wire:loading.attr="disabled" wire:target="check,file">Periksa Berkas</x-ui.button>

@@ -203,9 +203,7 @@
                 <p class="text-sm text-text-muted">Browser di laptop biasanya menolak memutar otomatis dengan suara. Tanpa centang ini video berputar otomatis tanpa suara.</p>
             @elseif ($type === 'video')
                 <div class="flex flex-col gap-1">
-                    <label for="field-media" class="text-sm font-semibold">Video (mp4 atau webm, paling besar 20 MB)</label>
-                    <input id="field-media" type="file" accept="video/mp4,video/webm" wire:model="media" class="min-h-11 w-full text-base">
-                    @error('media')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                    <x-ui.file-drop label="Video" name="media" accept="video/mp4,video/webm" hint="MP4 atau WebM, paling besar 20 MB" wire:model="media" />
                 </div>
             @elseif (in_array($type, ['poster', 'qr_donation'], true))
                 @include('masjid.partials.image-cropper')

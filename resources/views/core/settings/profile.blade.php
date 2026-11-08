@@ -19,12 +19,7 @@
                         <span class="flex size-16 items-center justify-center rounded-full bg-primary-soft font-display text-2xl font-semibold text-primary" aria-hidden="true">{{ mb_strtoupper(mb_substr($name ?: 'S', 0, 1)) }}</span>
                     @endif
                     <div class="flex min-w-0 flex-1 flex-col gap-2">
-                        <label for="field-logo" class="text-sm">Pilih berkas PNG, JPG, atau WebP, maksimal 2 MB.</label>
-                        <input id="field-logo" type="file" accept="image/png,image/jpeg,image/webp" wire:model="logo" class="min-h-11 w-full min-w-0 text-sm">
-                        <div wire:loading wire:target="logo" class="text-sm text-text-muted">Mengunggah…</div>
-                        @error('logo')
-                            <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                        @enderror
+                        <x-ui.file-drop label="Logo pesantren" name="logo" accept="image/png,image/jpeg,image/webp" hint="PNG, JPG, atau WebP, maksimal 2 MB" wire:model="logo" />
                     </div>
                     @if ($profile->logo_path)
                         <x-ui.button variant="tertiary" wire:click="removeLogo">Hapus logo</x-ui.button>

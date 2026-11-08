@@ -25,7 +25,7 @@
                             <x-ui.button variant="secondary" :href="route('staff.students.custom-fields')" wire:navigate>Field Tambahan</x-ui.button>
                         @endcan
                         <x-ui.button variant="secondary" icon="file-down" :href="route('staff.students.export')">Ekspor</x-ui.button>
-                        <x-ui.button variant="secondary" icon="upload" :href="route('staff.students.import')" wire:navigate>Impor</x-ui.button>
+                        <x-ui.button variant="secondary" icon="upload" x-data x-on:click="$dispatch('open-modal', 'impor-santri')">Impor</x-ui.button>
                     </div>
                     <x-ui.button icon="plus" x-data x-on:click="$dispatch('open-modal', 'tambah-santri')">Tambah Santri</x-ui.button>
                 </div>
@@ -41,7 +41,7 @@
                 </x-ui.empty-state>
             @elseif ($canManage)
                 <x-ui.empty-state icon="users" message="Belum ada santri. Impor dari Excel atau tambahkan satu per satu.">
-                    <x-slot:action><x-ui.button :href="route('staff.students.import')" wire:navigate>Impor Santri</x-ui.button></x-slot:action>
+                    <x-slot:action><x-ui.button x-data x-on:click="$dispatch('open-modal', 'impor-santri')">Impor Santri</x-ui.button></x-slot:action>
                 </x-ui.empty-state>
             @else
                 <x-ui.empty-state icon="users" message="Belum ada santri yang bisa Anda lihat. Santri tampil setelah Anda ditugaskan ke kelas atau asrama." />
@@ -100,6 +100,9 @@
     </x-ui.card>
 
     @if ($canManage)
+        <x-ui.modal name="impor-santri" title="Impor santri dari Excel" class="md:max-w-2xl">
+            @livewire(\App\Modules\Core\Livewire\Students\StudentImport::class, ['inModal' => true], key('impor-santri'))
+        </x-ui.modal>
         <x-ui.modal name="tambah-santri" title="Tambah santri" class="md:max-w-3xl">
             @livewire(\App\Modules\Core\Livewire\Students\StudentForm::class, ['inModal' => true], key('tambah-santri'))
         </x-ui.modal>

@@ -161,9 +161,7 @@
             </div>
             @if ($canSettings)
                 <div class="mt-3 flex flex-col gap-1">
-                    <label for="field-referenceFile" class="text-sm font-semibold">Atau impor manual (kolom: tanggal, subuh, terbit, dzuhur, ashar, maghrib, isya)</label>
-                    <input id="field-referenceFile" type="file" accept=".xlsx,.csv" wire:model="referenceFile" class="min-h-11 w-full text-base">
-                    @error('referenceFile')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                    <x-ui.file-drop label="Atau impor manual" name="referenceFile" accept=".xlsx,.csv" hint="Kolom: tanggal, subuh, terbit, dzuhur, ashar, maghrib, isya" wire:model="referenceFile" />
                     @if ($referenceFile)<x-ui.button variant="secondary" class="self-start" wire:click="importReference">Impor</x-ui.button>@endif
                 </div>
             @endif

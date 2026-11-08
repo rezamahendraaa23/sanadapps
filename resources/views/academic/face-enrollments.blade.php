@@ -77,8 +77,7 @@
                     <p x-show="notice" x-cloak role="status" class="text-center text-base font-semibold" x-text="notice"></p>
                     @unless ($runsInBrowser)
                     <div class="flex flex-col gap-1">
-                        <label for="field-photos" class="text-sm font-semibold">Atau pilih foto</label>
-                        <input id="field-photos" type="file" accept="image/jpeg,image/png" multiple wire:model="photos" class="min-h-11 w-full text-base">
+                        <x-ui.file-drop label="Atau pilih foto" name="photos" accept="image/jpeg,image/png" hint="Minimal 3 foto dari sudut berbeda" :multiple="true" wire:model="photos" />
                         @if (count($photos) > 0)
                             <x-ui.button variant="secondary" class="self-start" wire:click="enroll" wire:loading.attr="disabled" wire:target="enroll,photos">Simpan {{ count($photos) }} Foto</x-ui.button>
                         @endif
@@ -122,9 +121,7 @@
         <div class="flex flex-col gap-3">
             <x-ui.select label="Wali yang menandatangani" name="paper_guardian" placeholder="Pilih" :options="$guardians" wire:model="paper_guardian" />
             <div class="flex flex-col gap-1">
-                <label for="field-paper_document" class="text-sm font-semibold">Scan surat</label>
-                <input id="field-paper_document" type="file" accept="image/jpeg,image/png,application/pdf" wire:model="paper_document" class="min-h-11 w-full text-base">
-                @error('paper_document')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                <x-ui.file-drop label="Scan surat" name="paper_document" accept="image/jpeg,image/png,application/pdf" hint="Foto atau PDF surat yang sudah ditandatangani" wire:model="paper_document" />
             </div>
         </div>
         <x-slot:footer>

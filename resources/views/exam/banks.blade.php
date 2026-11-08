@@ -64,9 +64,7 @@
             <p class="text-base">Jenis: pg, kompleks, bs, isian, esai. Arah: ltr atau rtl. Kunci kompleks dipisah koma, jawaban isian dipisah garis tegak.</p>
             <x-ui.button variant="secondary" icon="file-down" class="self-start" :href="route('exam.import-template')">Unduh Template</x-ui.button>
             <div class="flex flex-col gap-1">
-                <label for="field-importFile" class="text-sm font-semibold">Berkas Excel (.xlsx)</label>
-                <input id="field-importFile" type="file" accept=".xlsx" wire:model="importFile" class="min-h-11 w-full text-base">
-                @error('importFile')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                <x-ui.file-drop label="Berkas Excel" name="importFile" accept=".xlsx" hint="Format .xlsx sesuai template" wire:model="importFile" />
             </div>
         </div>
         <x-slot:footer>
@@ -118,9 +116,7 @@
             </div>
             <x-ui.input label="Tag" name="tags" help="Pisahkan dengan koma, untuk pemilihan acak." wire:model="tags" />
             <div class="flex flex-col gap-1">
-                <label for="field-media" class="text-sm font-semibold">Gambar</label>
-                <input id="field-media" type="file" accept="image/jpeg,image/png" wire:model="media" class="min-h-11 w-full text-base">
-                @error('media')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                <x-ui.file-drop label="Gambar" name="media" accept="image/jpeg,image/png" hint="JPG atau PNG, tidak wajib" wire:model="media" />
             </div>
             @if (trim(strip_tags($preview)) !== '')
                 <div>

@@ -31,6 +31,10 @@ class StudentImport extends Component
     #[Locked]
     public ?int $importId = null;
 
+    /** Dipakai sebagai popup di halaman Santri. */
+    #[Locked]
+    public bool $inModal = false;
+
     public function check(ReadStudentImport $reader): void
     {
         $this->resetErrorBag();

@@ -97,11 +97,7 @@
                     </div>
                 @endif
                 <div class="flex flex-col gap-1">
-                    <label for="field-photo" class="text-sm font-semibold">Foto produk</label>
-                    <input id="field-photo" type="file" accept="image/jpeg,image/png" wire:model="photo" class="min-h-11 w-full text-base">
-                    @error('photo')
-                        <p role="alert" class="flex items-start gap-1 text-sm text-danger"><x-ui.icon name="circle-alert" size="sm" class="mt-0.5" />{{ $message }}</p>
-                    @enderror
+                    <x-ui.file-drop label="Foto produk" name="photo" accept="image/jpeg,image/png" hint="JPG atau PNG, tidak wajib" wire:model="photo" />
                 </div>
                 <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="is_active" class="size-5 accent-primary">Tampil di kasir</label>
             </div>

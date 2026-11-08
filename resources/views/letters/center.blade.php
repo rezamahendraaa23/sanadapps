@@ -187,15 +187,10 @@
                 <form wire:submit="saveLetterhead" class="flex flex-col gap-3 border-t border-border pt-3">
                     <x-ui.input label="Nama kop" name="kop_name" required help="Contoh: Kop resmi, Kop panitia." wire:model="kop_name" />
                     <div class="flex flex-col gap-1">
-                        <label for="field-kop_header" class="text-sm font-semibold">Gambar kop (atas)</label>
-                        <input id="field-kop_header" type="file" accept="image/png,image/jpeg" wire:model="kop_header" class="text-base">
-                        <p class="text-sm text-text-muted">PNG atau JPG selebar kertas, paling besar 2 MB.</p>
-                        @error('kop_header')<p role="alert" class="text-sm font-semibold text-danger">{{ $message }}</p>@enderror
+                        <x-ui.file-drop label="Kop surat (atas)" name="kop_header" accept="image/png,image/jpeg" hint="PNG atau JPG selebar kertas, paling besar 2 MB." wire:model="kop_header" />
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label for="field-kop_footer" class="text-sm font-semibold">Gambar footer (bawah)</label>
-                        <input id="field-kop_footer" type="file" accept="image/png,image/jpeg" wire:model="kop_footer" class="text-base">
-                        @error('kop_footer')<p role="alert" class="text-sm font-semibold text-danger">{{ $message }}</p>@enderror
+                        <x-ui.file-drop label="Footer surat (bawah)" name="kop_footer" accept="image/png,image/jpeg" hint="PNG atau JPG selebar kertas, paling besar 2 MB." wire:model="kop_footer" />
                     </div>
                     <x-ui.button type="submit" icon="upload" wire:loading.attr="disabled" wire:target="saveLetterhead,kop_header,kop_footer">Simpan Kop</x-ui.button>
                 </form>
