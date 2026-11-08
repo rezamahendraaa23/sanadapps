@@ -9,17 +9,22 @@ use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Dormitory;
 use App\Modules\Core\Models\Guardian;
+use App\Modules\Core\Models\Module;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Teacher;
 use App\Modules\Core\Models\User;
+use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Core\Support\SetupChecklist;
 use App\Modules\Finance\Models\FeeRate;
 use App\Modules\Finance\Models\FeeType;
+use App\Modules\Finance\Models\Invoice;
+use App\Modules\Leave\Models\LeaveRequest;
 use Database\Seeders\ModuleSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PragmaRX\Google2FA\Google2FA;
 
@@ -73,7 +78,36 @@ it('hanya menghitung santri yang boleh dilihat di dashboard', function () {
 
     $this->actingAs($user);
 
-    Livewire::test(Dashboard::class)->assertViewHas('activeStudents', 1);
+    Livewire::test(Dashboard::class)->assertViewHas('m', fn (array $m) => $m['students']['value'] === 1);
+});
+
+it('dashboard analitik: penagihan dibanding bulan lalu, umur tunggakan, santri di luar, dan antrean tindakan', function () {
+    Module::query()->update(['is_enabled' => true]);
+    app(ModuleRegistry::class)->forget();
+    $student = Student::create(['nis' => '9', 'name' => 'Santri Uji', 'gender' => 'P', 'entry_date' => now()->toDateString()]);
+    $month = now(config('sanad.display_timezone'))->startOfMonth()->toImmutable();
+    $invoice = fn (string $no, $period, $due, int $total, int $paid, string $status) => Invoice::create(['invoice_no' => $no, 'student_id' => $student->id, 'period' => $period->toDateString(), 'due_date' => $due->toDateString(), 'subtotal' => $total, 'total' => $total, 'paid_total' => $paid, 'status' => $status]);
+    $invoice('INV-1', $month, $month->addDays(27), 100_000, 60_000, 'partial');
+    $invoice('INV-2', $month->subMonth(), $month->subMonth()->addDays(9), 100_000, 80_000, 'partial');
+    $invoice('INV-3', $month->subMonths(4), now()->subDays(120), 50_000, 0, 'overdue');
+    LeaveRequest::create(['student_id' => $student->id, 'type' => 'pulang', 'reason' => 'Uji', 'start_at' => now()->subDays(3), 'end_at' => now()->subDay(), 'status' => 'late', 'qr_token' => Str::random(32)]);
+
+    $page = Livewire::test(Dashboard::class)->assertSee('Tingkat penagihan bulan ini')->assertSee('60%')->assertSee('-20 poin')
+        ->assertSee('Santri sedang di luar')->assertSee('Santri terlambat kembali')->assertSee('Lebih dari 90 hari');
+    $m = $page->viewData('m');
+
+    expect($m['collection']['rate'])->toBe(60.0)->and($m['collection']['previous'])->toBe(80.0)
+        ->and($m['students']['new'])->toBe(1)->and($m['students']['female'])->toBe(1)
+        ->and($m['arrears']['buckets'][3]['amount'])->toBe(50_000)->and($m['arrears']['students'])->toBe(1)
+        ->and($m['outside'])->toBe(['out' => 1, 'late' => 1, 'pending' => 0])
+        ->and($m['cashTrend'])->toHaveCount(6)->and($m['actions'][0]['label'])->toBe('Santri terlambat kembali');
+});
+
+it('dashboard tidak memuat angka keuangan untuk peran tanpa hak keuangan', function () {
+    $this->actingAs(tap(User::create(['name' => 'Kasir', 'email' => 'k@uji.test', 'type' => 'staff']))->assignRole('kasir'));
+    $m = Livewire::test(Dashboard::class)->assertDontSee('Tingkat penagihan')->viewData('m');
+
+    expect($m['collection'])->toBeNull()->and($m['arrears'])->toBeNull()->and($m['cashTrend'])->toBeNull();
 });
 
 it('pencarian cepat menghormati hak akses', function () {

@@ -115,7 +115,7 @@ test('ruang kerja punya sidebar sendiri dan Ctrl+F membuka pencarian', async ({ 
     await page.keyboard.type('tunggakan');
     await expect(page.getByRole('link', { name: /Tunggakan/ }).first()).toBeVisible();
     await page.keyboard.press('Escape');
-    if (shots) await page.screenshot({ path: `${shots}/sidebar-utama-1280.png` });
+    if (shots) await page.screenshot({ path: `${shots}/sidebar-utama-1280.png`, fullPage: true });
 
     const main = page.getByRole('navigation', { name: 'Menu utama' }).first();
     await main.getByRole('link', { name: /^Keuangan/ }).click();
