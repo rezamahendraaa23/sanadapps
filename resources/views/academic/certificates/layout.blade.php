@@ -54,6 +54,11 @@
         <section class="sheet d-{{ $design }}">
             @include('academic.certificates.designs.'.$design, $vars)
         </section>
+        @if ($result->phase->certificate_back)
+            <section class="sheet back">
+                @include('academic.certificates.back', [...$vars, 'titleFont' => CertificateDesigns::titleFont($design)])
+            </section>
+        @endif
     @endforeach
 </body>
 </html>

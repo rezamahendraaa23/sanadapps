@@ -18,7 +18,7 @@ class CurriculumPhase extends Model
 
     protected function casts(): array
     {
-        return ['sort_order' => 'integer', 'duration_weeks' => 'integer', 'min_score' => 'float', 'has_certificate' => 'boolean'];
+        return ['sort_order' => 'integer', 'duration_weeks' => 'integer', 'min_score' => 'float', 'has_certificate' => 'boolean', 'certificate_back' => 'boolean'];
     }
 
     public function curriculum(): BelongsTo

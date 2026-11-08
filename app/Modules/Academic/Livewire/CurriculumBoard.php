@@ -61,6 +61,8 @@ class CurriculumBoard extends Component
 
     public bool $p_certificate = true;
 
+    public bool $p_back = false;
+
     public string $p_certificate_title = '';
 
     public string $p_description = '';
@@ -115,7 +117,7 @@ class CurriculumBoard extends Component
         $this->phaseCurriculum = Curriculum::query()->where('uuid', $curriculumUuid)->firstOrFail()->uuid;
         $this->editingPhase = null;
         $this->reset('p_name', 'p_code', 'p_description', 'p_certificate_title', 'p_design', 'p_title_ar');
-        $this->fill(['p_weeks' => '12', 'p_min' => '70', 'p_certificate' => true]);
+        $this->fill(['p_weeks' => '12', 'p_min' => '70', 'p_certificate' => true, 'p_back' => false]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-fase');
     }
@@ -128,7 +130,7 @@ class CurriculumBoard extends Component
         $this->fill([
             'p_name' => $phase->name, 'p_code' => $phase->code, 'p_weeks' => (string) $phase->duration_weeks, 'p_min' => (string) (float) $phase->min_score,
             'p_certificate' => $phase->has_certificate, 'p_certificate_title' => (string) $phase->certificate_title, 'p_description' => (string) $phase->description,
-            'p_design' => (string) $phase->certificate_design, 'p_title_ar' => (string) $phase->certificate_title_ar,
+            'p_design' => (string) $phase->certificate_design, 'p_back' => $phase->certificate_back, 'p_title_ar' => (string) $phase->certificate_title_ar,
         ]);
         $this->resetErrorBag();
         $this->dispatch('open-modal', 'form-fase');
@@ -157,6 +159,7 @@ class CurriculumBoard extends Component
             'certificate_title' => $this->p_certificate_title ?: null,
             'description' => $this->p_description ?: null,
             'certificate_design' => $this->p_design ?: null,
+            'certificate_back' => $this->p_back,
             'certificate_title_ar' => trim($this->p_title_ar) ?: null,
         ], $this->editingPhase ? CurriculumPhase::query()->where('uuid', $this->editingPhase)->where('curriculum_id', $curriculum->id)->firstOrFail() : null);
 

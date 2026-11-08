@@ -252,6 +252,7 @@
             <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="p_certificate" class="size-5 accent-primary">Lulusan fase ini mendapat sertifikat</label>
             <x-ui.input label="Judul sertifikat" name="p_certificate_title" help="Contoh: Sertifikat Kelulusan Masa Perkenalan." wire:model="p_certificate_title" />
             <x-ui.input label="Judul sertifikat dalam bahasa Arab" name="p_title_ar" dir="rtl" help="Kosongkan untuk memakai: شَهَادَةُ إِتْمَامِ الْمَرْحَلَةِ" wire:model="p_title_ar" />
+            <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="p_back" class="size-5 accent-primary">Cetak dua sisi: belakangnya hasil ujian</label>
             <x-ui.select label="Desain sertifikat" name="p_design" placeholder="Ikuti desain bawaan" :options="collect($designs)->map(fn ($design) => $design['name'])->all()" wire:model="p_design" />
         </div>
         <x-slot:footer>

@@ -209,3 +209,31 @@ it('tanpa logo khusus, sertifikat memakai logo pesantren dari Pengaturan Profil'
 
     $this->actingAs($this->admin)->get(route('staff.curriculum.design', 'kufi'))->assertOk()->assertSee('data:image/png;base64,', false);
 });
+
+it('sertifikat dua sisi: belakangnya hasil ujian bila dipilih di fase', function () {
+    phaseAssess($this, $this->fiqih, $this->final, '2026-10-20', [$this->ahmad->id => '90', $this->budi->id => '90']);
+    $phases = app(ManagePhases::class);
+    $phases->evaluate($this->room);
+    $phases->decide($this->room, PhaseResult::pluck('uuid')->mapWithKeys(fn ($uuid) => [$uuid => 'passed'])->all(), $this->admin);
+    $phases->certify($this->room);
+    $captured = new class implements PdfRenderer
+    {
+        public string $html = '';
+
+        public function render(string $html, string $format = 'A4'): string
+        {
+            $this->html = $html;
+
+            return '%PDF';
+        }
+    };
+    $this->app->instance(PdfRenderer::class, $captured);
+    $this->actingAs($this->admin);
+
+    $this->get(route('staff.curriculum.certificate', $this->room))->assertOk();
+    expect($captured->html)->not->toContain('كَشْفُ الدَّرَجَاتِ');
+
+    Livewire::test(CurriculumBoard::class)->call('editPhase', $this->intro->uuid)->set('p_back', true)->call('savePhase')->assertHasNoErrors();
+    $this->get(route('staff.curriculum.certificate', $this->room))->assertOk();
+    expect($captured->html)->toContain('كَشْفُ الدَّرَجَاتِ')->toContain('Fiqih')->and(substr_count($captured->html, 'class="sheet back"'))->toBe(2);
+});
