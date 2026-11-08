@@ -119,6 +119,14 @@
         }
         return null;
     }
+    /* Sisa waktu dalam kata, berubah tiap menit, agar layar tidak berdetak terus. */
+    function leftWords(seconds) {
+        var minutes = Math.ceil(seconds / 60);
+        if (minutes <= 1) { return 'kurang dari 1 menit'; }
+        var h = Math.floor(minutes / 60);
+        var m = minutes % 60;
+        return (h > 0 ? h + ' jam' + (m > 0 ? ' ' : '') : '') + (m > 0 ? m + ' menit' : '') + ' lagi';
+    }
     function clockLeft(seconds) {
         var h = Math.floor(seconds / 3600);
         var m = Math.floor(seconds % 3600 / 60);
@@ -355,7 +363,7 @@
             paint('whole:' + theme + ':' + slot.key, theme + ' whole', '<div class="stage' + (slot.media ? ' media' : '') + (long ? ' long' : '') + '">' + slot.html + '</div>'
                 + '<div class="chip"><span id="clock">' + clock + '</span>' + (next ? '<b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span>' : '') + '</div>');
             setText('clock', clock);
-            if (next) { setText('left', clockLeft(next.left)); }
+            if (next) { setText('left', leftWords(next.left)); }
             return;
         }
 
@@ -363,14 +371,13 @@
         var ramadanLine = isRamadan(t.date) && row ? 'Imsak ' + row.imsak.replace(':', '.') + ', berbuka ' + row.maghrib.replace(':', '.') : '';
         var key = 'normal:' + theme + ':' + (next ? next.prayer : '') + ':' + slot.key + ':' + t.date + ':' + (row ? row.fajr : '') + ':' + tickerText() + ':' + online + ':' + (slot.media ? '' : t.minutes);
         var hero = showTimes
-            ? '<div class="hero">' + KHATAM + '<div class="clock"><span id="clock">' + clock + '</span><small>.<span id="sec">' + seconds + '</span></small></div>'
+            ? '<div class="hero">' + KHATAM + '<div class="clock"><span id="clock">' + clock + '</span></div>'
                 + (next ? '<div class="next">' + icon(next.prayer) + '<b>' + escapeHtml(prayerLabel(next.prayer, t.weekday)) + '</b><span id="left"></span></div><div class="note">Iqamah ' + iq.minutes + ' menit setelah adzan' + (ramadanLine ? '. ' + ramadanLine : '') + '</div>' : '')
                 + '</div>'
             : '';
         paint(key, theme, '<div class="safe nudge" id="safe">' + header(t, row) + '<div class="main">' + hero + '<div class="slot' + slot.cls + '">' + slot.html + '</div></div>' + (showTimes ? lineHtml(row, next, t) : '') + footer() + '</div>');
         setText('clock', clock);
-        setText('sec', seconds);
-        if (next) { setText('left', clockLeft(next.left)); }
+        if (next) { setText('left', leftWords(next.left)); }
     }
 
     /* Pergeseran piksel halus dan redup terjadwal (MSJ-DSP-10). */

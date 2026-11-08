@@ -62,7 +62,7 @@ body.pointer { cursor: auto; }
 .next { align-items: center; }
 .next .ico { width: 5rem; height: 5rem; margin-right: 1.4rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .next b { font-size: 4rem; font-weight: 800; margin-right: 2rem; }
-.next span { font-family: 'Fredoka', sans-serif; font-size: 5.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.next span { font-family: 'Fredoka', sans-serif; font-size: 4.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .note { position: relative; z-index: 1; margin-top: 2rem; font-size: 3.2rem; font-weight: 700; color: rgba(255,255,255,0.8); }
 
 .slot { flex: 1; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 4rem 4.8rem; border-radius: 3.2rem; background: var(--panel); border: 0.3rem solid var(--line); opacity: 1; transition: opacity 400ms ease; }
