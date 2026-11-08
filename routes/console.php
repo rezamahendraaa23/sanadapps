@@ -5,6 +5,7 @@ use App\Modules\Academic\Actions\PurgeAttendanceEvidence;
 use App\Modules\Admission\Actions\AdmissionFlow;
 use App\Modules\Affairs\Actions\ComputeRiskScores;
 use App\Modules\Affairs\Actions\SyncAlumni;
+use App\Modules\Core\Actions\RollAcademicPeriod;
 use App\Modules\Core\Support\ModuleRegistry;
 use App\Modules\Exam\Actions\RunAttempt;
 use App\Modules\Finance\Actions\ApplyLateFees;
@@ -26,6 +27,8 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Jam dihitung dalam zona waktu pesantren (PRD Sistem 8.3 dan 8.14).
+// Pergantian term dan tahun ajaran berjalan sebelum tagihan bulanan dibuat.
+Schedule::call(fn () => app(RollAcademicPeriod::class)->handle())->name('RollAcademicPeriod')->dailyAt('00:05')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(ApplyLateFees::class)->handle())->name('MarkOverdue')->dailyAt('00:30')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(GenerateMonthlyInvoices::class)->handle())->name('GenerateInvoices')->dailyAt('01:00')->timezone(config('sanad.display_timezone'))->withoutOverlapping();
 Schedule::call(fn () => app(SyncPayment::class)->pending())->name('SyncPendingPayments')->everyFifteenMinutes()->withoutOverlapping();

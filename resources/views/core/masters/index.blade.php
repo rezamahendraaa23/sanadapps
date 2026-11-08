@@ -1,7 +1,8 @@
 @php
-    $tabs = ['classrooms' => 'Kelas', 'dormitories' => 'Asrama', 'years' => 'Tahun ajaran', 'terms' => 'Term'];
-    $createLabel = ['classrooms' => 'Tambah Kelas', 'dormitories' => 'Tambah Asrama', 'years' => 'Tambah Tahun Ajaran', 'terms' => 'Tambah Term'][$tab];
-    $emptyMessage = ['classrooms' => 'Belum ada kelas. Tambahkan kelas sebelum mengimpor santri.', 'dormitories' => 'Belum ada asrama.', 'years' => 'Belum ada tahun ajaran. Tambahkan lalu jadikan aktif.', 'terms' => 'Belum ada term. Buat tahun ajaran dulu, lalu tambahkan term.'][$tab];
+    $tabs = ['classrooms' => 'Kelas', 'dormitories' => 'Asrama', 'years' => 'Tahun ajaran'];
+    $createLabel = ['classrooms' => 'Tambah Kelas', 'dormitories' => 'Tambah Asrama', 'years' => 'Tambah Tahun Ajaran'][$tab];
+    $emptyMessage = ['classrooms' => 'Belum ada kelas. Tambahkan kelas sebelum mengimpor santri.', 'dormitories' => 'Belum ada asrama.', 'years' => ''][$tab];
+    $formTitle = ['classrooms' => 'kelas', 'dormitories' => 'asrama', 'years' => 'tahun ajaran', 'terms' => 'term'][$formTarget];
 @endphp
 
 <div class="flex flex-col gap-4">
@@ -11,6 +12,9 @@
         @endforeach
     </div>
 
+    @if ($tab === 'years')
+        @include('core.masters.periods')
+    @else
     <x-ui.card>
         <div class="mb-4 flex justify-end">
             <x-ui.button icon="plus" class="w-full md:w-auto" wire:click="create">{{ $createLabel }}</x-ui.button>
@@ -69,19 +73,23 @@
             </x-ui.table>
         @endif
     </x-ui.card>
+    @endif
 
-    <x-ui.modal name="form-master" :title="($editingId ? 'Ubah ' : 'Tambah ').mb_strtolower($tabs[$tab])">
+    <x-ui.modal name="form-master" :title="($editingId ? 'Ubah ' : 'Tambah ').$formTitle">
         <form id="form-master" wire:submit="save" class="flex flex-col gap-4">
-            @if ($tab === 'terms')
+            @if ($formTarget === 'terms')
                 <x-ui.select label="Tahun ajaran" name="form.academic_year_id" required placeholder="Pilih tahun ajaran" :options="$years" wire:model="form.academic_year_id" />
             @endif
-            <x-ui.input label="Nama" name="form.name" required wire:model="form.name" :help="$tab === 'years' ? 'Contoh: 2026/2027' : null" />
-            @if (in_array($tab, ['years', 'terms'], true))
+            <x-ui.input label="Nama" name="form.name" required wire:model="form.name" :help="['years' => 'Contoh: 2026/2027', 'terms' => 'Contoh: Semester 2, atau Fase Lanjutan'][$formTarget] ?? null" />
+            @if (in_array($formTarget, ['years', 'terms'], true))
                 <div class="grid gap-4 md:grid-cols-2">
                     <x-ui.input label="Tanggal mulai" name="form.start_date" type="date" required wire:model="form.start_date" />
                     <x-ui.input label="Tanggal selesai" name="form.end_date" type="date" required wire:model="form.end_date" />
                 </div>
-            @elseif ($tab === 'classrooms')
+                @if ($formTarget === 'years' && ! $editingId)
+                    <x-ui.select label="Dibagi menjadi" name="split" :options="$splits" wire:model="split" help="Term dibuat otomatis sesuai pilihan ini." />
+                @endif
+            @elseif ($formTarget === 'classrooms')
                 <x-ui.input label="Jenjang" name="form.level" wire:model="form.level" help="Contoh: 7, 10, atau Ula. Dipakai untuk tarif per jenjang." />
                 <x-ui.select label="Wali kelas" name="form.homeroom_teacher_id" placeholder="Belum ditentukan" :options="$teachers" wire:model="form.homeroom_teacher_id" />
                 <x-ui.input label="Kapasitas" name="form.capacity" inputmode="numeric" wire:model="form.capacity" />

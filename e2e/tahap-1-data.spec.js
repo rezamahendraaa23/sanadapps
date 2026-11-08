@@ -38,7 +38,11 @@ test('alur setup: profil, tahun ajaran, kelas, asrama, tambah santri, cari, deta
     await form.getByLabel('Tanggal selesai').fill('2027-06-30');
     await form.getByRole('button', { name: 'Simpan' }).click();
     await expect(form).toBeHidden();
-    await page.getByRole('button', { name: /Jadikan aktif/ }).click();
+    // Sudah ada tahun aktif yang masih berlaku, jadi yang baru tidak diaktifkan diam-diam; term-nya dibuat otomatis.
+    await expect(page.getByText('Tahun ajaran dibuat. Aktifkan saat periodenya tiba.')).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Term 2026/2027', exact: true }).getByRole('cell', { name: 'Tahun penuh', exact: true })).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/tahun-ajaran-1280.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Jadikan aktif 2026/2027', exact: true }).click();
     await expect(page.getByText('Periode aktif diganti.')).toBeVisible();
 
     await page.getByRole('tab', { name: 'Kelas' }).click();

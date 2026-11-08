@@ -52,7 +52,7 @@ it('mengganti periode aktif tanpa melanggar aturan satu aktif', function () {
     $new = AcademicYear::create(['name' => '2026/2027', 'start_date' => '2026-07-01', 'end_date' => '2027-06-30']);
     $newTerm = Term::create(['academic_year_id' => $new->id, 'name' => 'Ganjil', 'start_date' => '2026-07-01', 'end_date' => '2026-12-31']);
 
-    Livewire::test(MasterData::class)->call('selectTab', 'terms')->call('activate', $newTerm->id)->assertDispatched('toast');
+    Livewire::test(MasterData::class)->call('selectTab', 'terms')->assertSet('tab', 'years')->call('activate', $newTerm->id, 'terms')->assertDispatched('toast');
 
     expect($new->fresh()->is_active)->toBeTrue()
         ->and($old->fresh()->is_active)->toBeFalse()
