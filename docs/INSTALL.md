@@ -4,7 +4,7 @@ Pilih satu cara:
 
 | Cara | Cocok untuk | Lama |
 |---|---|---|
-| **A. Skrip otomatis** | Server Ubuntu 22.04 atau 24.04 yang masih kosong (VPS) | 15 menit |
+| **A. Skrip otomatis** | Server Ubuntu 22.04/24.04 atau Debian 12/13 yang masih kosong (VPS) | 15 menit |
 | **B. Docker** | Laptop atau server yang sudah ada Docker | 15 menit |
 
 Sebelum mulai, siapkan **token GitHub** karena repo ini privat:
@@ -12,7 +12,7 @@ GitHub > foto profil > **Settings > Developer settings > Personal access tokens 
 
 ---
 
-## A. Skrip otomatis (server Ubuntu)
+## A. Skrip otomatis (server Ubuntu atau Debian)
 
 **1. Masuk ke server**
 

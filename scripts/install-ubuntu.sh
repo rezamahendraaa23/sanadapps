@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pasang SANAD di Ubuntu 22.04 atau 24.04 (server kosong) dalam satu perintah:
+# Pasang SANAD di Ubuntu 22.04/24.04 atau Debian 12/13 (server kosong) dalam satu perintah:
 #   sudo bash scripts/install-ubuntu.sh
 # Dijalankan dari folder kode SANAD hasil git clone. Aman diulang bila sempat terhenti.
 set -euo pipefail
@@ -10,7 +10,16 @@ step() { echo; echo "==> $*"; }
 fail() { echo; echo "GAGAL: $*"; echo "Rincian ada di $LOG"; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || fail "Jalankan dengan sudo: sudo bash scripts/install-ubuntu.sh"
-grep -qE '^(22|24)\.04' <(. /etc/os-release && echo "$VERSION_ID") || fail "Skrip ini untuk Ubuntu 22.04 atau 24.04."
+. /etc/os-release
+OS="$ID $VERSION_ID"
+CODENAME="$VERSION_CODENAME"
+# Versi PHP per sistem: Debian 13 sudah membawa 8.4; Ubuntu dan Debian 12 mengambil 8.3 dari repo PHP tambahan.
+case "$OS" in
+    "ubuntu 22.04"|"ubuntu 24.04") PHPV=8.3; PHP_REPO=ondrej ;;
+    "debian 12") PHPV=8.3; PHP_REPO=sury ;;
+    "debian 13") PHPV=8.4; PHP_REPO=none ;;
+    *) fail "Skrip ini untuk Ubuntu 22.04/24.04 atau Debian 12/13 (terdeteksi: $OS)." ;;
+esac
 [ "$(dpkg --print-architecture)" = "amd64" ] || fail "Skrip ini untuk server amd64 (x86_64)."
 [ -f "$APP_DIR/artisan" ] || fail "Jalankan dari dalam folder kode SANAD."
 
@@ -28,18 +37,30 @@ if [ "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -lt 2000000 ] && ! swapon --
     grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
-step "2/8 Paket sistem, PHP 8.3, PostgreSQL 16, Node 22, Chrome"
+step "2/8 Paket sistem, PHP $PHPV, PostgreSQL 16, Node 22, Chrome ($OS)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
-apt-get install -yq software-properties-common curl git unzip nginx ca-certificates lsb-release gnupg cron
-add-apt-repository -y ppa:ondrej/php
+apt-get install -yq curl git unzip nginx ca-certificates gnupg cron
+case "$PHP_REPO" in
+    ondrej)
+        apt-get install -yq software-properties-common
+        add-apt-repository -y ppa:ondrej/php ;;
+    sury)
+        curl -fsSLo /usr/share/keyrings/sury-php.gpg https://packages.sury.org/php/apt.gpg
+        echo "deb [signed-by=/usr/share/keyrings/sury-php.gpg] https://packages.sury.org/php/ $CODENAME main" > /etc/apt/sources.list.d/sury-php.list ;;
+esac
 install -d /usr/share/postgresql-common/pgdg
 curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
-echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-command -v node >/dev/null && node -v | grep -q '^v22' || curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $CODENAME-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+command -v node >/dev/null && node -v | grep -q '^v22' \
+    || curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    || echo "Node 22 dari NodeSource belum tersedia untuk $OS; memakai Node bawaan sistem."
 apt-get update -q
-apt-get install -yq php8.3-fpm php8.3-cli php8.3-pgsql php8.3-mbstring php8.3-intl php8.3-gd php8.3-zip php8.3-bcmath php8.3-xml php8.3-curl \
+apt-get install -yq php$PHPV-fpm php$PHPV-cli php$PHPV-pgsql php$PHPV-mbstring php$PHPV-intl php$PHPV-gd php$PHPV-zip php$PHPV-bcmath php$PHPV-xml php$PHPV-curl \
     postgresql-16 nodejs fonts-noto-core
+# Vite butuh Node 20.19 atau lebih baru.
+node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(a>20||(a===20&&b>=19)?0:1)' \
+    || fail "Node $(node -v) terlalu lama; butuh 20.19 atau lebih baru."
 if ! command -v google-chrome >/dev/null; then
     curl -fsSLo /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
     apt-get install -yq /tmp/chrome.deb
@@ -97,15 +118,15 @@ server {
     index index.php;
     client_max_body_size 25M;
     location / { try_files \$uri \$uri/ /index.php?\$query_string; }
-    location ~ \.php\$ { include snippets/fastcgi-php.conf; fastcgi_pass unix:/run/php/php8.3-fpm.sock; }
+    location ~ \.php\$ { include snippets/fastcgi-php.conf; fastcgi_pass unix:/run/php/php$PHPV-fpm.sock; }
     location ~ /\.(?!well-known) { deny all; }
 }
 NGINX
 ln -sf /etc/nginx/sites-available/sanad /etc/nginx/sites-enabled/sanad
 rm -f /etc/nginx/sites-enabled/default
 # Hemat RAM: pekerja PHP dinyalakan saat dibutuhkan saja.
-sed -i 's/^pm = .*/pm = ondemand/; s/^pm.max_children = .*/pm.max_children = 4/' /etc/php/8.3/fpm/pool.d/www.conf
-systemctl restart php8.3-fpm
+sed -i 's/^pm = .*/pm = ondemand/; s/^pm.max_children = .*/pm.max_children = 4/' /etc/php/$PHPV/fpm/pool.d/www.conf
+systemctl restart php$PHPV-fpm
 nginx -t && systemctl reload nginx
 
 step "7/8 Antrean dan penjadwal"
