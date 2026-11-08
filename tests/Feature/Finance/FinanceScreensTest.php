@@ -425,3 +425,18 @@ it('impor tunggakan awal melaporkan baris salah lalu membuat tagihan', function 
 
     expect(Invoice::where('total', 300000)->first()->status)->toBe('overdue');
 });
+
+it('terima pembayaran dari halaman santri: santri terpilih, rincian tagihan terbaca, nominal cepat', function () {
+    $this->get(route('staff.payments.cash', ['santri' => $this->student->uuid]))->assertOk();
+
+    $page = Livewire::withQueryParams(['santri' => $this->student->uuid])->test(CashPayment::class)
+        ->assertSet('amount', '625000')->assertSee($this->invoice->items()->value('description'))
+        ->assertSee('Uang pas')->assertSee('Rp 650.000')->assertSee('Rp 700.000');
+
+    $page->call('quickReceived', 700000)->assertSet('received', '700000')->assertSee('Rp 75.000')
+        ->call('selectAll', false)->assertSet('selected', [])->assertSet('amount', '0')
+        ->call('selectAll', true)->call('quickReceived', 625000)->call('record')->assertRedirect();
+
+    expect($this->invoice->fresh()->status)->toBe('paid');
+    Livewire::test(StudentFinance::class, ['student' => $this->student])->assertDontSee('Terima Pembayaran');
+});

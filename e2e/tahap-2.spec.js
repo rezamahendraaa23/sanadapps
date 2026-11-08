@@ -184,10 +184,11 @@ test('tunai: kembalian terhitung di layar, lalu kas terisi', async ({ page }) =>
     await page.goto('/panel/pembayaran/tunai');
     await page.getByLabel('Cari nama atau NIS').fill('2026001');
     await page.getByRole('button', { name: /Santri Uji/ }).click();
-    await expect(page.getByLabel('Nominal dibayarkan')).toHaveValue('200.000');
+    await expect(page.getByLabel('Nominal dibayar')).toHaveValue('200.000');
     await page.getByLabel('Uang diterima').pressSequentially('250000');
     await expect(page.getByText('Rp 50.000')).toBeVisible();
-    await page.getByRole('button', { name: 'Catat Pembayaran' }).click();
+    if (shots) await page.screenshot({ path: `${shots}/terima-pembayaran-1280.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Terima Rp 200.000' }).click();
     await expect(page).toHaveURL(/panel\/pembayaran\/[0-9a-f-]{36}$/);
 
     await pageReady(page);

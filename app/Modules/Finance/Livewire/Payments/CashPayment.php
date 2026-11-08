@@ -12,8 +12,8 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('components.layouts.staff', ['active' => 'payments'])]
-#[Title('Pembayaran Tunai')]
+#[Layout('components.layouts.staff', ['active' => 'payments-cash'])]
+#[Title('Terima Pembayaran')]
 class CashPayment extends Component
 {
     public string $search = '';
@@ -27,6 +27,32 @@ class CashPayment extends Component
     public string $received = '';
 
     public string $amount = '';
+
+    /**
+     * Dibuka dari halaman santri: ?santri=uuid langsung memilih santrinya.
+     */
+    public function mount(): void
+    {
+        $uuid = (string) request()->query('santri');
+        if ($uuid !== '' && Student::query()->where('uuid', $uuid)->exists()) {
+            $this->pickStudent($uuid);
+        }
+    }
+
+    /**
+     * Tombol cepat uang diterima: uang pas atau pecahan bulat.
+     */
+    public function quickReceived(int $value): void
+    {
+        $this->received = (string) max(0, $value);
+        $this->resetErrorBag('received');
+    }
+
+    public function selectAll(bool $all): void
+    {
+        $this->selected = $all ? $this->openInvoices()->pluck('uuid')->all() : [];
+        $this->updatedSelected();
+    }
 
     public function pickStudent(string $uuid): void
     {
@@ -88,7 +114,7 @@ class CashPayment extends Component
     private function openInvoices()
     {
         return $this->studentId
-            ? Invoice::query()->where('student_id', $this->studentId)->open()->orderBy('due_date')->get()
+            ? Invoice::query()->with('items')->where('student_id', $this->studentId)->open()->orderBy('due_date')->get()
             : collect();
     }
 
@@ -107,10 +133,13 @@ class CashPayment extends Component
             'student' => $this->studentId ? Student::query()->with('classroom')->find($this->studentId) : null,
             'invoices' => $this->openInvoices(),
             'results' => mb_strlen($term) >= 2
-                ? Student::query()->where(fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%')->orWhere('nis', 'like', addcslashes($term, '%_').'%'))->orderBy('name')->limit(8)->get(['uuid', 'name', 'nis'])
+                ? Student::query()->where(fn ($query) => $query->where('name', 'ilike', '%'.addcslashes($term, '%_').'%')->orWhere('nis', 'like', addcslashes($term, '%_').'%'))->with('classroom:id,name')->where('status', 'active')->orderBy('name')->limit(8)->get(['uuid', 'name', 'nis', 'classroom_id'])
                 : collect(),
             'total' => $this->selectedTotal(),
             'change' => max(0, $received - $amount),
+            // Uang pas lalu pembulatan ke atas yang lazim diterima pengurus.
+            'quick' => $amount > 0 ? collect([$amount, ...array_map(fn (int $step) => (int) ceil($amount / $step) * $step, [10_000, 50_000, 100_000])])
+                ->unique()->values()->take(4)->all() : [],
         ]);
     }
 }

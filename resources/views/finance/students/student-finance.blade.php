@@ -2,6 +2,11 @@
 
 <div class="flex flex-col gap-4">
     <x-ui.card title="Tagihan">
+        @if ($invoices->contains(fn ($invoice) => in_array($invoice->status, ['unpaid', 'partial', 'overdue'], true)) && $canManage)
+            <x-slot:actions>
+                <x-ui.button icon="hand-coins" :href="route('staff.payments.cash', ['santri' => $studentUuid])" wire:navigate>Terima Pembayaran</x-ui.button>
+            </x-slot:actions>
+        @endif
         @if ($invoices->isEmpty())
             <x-ui.empty-state icon="receipt-text" message="Belum ada tagihan untuk santri ini." class="py-2" />
         @else

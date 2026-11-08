@@ -24,7 +24,7 @@ class GlobalSearch extends Component
     /** Kata lain untuk menu, agar "pos" menemukan Kasir dan "spp" menemukan Tagihan. */
     private const KEYWORDS = [
         'pos' => 'kasir jual belanja pos', 'merchants' => 'mart warung kantin koperasi toko produk stok pembelian promo pemasok',
-        'invoices' => 'tagihan spp bayar iuran', 'payments' => 'pembayaran kwitansi transfer', 'cash' => 'kas uang keluar masuk',
+        'invoices' => 'tagihan spp bayar iuran', 'payments' => 'pembayaran kwitansi transfer', 'payments-cash' => 'terima bayar tunai loket spp uang makan iuran kasir keuangan', 'cash' => 'kas uang keluar masuk',
         'cards' => 'kartu santri cetak qr', 'wallet' => 'dompet saldo topup', 'leaves' => 'izin pulang', 'gate' => 'gerbang satpam keluar masuk',
         'attendance' => 'absen kehadiran', 'grades' => 'nilai rapor', 'curriculum' => 'kurikulum fase sertifikat syahadah',
         'exams' => 'ujian soal cbt', 'tahfidz' => 'hafalan setoran quran', 'letters' => 'surat kop nomor', 'masjid' => 'sholat adzan jadwal',

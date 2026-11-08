@@ -74,6 +74,7 @@ return [
             // Grup bertanda workspace menjadi ruang kerja sendiri: sidebar utama hanya menampilkan pintu masuknya.
             ['label' => 'Keuangan', 'workspace' => ['key' => 'keuangan', 'icon' => 'landmark', 'hint' => 'Tagihan, pembayaran, dompet, kas'], 'items' => [
                 ['key' => 'invoices', 'permission' => 'finance.view', 'label' => 'Tagihan', 'icon' => 'receipt-text', 'route' => 'staff.invoices.index', 'module' => 'finance'],
+                ['key' => 'payments-cash', 'permission' => 'finance.manage', 'label' => 'Terima Pembayaran', 'icon' => 'hand-coins', 'route' => 'staff.payments.cash', 'module' => 'finance'],
                 ['key' => 'payments', 'permission' => 'finance.view', 'label' => 'Pembayaran', 'icon' => 'banknote', 'route' => 'staff.payments.index', 'module' => 'finance'],
                 ['key' => 'transfer-review', 'permission' => 'finance.verify', 'label' => 'Verifikasi Transfer', 'icon' => 'badge-check', 'route' => 'staff.transfers.index', 'module' => 'payment_manual'],
                 ['key' => 'arrears', 'permission' => 'finance.view', 'label' => 'Tunggakan', 'icon' => 'clock-alert', 'route' => 'staff.arrears.index', 'module' => 'finance'],

@@ -113,6 +113,7 @@ class StudentFinance extends Component
             'payments' => Payment::query()->whereHas('invoices', fn ($query) => $query->where('student_id', $this->studentId))->latest('id')->limit(12)->get(),
             'feeTypes' => FeeType::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'canManage' => auth()->user()->can('finance.manage'),
+            'studentUuid' => Student::query()->whereKey($this->studentId)->value('uuid'),
         ]);
     }
 }
