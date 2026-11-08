@@ -37,6 +37,7 @@ final class ModuleCatalog
         'masjid_prayer' => ['name' => 'Jadwal sholat masjid', 'description' => 'Hitung jadwal metode Kemenag, koreksi, iqamah, Jumat, Ramadan.', 'default' => false, 'depends' => ['core']],
         'masjid_display' => ['name' => 'Layar TV masjid', 'description' => 'Jadwal dan pengumuman di TV, tetap jalan saat internet putus.', 'default' => false, 'depends' => ['core', 'masjid_prayer']],
         'masjid_public' => ['name' => 'Halaman jadwal jamaah', 'description' => 'Halaman web jadwal sholat dan pengumuman publik.', 'default' => false, 'depends' => ['masjid_prayer']],
+        'curriculum' => ['name' => 'Kurikulum berbasis fase', 'description' => 'Fase belajar dengan durasi sendiri, ujian akhir fase, rapor fase, sertifikat, dan naik fase.', 'default' => false, 'depends' => ['core', 'academic']],
         'letters' => ['name' => 'Surat keluar', 'description' => 'Surat dari template dengan kop sendiri, nomor otomatis, dan arsip.', 'default' => false, 'depends' => ['core']],
         'export_dapodik' => ['name' => 'Ekspor Dapodik/EMIS', 'description' => 'Ekspor file sesuai template.', 'default' => false, 'depends' => ['core']],
     ];
