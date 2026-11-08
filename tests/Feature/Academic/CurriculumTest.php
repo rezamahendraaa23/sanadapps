@@ -14,6 +14,7 @@ use App\Modules\Academic\Support\CertificateDesigns;
 use App\Modules\Core\Models\AcademicYear;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Module;
+use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Term;
 use App\Modules\Core\Models\User;
@@ -195,4 +196,16 @@ it('logo sertifikat bisa lebih dari satu, paling banyak empat, dan ikut tercetak
     expect(CertificateDesigns::settings()['logos'])->toHaveCount(3)->and(CertificateDesigns::logoData())->toHaveCount(3);
     $this->get(route('staff.curriculum.logo', 0))->assertOk();
     $this->get(route('staff.curriculum.design', 'mihrab'))->assertOk()->assertSee('class="logos', false);
+});
+
+it('tanpa logo khusus, sertifikat memakai logo pesantren dari Pengaturan Profil', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('logo/pesantren.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
+    SchoolProfile::query()->updateOrCreate([], ['name' => 'Pesantren Uji', 'logo_path' => 'logo/pesantren.png']);
+
+    expect(CertificateDesigns::settings()['logos'])->toBe([])
+        ->and(CertificateDesigns::logoData())->toHaveCount(1)
+        ->and(CertificateDesigns::logoData()[0])->toStartWith('data:image/png;base64,');
+
+    $this->actingAs($this->admin)->get(route('staff.curriculum.design', 'kufi'))->assertOk()->assertSee('data:image/png;base64,', false);
 });
