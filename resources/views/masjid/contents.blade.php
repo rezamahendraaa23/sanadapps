@@ -141,7 +141,7 @@
         <div class="flex flex-col gap-3">
             <fieldset>
                 <legend class="text-sm font-semibold">Tampil di mana</legend>
-                <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                <div class="mt-1 grid gap-2 md:grid-cols-2">
                     @foreach (['panel' => ['Bagian pengumuman', 'Jam dan jadwal sholat tetap terlihat.'], 'full' => ['Layar penuh', 'Memenuhi layar saat gilirannya, jam kecil di pojok.']] as $value => [$heading, $hint])
                         <label wire:key="layout-{{ $value }}" @class(['flex cursor-pointer gap-3 rounded-control border p-3', 'border-primary bg-primary-soft' => $layout === $value, 'border-border' => $layout !== $value])>
                             <input type="radio" value="{{ $value }}" wire:model.live="layout" class="mt-1 size-5 accent-primary">

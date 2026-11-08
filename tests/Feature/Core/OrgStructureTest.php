@@ -72,6 +72,15 @@ it('bagan dipilih per layar: layar A menampilkan kesantrian, layar B tidak; foto
         ->set('org_charts', ['yayasan'])->call('updateScreen')->assertHasNoErrors();
     expect(app(DisplayManifest::class)->build($masjid->fresh())['structures'][0]['key'])->toBe('yayasan');
     $this->get(route('display.org-photo', $founder))->assertOk();
+
+    // Saklar cepat di daftar layar: langsung tersimpan tanpa membuka form.
+    Livewire::test(DisplayScreens::class)->call('toggleChart', $masjid->uuid, 'kesantrian');
+    expect($masjid->fresh()->org_charts)->toBe(['yayasan', 'kesantrian']);
+    Livewire::test(DisplayScreens::class)->call('toggleChart', $masjid->uuid, 'yayasan')->call('toggleOrgMode', $masjid->uuid);
+    expect($masjid->fresh()->org_charts)->toBe(['kesantrian'])->and($masjid->fresh()->org_mode)->toBe('always');
+    Livewire::test(DisplayScreens::class)->call('toggleChart', $masjid->uuid, 'kesantrian')->assertSee('Tidak tampil di layar ini.');
+    expect(app(DisplayManifest::class)->build($masjid->fresh())['structures'])->toBe([]);
+    Livewire::test(DisplayScreens::class)->call('toggleChart', $masjid->uuid, 'lain')->assertNotFound();
 });
 
 it('hanya pengelola data induk', function () {

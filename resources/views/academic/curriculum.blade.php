@@ -240,11 +240,11 @@
 
     <x-ui.modal name="form-fase" :title="$editingPhase ? 'Ubah fase' : 'Tambah fase'">
         <div class="flex flex-col gap-3">
-            <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
+            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
                 <x-ui.input label="Nama fase" name="p_name" required help="Contoh: Masa Perkenalan." wire:model="p_name" />
                 <x-ui.input label="Kode" name="p_code" required help="Masuk ke nomor sertifikat." wire:model="p_code" />
             </div>
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid gap-3 md:grid-cols-2">
                 <x-ui.input label="Durasi (minggu)" name="p_weeks" inputmode="numeric" required help="12 minggu kira-kira 3 bulan." wire:model="p_weeks" />
                 <x-ui.input label="Nilai lulus minimal" name="p_min" inputmode="decimal" required wire:model="p_min" />
             </div>

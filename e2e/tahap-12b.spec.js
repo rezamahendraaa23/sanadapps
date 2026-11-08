@@ -56,8 +56,17 @@ test('admin mengatur masjid, memasang TV dengan kode, TV tetap jalan saat offlin
     await admin.getByRole('button', { name: 'Pasang Layar', exact: true }).click();
     await admin.getByLabel('Kode di layar').fill(code);
     await admin.getByLabel('Nama layar').fill('TV Masjid Utama');
+    if (shots) await admin.screenshot({ path: `${shots}/masjid-pasang-layar-1280.png` });
     await admin.getByRole('button', { name: 'Pasangkan' }).click();
     await expect(admin.getByText('TV Masjid Utama').first()).toBeVisible();
+
+    // Saklar struktur langsung di daftar layar, tanpa membuka form.
+    const toggle = admin.getByRole('group', { name: 'Struktur pesantren di TV Masjid Utama' }).getByRole('button', { name: /Struktur Kesantrian/ });
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    if (shots) { await admin.waitForTimeout(400); await admin.screenshot({ path: `${shots}/masjid-layar-saklar-1280.png` }); }
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 
     await expect(tv.locator('.slotime, .ring, #layar.praying').first()).toBeVisible({ timeout: 20_000 });
     await expect(tv.locator('.slotime, .ring, #layar.praying').first()).toBeAttached();

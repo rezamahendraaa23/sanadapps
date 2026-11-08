@@ -29,7 +29,8 @@
         x-transition:enter-start="translate-y-6 opacity-0"
         x-transition:leave="transition duration-175 ease-exit"
         x-transition:leave-end="translate-y-6 opacity-0"
-        {{ $attributes->class('relative flex max-h-[90dvh] w-full flex-col rounded-t-modal bg-surface shadow-lg md:max-w-lg md:rounded-b-modal') }}
+        {{-- Lebar bawaan dipakai hanya bila pemanggil tidak menentukan lebar sendiri. --}}
+        {{ $attributes->class(['relative flex max-h-[90dvh] w-full flex-col rounded-t-modal bg-surface shadow-lg md:rounded-b-modal', 'md:max-w-lg' => ! str_contains((string) $attributes->get('class'), 'max-w-')]) }}
     >
         <header class="flex items-start justify-between gap-4 p-4 md:p-6 md:pb-4">
             <h2 id="modal-{{ $name }}-title" class="text-lg font-semibold">{{ $title }}</h2>

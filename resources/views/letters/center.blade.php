@@ -7,7 +7,7 @@
 
     @if ($tab === 'buat')
         @if (! $template)
-            <section aria-label="Pilih jenis surat" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section aria-label="Pilih jenis surat" class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 @foreach ($templates->where('is_active', true) as $option)
                     <button type="button" wire:key="pick-{{ $option->uuid }}" wire:click="pickTemplate('{{ $option->uuid }}')" class="group flex min-h-36 flex-col gap-3 rounded-card border border-border bg-surface p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                         <span class="inline-flex size-11 -rotate-6 items-center justify-center rounded-card bg-primary-soft text-primary group-hover:bg-primary group-hover:text-on-primary"><x-ui.icon name="file-text" /></span>
@@ -52,7 +52,7 @@
                         @foreach ($template->fields as $field)
                             <x-ui.input wire:key="f-{{ $field['key'] }}" :label="$field['label']" name="extra.{{ $field['key'] }}" wire:model.live.debounce.400ms="extra.{{ $field['key'] }}" />
                         @endforeach
-                        <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="grid gap-3 md:grid-cols-2">
                             <x-ui.input label="Tanggal surat" name="issued_on" type="date" required wire:model.live="issued_on" />
                             <x-ui.select label="Kop" name="letterheadUuid" placeholder="Tanpa kop gambar" :options="$letterheads->pluck('name', 'uuid')->all()" wire:model.live="letterheadUuid" />
                             <x-ui.input label="Penandatangan" name="signer_name" required wire:model.live.debounce.400ms="signer_name" />
@@ -73,7 +73,7 @@
                 {{-- Pratinjau seperti kertas A4. --}}
                 <section aria-label="Pratinjau surat" class="min-w-0">
                     <div class="mx-auto aspect-[210/297] w-full max-w-[42rem] overflow-hidden rounded-card bg-surface shadow-lg ring-1 ring-border">
-                        <div class="flex h-full flex-col text-[0.62rem] leading-relaxed sm:text-xs">
+                        <div class="flex h-full flex-col text-[0.62rem] leading-relaxed md:text-xs">
                             @php($kop = $letterheads->firstWhere('uuid', $letterheadUuid))
                             @if ($kop?->header_path)
                                 <img src="{{ route('staff.letters.kop', [$kop, 'header']) }}" alt="" class="w-full">
@@ -205,7 +205,7 @@
 
     <x-ui.modal name="form-template" :title="$editingTemplate ? 'Ubah template' : 'Template baru'">
         <div class="flex flex-col gap-3">
-            <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
+            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
                 <x-ui.input label="Nama" name="t_name" required wire:model="t_name" />
                 <x-ui.input label="Kode" name="t_code" required help="Masuk ke nomor." wire:model="t_code" />
             </div>
@@ -215,7 +215,7 @@
             <label class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" wire:model="t_needs_student" class="size-5 accent-primary">Surat ini untuk satu santri</label>
             <details class="rounded-control bg-bg p-3 text-sm">
                 <summary class="min-h-11 cursor-pointer content-center font-semibold">Isian otomatis yang tersedia</summary>
-                <ul class="mt-2 grid gap-1 sm:grid-cols-2">
+                <ul class="mt-2 grid gap-1 md:grid-cols-2">
                     @foreach ($builtIn as $key => $label)
                         <li><code class="font-tabular">{{ '{'.$key.'}' }}</code> {{ $label }}</li>
                     @endforeach

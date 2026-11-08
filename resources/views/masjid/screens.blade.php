@@ -17,6 +17,28 @@
                     </div>
                     <span @class(['inline-flex shrink-0 items-center gap-1 text-sm font-semibold', 'text-success' => $screen->isOnline(), 'text-danger' => ! $screen->isOnline()])><x-ui.icon :name="$screen->isOnline() ? 'wifi' : 'wifi-off'" size="sm" />{{ $screen->isOnline() ? 'Online' : 'Offline' }}</span>
                 </div>
+                @if ($charts !== [])
+                    @php($shownCharts = $screen->org_charts ?? [])
+                    <div class="flex flex-wrap items-center gap-2 rounded-control bg-bg p-2" role="group" aria-label="Struktur pesantren di {{ $screen->name }}">
+                        <span class="flex items-center gap-1 px-1 text-sm font-semibold"><x-ui.icon name="network" size="sm" class="text-primary" />Struktur</span>
+                        @foreach ($charts as $chartKey => $chartName)
+                            @php($on = in_array($chartKey, $shownCharts, true))
+                            <button type="button" wire:key="tg-{{ $screen->uuid }}-{{ $chartKey }}" wire:click="toggleChart('{{ $screen->uuid }}', '{{ $chartKey }}')" wire:loading.attr="disabled" aria-pressed="{{ $on ? 'true' : 'false' }}"
+                                @class(['inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors', 'border-primary bg-primary text-on-primary' => $on, 'border-border bg-surface text-text-muted hover:border-primary' => ! $on])>
+                                <span @class(['relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors', 'bg-on-primary/30' => $on, 'bg-border' => ! $on]) aria-hidden="true"><span @class(['absolute top-0.5 size-4 rounded-full bg-surface shadow transition-all', 'left-[1.125rem]' => $on, 'left-0.5' => ! $on])></span></span>
+                                {{ $chartName }}<span class="sr-only">{{ $on ? ', tampil' : ', tidak tampil' }}</span>
+                            </button>
+                        @endforeach
+                        @if ($shownCharts !== [])
+                            <button type="button" wire:click="toggleOrgMode('{{ $screen->uuid }}')" wire:loading.attr="disabled" aria-pressed="{{ $screen->org_mode === 'always' ? 'true' : 'false' }}"
+                                class="inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-primary hover:bg-primary-soft">
+                                <x-ui.icon :name="$screen->org_mode === 'always' ? 'pin' : 'repeat'" size="sm" />{{ $screen->org_mode === 'always' ? 'Tampil terus' : 'Bergiliran' }}<span class="sr-only">, ketuk untuk mengganti</span>
+                            </button>
+                        @else
+                            <span class="px-1 text-sm text-text-muted">Tidak tampil di layar ini.</span>
+                        @endif
+                    </div>
+                @endif
                 @if ($last = $lastCommands[$screen->id] ?? null)
                     <p class="text-sm text-text-muted" aria-live="polite">Perintah terakhir: {{ ['reload' => 'muat ulang', 'test' => 'layar tes', 'dim' => 'redupkan', 'undim' => 'terangkan'][$last->command] ?? $last->command }}, {{ $last->acked_at ? 'sudah diterima layar' : 'menunggu layar' }}.@if ($dimmed[$screen->id] ?? false) Layar sedang redup.@endif</p>
                 @endif
@@ -40,25 +62,7 @@
     <x-ui.modal name="ubah-layar" title="Ubah layar" class="md:max-w-2xl">
         {{-- Hanya dirender saat mengubah, agar id isian tidak kembar dengan popup Pasang Layar. --}}
         @if ($editing)
-        <form id="form-ubah-layar" wire:submit="updateScreen" class="grid gap-3 sm:grid-cols-2">
-            <x-ui.input label="Nama layar" name="name" required wire:model="name" />
-            <x-ui.input label="Lokasi" name="location" wire:model="location" />
-            <x-ui.select label="Profil" name="profile" :options="$profiles" help="Hanya pengumuman: tanpa jam dan hitung mundur sholat." wire:model="profile" />
-            <x-ui.select label="Orientasi" name="orientation" :options="['landscape' => 'Mendatar', 'portrait' => 'Tegak']" wire:model="orientation" />
-            <x-ui.select label="Pola pengumuman" name="content_pattern" :options="['rotate' => 'Bergilir satu per satu', 'list' => 'Daftar, tiga sekaligus']" wire:model="content_pattern" />
-            <div></div>
-            <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
-            <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
-            <fieldset class="sm:col-span-2">
-                <legend class="text-sm font-semibold">Struktur pesantren di layar ini</legend>
-                @forelse ($charts as $chartKey => $chartName)
-                    <label wire:key="oc-{{ $chartKey }}-{{ $editing ?? 'baru' }}" class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" value="{{ $chartKey }}" wire:model="org_charts" class="size-5 accent-primary">{{ $chartName }}</label>
-                @empty
-                    <p class="text-sm text-text-muted">Belum ada bagan. Susun dulu di menu Struktur Pesantren.</p>
-                @endforelse
-            </fieldset>
-            <x-ui.select label="Cara tampil struktur" name="org_mode" :options="['rotate' => 'Ikut bergiliran dengan konten lain', 'always' => 'Tampil terus (layar khusus struktur)']" wire:model="org_mode" />
-        </form>
+            @include('masjid.partials.screen-form', ['formId' => 'form-ubah-layar', 'submit' => 'updateScreen', 'withCode' => false])
         @endif
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>
@@ -67,31 +71,12 @@
     </x-ui.modal>
 
     <x-ui.modal name="pasang-layar" title="Pasang layar baru" class="md:max-w-2xl">
-        <ol class="mb-4 flex flex-col gap-1 text-base">
-            <li>1. Buka <strong class="break-all">{{ url('/display') }}</strong> di TV atau laptop.</li>
-            <li>2. Ketik kode 6 angka yang muncul di layar itu.</li>
-        </ol>
-        <x-ui.button variant="secondary" icon="monitor" class="mb-4" :href="url('/display')" target="_blank">Buka Layar di Tab Baru</x-ui.button>
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-control bg-bg p-3">
+            <p class="text-sm">Buka <strong class="break-all">{{ url('/display') }}</strong> di TV atau laptop. Kode 6 angka muncul di sana.</p>
+            <x-ui.button variant="secondary" icon="monitor" :href="url('/display')" target="_blank">Buka Layar</x-ui.button>
+        </div>
         @unless ($editing)
-        <form id="form-pasang" wire:submit="claim" class="grid gap-3 sm:grid-cols-2">
-            <x-ui.input label="Kode di layar" name="code" inputmode="numeric" autocomplete="off" required wire:model="code" />
-            <x-ui.input label="Nama layar" name="name" required help="Contoh: TV Masjid Utama." wire:model="name" />
-            <x-ui.input label="Lokasi" name="location" wire:model="location" />
-            <x-ui.select label="Profil" name="profile" :options="$profiles" wire:model="profile" />
-            <x-ui.select label="Orientasi" name="orientation" :options="['landscape' => 'Mendatar', 'portrait' => 'Tegak']" wire:model="orientation" />
-            <x-ui.select label="Pola pengumuman" name="content_pattern" :options="['rotate' => 'Bergilir satu per satu', 'list' => 'Daftar, tiga sekaligus']" wire:model="content_pattern" />
-            <x-ui.input label="Redup mulai" name="dim_from" type="time" help="Kosongkan bila tidak perlu." wire:model="dim_from" />
-            <x-ui.input label="Redup sampai" name="dim_until" type="time" wire:model="dim_until" />
-            <fieldset class="sm:col-span-2">
-                <legend class="text-sm font-semibold">Struktur pesantren di layar ini</legend>
-                @forelse ($charts as $chartKey => $chartName)
-                    <label wire:key="oc-{{ $chartKey }}-{{ $editing ?? 'baru' }}" class="flex min-h-11 items-center gap-3 text-base"><input type="checkbox" value="{{ $chartKey }}" wire:model="org_charts" class="size-5 accent-primary">{{ $chartName }}</label>
-                @empty
-                    <p class="text-sm text-text-muted">Belum ada bagan. Susun dulu di menu Struktur Pesantren.</p>
-                @endforelse
-            </fieldset>
-            <x-ui.select label="Cara tampil struktur" name="org_mode" :options="['rotate' => 'Ikut bergiliran dengan konten lain', 'always' => 'Tampil terus (layar khusus struktur)']" wire:model="org_mode" />
-        </form>
+            @include('masjid.partials.screen-form', ['formId' => 'form-pasang', 'submit' => 'claim', 'withCode' => true])
         @endunless
         <x-slot:footer>
             <x-ui.button variant="secondary" x-on:click="open = false">Batal</x-ui.button>

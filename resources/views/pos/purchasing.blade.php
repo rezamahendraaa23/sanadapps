@@ -6,7 +6,7 @@
         @include('pos.partials.merchant-nav')
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-3">
+    <div class="grid gap-3 md:grid-cols-3">
         <div class="rounded-card bg-primary p-4 text-on-primary shadow-md">
             <p class="text-sm opacity-80">Utang ke pemasok</p>
             <p class="font-display font-tabular text-2xl font-semibold">{{ Rupiah::format($debt) }}</p>
@@ -134,15 +134,15 @@
     @if ($canManage)
         <x-ui.modal name="form-pembelian" title="Catat pembelian">
             <div class="flex flex-col gap-3">
-                <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-3 md:grid-cols-2">
                     <x-ui.select label="Pemasok" name="supplier_id" placeholder="Tanpa pemasok" :options="$suppliers->pluck('name', 'uuid')->all()" wire:model="supplier_id" />
                     <x-ui.input label="Tanggal beli" name="purchased_on" type="date" required wire:model="purchased_on" />
                 </div>
                 @error('rows')<p role="alert" class="flex items-center gap-1 text-sm font-semibold text-danger"><x-ui.icon name="circle-alert" size="sm" />{{ $message }}</p>@enderror
                 @foreach ($rows as $index => $row)
-                    <fieldset wire:key="row-{{ $index }}" class="grid gap-2 rounded-control border border-border p-3 sm:grid-cols-2">
+                    <fieldset wire:key="row-{{ $index }}" class="grid gap-2 rounded-control border border-border p-3 md:grid-cols-2">
                         <legend class="px-1 text-sm font-semibold">Barang {{ $index + 1 }}</legend>
-                        <div class="sm:col-span-2"><x-ui.select label="Produk" name="rows.{{ $index }}.product" placeholder="Pilih produk" :options="$products" wire:model="rows.{{ $index }}.product" /></div>
+                        <div class="md:col-span-2"><x-ui.select label="Produk" name="rows.{{ $index }}.product" placeholder="Pilih produk" :options="$products" wire:model="rows.{{ $index }}.product" /></div>
                         <x-ui.input label="Jumlah" name="rows.{{ $index }}.qty" inputmode="numeric" required wire:model="rows.{{ $index }}.qty" />
                         <x-ui.input-rupiah label="Harga beli satuan" name="rows.{{ $index }}.unit_cost" required wire:model="rows.{{ $index }}.unit_cost" />
                         <x-ui.input label="Kedaluwarsa" name="rows.{{ $index }}.expires_on" type="date" help="Kosongkan bila tidak ada." wire:model="rows.{{ $index }}.expires_on" />
@@ -152,7 +152,7 @@
                     </fieldset>
                 @endforeach
                 <x-ui.button variant="secondary" icon="plus" wire:click="addRow">Tambah Barang</x-ui.button>
-                <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-3 md:grid-cols-2">
                     <x-ui.input-rupiah label="Dibayar sekarang" name="paid_now" help="Kosongkan bila belum dibayar." wire:model="paid_now" />
                     <x-ui.input label="Jatuh tempo" name="due_on" type="date" wire:model="due_on" />
                 </div>

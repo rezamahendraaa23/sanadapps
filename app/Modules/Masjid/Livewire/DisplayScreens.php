@@ -144,6 +144,29 @@ class DisplayScreens extends Component
         $this->dispatch('toast', message: 'Layar diperbarui. TV menyesuaikan dalam beberapa detik.', tone: 'success');
     }
 
+    /**
+     * Saklar cepat di daftar layar: menampilkan atau menyembunyikan satu bagan tanpa membuka form.
+     */
+    public function toggleChart(string $uuid, string $key): void
+    {
+        abort_unless(isset(OrgChart::DEFAULTS[$key]), 404);
+        $screen = DisplayScreen::query()->where('uuid', $uuid)->where('is_active', true)->firstOrFail();
+        $current = array_values($screen->org_charts ?? []);
+        $shown = ! in_array($key, $current, true);
+        $next = $shown ? [...$current, $key] : array_values(array_diff($current, [$key]));
+        $screen->update(['org_charts' => array_values(array_intersect(array_keys(OrgChart::DEFAULTS), $next))]);
+
+        $name = OrgChart::query()->where('key', $key)->value('name') ?? $key;
+        $this->dispatch('toast', message: $name.($shown ? ' ditampilkan di ' : ' disembunyikan dari ').$screen->name.'. TV menyesuaikan dalam beberapa detik.', tone: 'success');
+    }
+
+    public function toggleOrgMode(string $uuid): void
+    {
+        $screen = DisplayScreen::query()->where('uuid', $uuid)->where('is_active', true)->firstOrFail();
+        $screen->update(['org_mode' => $screen->org_mode === 'always' ? 'rotate' : 'always']);
+        $this->dispatch('toast', message: $screen->org_mode === 'always' ? 'Struktur tampil terus di '.$screen->name.'.' : 'Struktur kembali bergiliran dengan konten lain.', tone: 'success');
+    }
+
     public function command(string $uuid, string $command, ManageScreens $screens): void
     {
         $screen = DisplayScreen::query()->where('uuid', $uuid)->firstOrFail();
@@ -162,6 +185,9 @@ class DisplayScreens extends Component
 
     public function render(): View
     {
+        // Bagan bawaan disiapkan di sini juga, agar saklar struktur muncul walau menu Struktur belum pernah dibuka.
+        OrgChart::ensureDefaults();
+
         return view('masjid.screens', [
             'screens' => $list = DisplayScreen::query()->where('is_active', true)->orderBy('name')->get(),
             // Perintah terakhir per layar, agar terlihat sudah diterima TV atau belum.

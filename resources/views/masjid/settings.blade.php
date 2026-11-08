@@ -54,7 +54,7 @@
                     @if ($foundLabel)<p class="mt-2 text-sm break-words">Ditemukan: {{ $foundLabel }}. Periksa titiknya di peta sebelum menyimpan.</p>@endif
                 </div>
             @endif
-            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)]">
+            <div class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)]">
                 <x-ui.input label="Lintang" name="latitude" inputmode="decimal" required wire:model.blur="latitude" :disabled="! $canSettings" />
                 <x-ui.input label="Bujur" name="longitude" inputmode="decimal" required wire:model.blur="longitude" :disabled="! $canSettings" />
                 <x-ui.select label="Zona waktu" name="timezone" :options="['Asia/Jakarta' => 'WIB', 'Asia/Makassar' => 'WITA', 'Asia/Jayapura' => 'WIT']" wire:model="timezone" :disabled="! $canSettings" />
@@ -65,13 +65,13 @@
         </x-ui.card>
 
         <x-ui.card title="Cara menghitung">
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <x-ui.input label="Sudut Subuh" name="fajr_angle" inputmode="decimal" help="Kemenag RI: 20" wire:model="fajr_angle" :disabled="! $canSettings" />
                 <x-ui.input label="Sudut Isya" name="isha_angle" inputmode="decimal" help="Kemenag RI: 18" wire:model="isha_angle" :disabled="! $canSettings" />
                 <x-ui.select label="Ashar" name="asr_method" :options="['standard' => 'Standar (1x bayangan)', 'hanafi' => 'Hanafi (2x bayangan)']" wire:model="asr_method" :disabled="! $canSettings" />
                 <x-ui.input label="Imsak sebelum Subuh (menit)" name="imsak_minutes" inputmode="numeric" wire:model="imsak_minutes" :disabled="! $canSettings" />
             </div>
-            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div class="mt-3 grid gap-3 md:grid-cols-2">
                 <x-ui.select label="Sumber jadwal" name="schedule_source" :options="['computed' => 'Hitung sendiri', 'api' => 'Jadwal resmi bila ada, cadangan hitung sendiri']" wire:model="schedule_source" :disabled="! $canSettings" />
                 <x-ui.input label="Hitung mundur adzan (menit)" name="countdown_minutes" inputmode="numeric" help="Layar TV berganti ke hitung mundur sebelum adzan." wire:model="countdown_minutes" :disabled="! $canSettings" />
             </div>
@@ -82,7 +82,7 @@
         </x-ui.card>
 
         <x-ui.card title="Kalender hijriah dan Ramadan">
-            <div class="grid gap-3 sm:grid-cols-3">
+            <div class="grid gap-3 md:grid-cols-3">
                 <x-ui.input label="Koreksi tanggal hijriah (hari)" name="hijri_offset_days" inputmode="numeric" help="Contoh: 1 atau -1." wire:model="hijri_offset_days" :disabled="! $canSettings" />
                 <x-ui.input label="Ramadan mulai" name="ramadan_start" type="date" help="Isi setelah keputusan resmi." wire:model="ramadan_start" :disabled="! $canSettings" />
                 <x-ui.input label="Ramadan selesai" name="ramadan_end" type="date" wire:model="ramadan_end" :disabled="! $canSettings" />
@@ -97,11 +97,11 @@
 
             <x-ui.card title="Awal bulan hijriah resmi">
                 <p class="text-base">Isi setelah ada keputusan resmi, misalnya awal Ramadan. Sistem tidak menetapkannya sendiri.</p>
-                <div class="mt-3 grid gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start">
+                <div class="mt-3 grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-start">
                     <x-ui.input label="Tahun" name="hijri_year" inputmode="numeric" wire:model="hijri_year" />
                     <x-ui.select label="Bulan" name="hijri_month" :options="array_combine(range(1, 12), \App\Modules\Masjid\Support\HijriDate::MONTHS)" wire:model="hijri_month" />
                     <x-ui.input label="Tanggal 1 jatuh pada" name="hijri_start" type="date" wire:model="hijri_start" />
-                    <x-ui.button variant="secondary" class="sm:mt-6" wire:click="setHijriMonth">Simpan Awal Bulan</x-ui.button>
+                    <x-ui.button variant="secondary" class="md:mt-6" wire:click="setHijriMonth">Simpan Awal Bulan</x-ui.button>
                 </div>
             </x-ui.card>
         @endif

@@ -45,7 +45,7 @@
                 @elseif ($target === 'category')
                     <x-ui.select label="Kategori" name="category" placeholder="Pilih kategori" :options="$categories" wire:model="category" />
                 @endif
-                <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-3 md:grid-cols-2">
                     <x-ui.select label="Jenis potongan" name="kind" :options="['percent' => 'Persen', 'amount' => 'Rupiah per barang']" wire:model.live="kind" />
                     @if ($kind === 'percent')
                         <x-ui.input label="Besar potongan (%)" name="value" inputmode="numeric" required wire:model="value" />
@@ -54,7 +54,7 @@
                     @endif
                 </div>
                 <x-ui.input label="Jumlah minimal" name="min_qty" inputmode="numeric" required help="Isi 3 untuk promo beli 3 lebih murah." wire:model="min_qty" />
-                <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-3 md:grid-cols-2">
                     <x-ui.input label="Mulai" name="starts_on" type="date" wire:model="starts_on" />
                     <x-ui.input label="Selesai" name="ends_on" type="date" help="Kosongkan bila tanpa batas." wire:model="ends_on" />
                 </div>

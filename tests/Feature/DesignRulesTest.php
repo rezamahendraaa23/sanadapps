@@ -15,6 +15,13 @@ it('tidak memakai warna hex mentah di view', function () {
     }
 });
 
+it('hanya memakai breakpoint yang ada di token (xs, md, lg, xl)', function () {
+    foreach (viewFiles() as $file) {
+        expect(preg_match('/(^|[\s"\'\[])(sm|2xl):[\w\[]/m', $file->getContents()))
+            ->toBe(0, "Breakpoint tanpa token di {$file->getRelativePathname()}, kelasnya tidak pernah aktif");
+    }
+});
+
 it('tidak memakai em dash di teks antarmuka', function () {
     foreach (viewFiles() as $file) {
         expect($file->getContents())->not->toContain('—', "Em dash di {$file->getRelativePathname()}");
