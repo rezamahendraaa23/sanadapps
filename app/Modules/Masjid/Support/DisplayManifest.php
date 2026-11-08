@@ -3,6 +3,7 @@
 namespace App\Modules\Masjid\Support;
 
 use App\Modules\Affairs\Models\DutyAssignment;
+use App\Modules\Core\Models\OrgChart;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Support\ModuleRegistry;
@@ -42,6 +43,8 @@ class DisplayManifest
             'screen' => ['name' => $screen->name, 'profile' => $screen->profile, 'orientation' => $screen->orientation, 'pattern' => $screen->content_pattern, 'brightness' => $screen->brightness_schedule],
             'identity' => ['name' => $profile->name ?: $school->name, 'school' => $school->name, 'logo' => app(SchoolIdentity::class)->logoUrl()],
             // Pustaka terverifikasi ikut bergilir walau tidak dijadikan konten, agar layar tidak kosong.
+            // Bagan struktur yang dipilih tampil di TV, paling dalam tiga tingkat agar terbaca dari jauh.
+            'structures' => $this->structures(),
             'quotes' => Quote::query()->whereNotNull('verified_at')->where('is_active', true)->orderBy('id')->limit(60)->get()->map(fn (Quote $quote) => ['id' => 'q'.$quote->id, 'arabic' => $quote->text_ar, 'text' => $quote->text_id, 'source' => $quote->source_ref])->values()->all(),
             'tz_offset_minutes' => (int) ($zone->getOffset($today) / 60),
             'countdown_minutes' => $profile->countdown_minutes,
@@ -71,6 +74,26 @@ class DisplayManifest
         return DisplayContent::query()->where('status', 'approved')
             ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>', now()))
             ->where(fn ($query) => $query->whereDoesntHave('screens')->orWhereHas('screens', fn ($inner) => $inner->whereKey($screen->id)));
+    }
+
+    /**
+     * @return list<array{key: string, name: string, nodes: list<array<string, mixed>>}>
+     */
+    private function structures(): array
+    {
+        $map = function (array $nodes, int $depth) use (&$map): array {
+            return $depth > 2 ? [] : array_map(fn (array $node) => [
+                'title' => $node['position']->title,
+                'name' => $node['position']->person_name,
+                'initials' => $node['position']->initials(),
+                'photo' => $node['position']->photo_path ? route('display.org-photo', $node['position']) : null,
+                'children' => $map($node['children'], $depth + 1),
+            ], $nodes);
+        };
+
+        return OrgChart::query()->where('show_on_tv', true)->orderBy('id')->get()
+            ->map(fn (OrgChart $chart) => ['key' => $chart->key, 'name' => $chart->name, 'nodes' => $map($chart->tree(), 0)])
+            ->filter(fn (array $chart) => $chart['nodes'] !== [])->values()->all();
     }
 
     /**

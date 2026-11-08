@@ -187,6 +187,10 @@
             var q = quotes[(t.hours + new Date(nowMs()).getUTCDate() * 24) % quotes.length];
             cards.push({ id: q.id, type: 'quote', body: { arabic: q.arabic, text: q.text, source: q.source }, duration: 15 });
         }
+        var structures = manifest.structures || [];
+        for (i = 0; i < structures.length; i++) {
+            cards.push({ id: 'org-' + structures[i].key, type: 'structure', layout: 'full', title: structures[i].name, structure: structures[i], duration: 20 });
+        }
         if (row) {
             cards.push({ id: 'today', type: 'today', duration: 10 });
         }
@@ -204,6 +208,18 @@
         if (item.type === 'youtube') {
             var video = encodeURIComponent(body.youtube_id);
             return { media: true, html: '<iframe src="https://www.youtube-nocookie.com/embed/' + video + '?autoplay=1&mute=' + (body.sound ? '0' : '1') + '&controls=0&rel=0&playsinline=1&loop=1&playlist=' + video + '" title="' + escapeHtml(item.title) + '" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>' };
+        }
+        if (item.type === 'structure') {
+            var tree = function (nodes, depth) {
+                var html = '<ul>';
+                for (var n = 0; n < nodes.length; n++) {
+                    var node = nodes[n];
+                    var face = node.photo ? '<img src="' + escapeHtml(node.photo) + '" alt="">' : escapeHtml(node.initials);
+                    html += '<li><div class="onode d' + depth + '"><i>' + face + '</i><b>' + escapeHtml(node.title) + '</b><span>' + escapeHtml(node.name || 'Belum diisi') + '</span></div>' + (node.children && node.children.length ? tree(node.children, depth + 1) : '') + '</li>';
+                }
+                return html + '</ul>';
+            };
+            return { media: false, html: '<div class="kind"><i aria-hidden="true"></i>' + escapeHtml(item.title) + '</div><div class="otree">' + tree(item.structure.nodes, 0) + '</div>' };
         }
         if (item.type === 'today') {
             var t = localNow();

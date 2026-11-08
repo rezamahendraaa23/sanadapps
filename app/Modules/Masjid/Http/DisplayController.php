@@ -2,6 +2,7 @@
 
 namespace App\Modules\Masjid\Http;
 
+use App\Modules\Core\Models\OrgPosition;
 use App\Modules\Masjid\Actions\ManageScreens;
 use App\Modules\Masjid\Models\DisplayCommand;
 use App\Modules\Masjid\Models\DisplayContent;
@@ -69,6 +70,16 @@ class DisplayController
         DisplayCommand::query()->where('screen_id', $request->attributes->get('screen')->id)->whereKey($data['id'])->update(['acked_at' => now()]);
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Foto struktur hanya untuk bagan yang memang dipilih tampil di TV.
+     */
+    public function orgPhoto(OrgPosition $position): Response
+    {
+        abort_unless($position->photo_path && $position->chart->show_on_tv && Storage::disk('local')->exists($position->photo_path), 404);
+
+        return Storage::disk('local')->response($position->photo_path, null, ['Cache-Control' => 'private, max-age=86400']);
     }
 
     public function staffMedia(DisplayContent $content): Response

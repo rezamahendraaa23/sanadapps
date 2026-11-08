@@ -46,6 +46,7 @@ use App\Modules\Core\Livewire\Auth\TwoFactorChallenge;
 use App\Modules\Core\Livewire\Auth\VerifyOtp;
 use App\Modules\Core\Livewire\Guardians\GuardianIndex;
 use App\Modules\Core\Livewire\Masters\MasterData;
+use App\Modules\Core\Livewire\OrgStructure;
 use App\Modules\Core\Livewire\Settings\AuditLogs;
 use App\Modules\Core\Livewire\Settings\IntegrationSettings;
 use App\Modules\Core\Livewire\Settings\ModuleSettings;
@@ -63,6 +64,7 @@ use App\Modules\Core\Livewire\Users\UserIndex;
 use App\Modules\Core\Models\Classroom;
 use App\Modules\Core\Models\Guardian;
 use App\Modules\Core\Models\Import;
+use App\Modules\Core\Models\OrgPosition;
 use App\Modules\Core\Models\SchoolProfile;
 use App\Modules\Core\Models\Student;
 use App\Modules\Core\Models\Student as AffairsStudent;
@@ -282,6 +284,15 @@ Route::middleware(['auth', 'user.type:staff', 'can:panel.access'])->prefix('pane
         Route::get('/absensi/sesi/{session}', AttendanceSheet::class)->name('attendance.session');
         Route::get('/absensi/tinjauan', AttendanceReview::class)->middleware('can:academic.manage')->name('attendance.review');
         Route::get('/wajah', FaceEnrollments::class)->middleware(['module:face_attendance', 'can:face.enroll'])->name('face');
+    });
+
+    Route::middleware('can:masters.manage')->group(function (): void {
+        Route::get('/struktur', OrgStructure::class)->name('org.index');
+        Route::get('/struktur/foto/{position}', function (OrgPosition $position) {
+            abort_unless($position->photo_path && Storage::disk('local')->exists($position->photo_path), 404);
+
+            return Storage::disk('local')->response($position->photo_path);
+        })->name('org.photo');
     });
 
     Route::prefix('kurikulum')->name('curriculum.')->middleware(['module:curriculum', 'can:academic.manage'])->group(function (): void {

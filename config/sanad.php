@@ -48,6 +48,7 @@ return [
             ]],
             ['label' => 'Kesantrian', 'items' => [
                 ['key' => 'students', 'permission' => ['students.view-all', 'students.view-own-class', 'students.view-own-dormitory'], 'label' => 'Santri', 'icon' => 'users', 'route' => 'staff.students.index', 'module' => 'core'],
+                ['key' => 'org', 'permission' => 'masters.manage', 'label' => 'Struktur Pesantren', 'icon' => 'network', 'route' => 'staff.org.index', 'module' => 'core'],
                 ['key' => 'guardians', 'permission' => 'students.view-all', 'label' => 'Wali', 'icon' => 'contact', 'route' => 'staff.guardians.index', 'module' => 'core'],
                 ['key' => 'cards', 'permission' => 'cards.view', 'label' => 'Kartu Santri', 'icon' => 'id-card', 'route' => 'staff.cards.index', 'module' => 'card'],
                 ['key' => 'leaves', 'permission' => 'leave.manage', 'label' => 'Perizinan', 'icon' => 'door-open', 'route' => 'staff.leaves.index', 'module' => 'leave'],

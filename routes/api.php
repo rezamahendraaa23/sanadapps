@@ -20,6 +20,7 @@ Route::prefix('v1/display')->middleware('module:masjid_display')->group(function
     Route::post('/pair/start', [DisplayController::class, 'pairStart'])->middleware('throttle:20,1');
     Route::get('/pair/status', [DisplayController::class, 'pairStatus'])->middleware('throttle:60,1');
     Route::get('/media/{content}', [DisplayController::class, 'media'])->name('display.media');
+    Route::get('/struktur-foto/{position}', [DisplayController::class, 'orgPhoto'])->name('display.org-photo');
     Route::middleware([AuthenticateScreen::class, 'throttle:120,1'])->group(function (): void {
         Route::get('/manifest', [DisplayController::class, 'manifest']);
         Route::get('/manifest/version', [DisplayController::class, 'version']);
