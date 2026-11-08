@@ -190,7 +190,8 @@ test('tunai: kembalian terhitung di layar, lalu kas terisi', async ({ page }) =>
     await pageReady(page);
     await page.getByRole('link', { name: 'Laporan Kas' }).click();
     await expect(page).toHaveURL(new RegExp('panel.kas'));
-    await expect(page.getByText('Rp 550.000').first()).toBeVisible();
+    // Total kas ikut uji lain di database yang sama, jadi yang diperiksa baris pembayaran ini.
+    await expect(page.getByRole('row', { name: /Pembayaran tagihan.*Rp 200\.000/ }).first()).toBeVisible();
     await page.getByRole('button', { name: 'Catat Kas' }).click();
     const form = page.getByRole('dialog', { name: 'Catat kas' });
     await form.getByLabel('Kategori').selectOption({ label: 'Operasional' });

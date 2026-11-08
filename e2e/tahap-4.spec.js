@@ -247,6 +247,9 @@ test('admin: perangkat, log pindai, merchant, layar HP aman', async ({ page }) =
     await expect(page.getByText(/^dev_/)).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/perangkat-1280.png`, fullPage: true });
 
+    // Perangkat sekarang di Pengaturan; log pindai tetap di halaman Kartu Santri.
+    await page.goto('/panel/kartu');
+    await pageReady(page);
     await page.getByRole('link', { name: 'Log Pindai' }).click();
     await expect(page.getByRole('cell', { name: /Tidak dikenal/ }).first()).toBeVisible();
 

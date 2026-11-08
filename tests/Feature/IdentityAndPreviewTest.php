@@ -58,7 +58,9 @@ it('membatasi navigasi portal maksimal lima item', function (string $role) {
 it('memakai module_key yang terdaftar di PRD untuk semua menu', function () {
     $known = ['core', 'finance', 'payment_midtrans', 'payment_manual', 'wallet', 'card', 'pos', 'academic', 'attendance',
         'face_attendance', 'grading', 'tahfidz', 'exam', 'leave', 'gate', 'discipline', 'health', 'ppdb', 'notification_wa',
-        'portal_wali', 'portal_santri', 'analytics', 'alumni', 'inventory', 'duty_roster', 'export_dapodik', 'masjid_prayer', 'masjid_display', 'masjid_public'];
+        'portal_wali', 'portal_santri', 'analytics', 'alumni', 'inventory', 'duty_roster', 'export_dapodik', 'masjid_prayer', 'masjid_display', 'masjid_public',
+        // Tambahan pemilik 8 November 2026.
+        'letters', 'curriculum'];
 
     $items = collect(config('sanad.navigation.staff'))->flatMap(fn ($group) => $group['items'])
         ->merge(collect(config('sanad.navigation.portal'))->flatten(1));
