@@ -16,7 +16,30 @@ Diperbarui setiap ada langkah selesai.
 - [x] **Tahap 11:** PPDB
 - [x] **Tahap 12:** pelanggaran, kesehatan, analitik risiko, alumni, inventaris, piket, ekspor Dapodik/EMIS
 - [x] **Tahap 12b:** modul Masjid: jadwal sholat Kemenag, layar TV offline, konten dan persetujuan, pairing, aplikasi Android TV
-- [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT
+- [ ] **Tahap 13:** hardening, uji beban dan keamanan, backup, seluruh UAT (pekerjaan kode selesai, menunggu uji lapangan di bawah)
+- [x] **Tambahan pemilik 8 November:** POS lanjutan, modul Surat, kurikulum berbasis fase, konten TV fleksibel
+
+## Rincian Tahap 13
+
+- [x] Header keamanan dan CSP, HSTS lewat HTTPS, Horizon hanya pengelola pengaturan
+- [x] Uji akses silang (wali A ke data wali B, ustadz dan musyrif lain) di tagihan, kwitansi, rapor, ujian, PPDB, absensi
+- [x] Cadangan harian (`sanad:backup`), restore aman (`sanad:restore`), uji restore mingguan otomatis (`sanad:backup-drill`)
+- [x] Uji beban satu proses 200 santri: autosave ujian p95 sekitar 8 ms, belanja kartu p95 di bawah 100 ms, tidak ada jawaban hilang, saldo cocok
+- [ ] Uji beban serentak di staging dengan k6 (`scripts/load`), **belum dijalankan, butuh server staging**
+- [x] Runbook (`docs/RUNBOOK.md`) dan pemetaan 16 skenario UAT ke bukti test (`docs/UAT.md`)
+- [ ] Uji lapangan: Midtrans sandbox, HP santri sungguhan, kamera wajah, Fonnte, APK Android TV
+
+## Rincian tambahan pemilik
+
+- [x] Kasir: desain baru, chip kategori, keranjang gaya struk, omzet hari ini
+- [x] POS: shift kasir dengan hitung uang, penjualan tunai untuk bukan santri, pemasok dan pembelian dengan utang, daftar perlu belanja, kedaluwarsa, promo, retur sebagian, struk thermal 58 dan 80 mm
+- [x] Surat: template dengan isian otomatis, kop dan footer diunggah, nomor berurutan per tahun, arsip dan pembatalan, PDF, peran tata usaha
+- [x] Kurikulum fase: fase berdurasi sendiri, rombongan, nilai selama masa fase, keputusan lulus, sertifikat bernomor, rapor fase, naik fase
+- [x] Layar TV: nuansa Islami, konten layar penuh atau bagian pengumuman, YouTube, pemotong gambar sesuai layar, tombol pasang aplikasi, status perintah
+- [x] Perangkat pemindai pindah ke Pengaturan dan tidak memuat layar TV
+- [ ] Portal wali dan santri belum menampilkan rapor fase dan sertifikat (baru dari panel staf)
+- [ ] Sidebar per modul: menunggu keputusan pemilik
+- [ ] CCTV Jumatan: menunggu merek dan cara kamera menyiarkan
 
 ## Rincian Tahap 12b
 
